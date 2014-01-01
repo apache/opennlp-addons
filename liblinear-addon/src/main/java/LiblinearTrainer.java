@@ -69,7 +69,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
       problem.x[i] = vx.get(i);
 
       if (bias >= 0) {
-        problem.x[i][problem.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
+        problem.x[i][problem.x[i].length - 1] = new FeatureNode(maxIndex + 1, bias);
       }
     }
 

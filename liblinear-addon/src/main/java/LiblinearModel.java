@@ -17,16 +17,22 @@
  * under the License.
  */
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import opennlp.tools.ml.model.MaxentModel;
-import opennlp.tools.util.model.ArtifactSerializer;
 import opennlp.tools.util.model.SerializableArtifact;
 import de.bwaldvogel.liblinear.Feature;
 import de.bwaldvogel.liblinear.FeatureNode;
@@ -41,6 +47,8 @@ import de.bwaldvogel.liblinear.Model;
 
 public class LiblinearModel implements MaxentModel, SerializableArtifact {
 
+  private static final Charset LIBLINEAR_MODEL_ENCODING = Charset.forName("UTF-8");
+  
   private Model model;
   
   // Lets read them from disk, when model is loaded ... 
@@ -54,7 +62,33 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
   }
 
   public LiblinearModel(InputStream in) throws IOException {
-    model = Linear.loadModel(new InputStreamReader(in));
+    
+    DataInputStream di = new DataInputStream(in);
+    
+    int modelByteLength = di.readInt();
+    
+    // TODO: We should have a fixed memory limit here ...
+    
+    byte modelBytes[] = new byte[modelByteLength];
+    di.read(modelBytes);
+    
+    int outcomeLabelLength = di.readInt();
+    
+    outcomeLabels = new String[outcomeLabelLength];
+    for (int i = 0; i < outcomeLabelLength; i++) {
+      outcomeLabels[i] = di.readUTF();
+    }
+    
+    predMap = new HashMap<String, Integer>();
+    
+    int predMapSize = di.readInt();
+    for (int i = 0; i < predMapSize; i++) {
+      String key = di.readUTF();
+      int value = di.readInt();
+      predMap.put(key, value);
+    }
+    
+    model = Linear.loadModel(new InputStreamReader(new ByteArrayInputStream(modelBytes), LIBLINEAR_MODEL_ENCODING));
   }
 
   public double[] eval(String[] features) {
@@ -134,10 +168,33 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
 
   public void serialize(OutputStream out) throws IOException {
     
-  }
-  
-  public Class<?> getSerializerClass() {
-    return LiblinearModelSerializer.class;
+    DataOutputStream ds = new DataOutputStream(out);
+    
+    ByteArrayOutputStream modelBytes = new ByteArrayOutputStream();
+    Linear.saveModel(new OutputStreamWriter(modelBytes, LIBLINEAR_MODEL_ENCODING), model);
+
+    ds.writeInt(modelBytes.size());
+    ds.write(modelBytes.toByteArray());
+    
+    // write string array
+    // write label count
+    ds.writeInt(outcomeLabels.length);
+    
+    // write each label
+    for (String outcomeLabel : outcomeLabels) {
+      ds.writeUTF(outcomeLabel);
+    }
+
+    // write entry count
+    ds.writeInt(predMap.size());
+    for (Map.Entry<String, Integer> entry : predMap.entrySet()) {
+      ds.writeUTF(entry.getKey());
+      ds.writeInt(entry.getValue());
+    }
   }
 
+  @Override
+  public Class<?> getArtifactSerializerClass() {
+    return LiblinearModelSerializer.class;
+  }
 }
