@@ -16,5 +16,14 @@
 # Sample machine learning properties file
 
 Algorithm=LiblinearTrainer
-Iterations=100
 Cutoff=0
+
+# All solver types are listed in the SolverType enum
+solverType = L1R_LR
+
+# The following parameters should be adapted,
+# please refer to the liblinear documentation
+c = 1
+eps = 0.001
+p = 0.1
+bias = 0

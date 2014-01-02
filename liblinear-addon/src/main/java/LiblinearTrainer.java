@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import opennlp.tools.ml.AbstractEventTrainer;
+import opennlp.tools.ml.model.DataIndexer;
+import opennlp.tools.ml.model.MaxentModel;
 import de.bwaldvogel.liblinear.Feature;
 import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.Linear;
@@ -35,20 +38,72 @@ import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
 import de.bwaldvogel.liblinear.Train;
-import opennlp.tools.ml.AbstractEventTrainer;
-import opennlp.tools.ml.model.DataIndexer;
-import opennlp.tools.ml.model.MaxentModel;
 
 public class LiblinearTrainer extends AbstractEventTrainer {
 
+  private final SolverType solverType;
+  private final Double c;
+  private final Double eps;
+  private final Double p;
+  
+  private final int bias;
+  
+  // TODO: Is is probably better to specifiy an initalizer method
+  // and throw an exception from it, rather than throwing it here ?!
   public LiblinearTrainer(Map<String, String> trainParams,
       Map<String, String> reportMap) {
     super(trainParams, reportMap);
     
-    //  TODO: Extract solver type here
-    // depending on it, extract parameters
-    // e.g. bias, C, eps for L1_LR
+    String solverTypeName = trainParams.get("solverType");
     
+    if (solverTypeName != null) {
+      try {
+        solverType = SolverType.valueOf(trainParams.get("solverType"));
+      }
+      catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("solverType [" + solverTypeName + "] is not available!");
+      }
+    }
+    else {
+      throw new IllegalArgumentException("solverType needs to be specified!");
+    }
+    
+    String cValueString = trainParams.get("c");
+    
+    if (cValueString != null) {
+      c = Double.valueOf(cValueString);
+    }
+    else {
+      throw new IllegalArgumentException("c must be specified");
+    }
+    
+    // eps
+    String epsValueString = trainParams.get("eps");
+
+    if (epsValueString != null) {
+      eps = Double.valueOf(epsValueString);
+    }
+    else {
+      throw new IllegalArgumentException("eps must be specified");
+    }
+
+    String pValueString = trainParams.get("p");
+
+    if (pValueString != null) {
+      p = Double.valueOf(pValueString);
+    }
+    else {
+      throw new IllegalArgumentException("p must be specified");
+    }
+    
+    String biasValueString = trainParams.get("bias");
+    
+    if (biasValueString != null) {
+      bias = Integer.valueOf(biasValueString);
+    }
+    else {
+      throw new IllegalArgumentException("eps must be specified");
+    }
   }
 
   private static Problem constructProblem(List<Double> vy, List<Feature[]> vx, int maxIndex, double bias) {
@@ -91,8 +146,6 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     // outcomes
     int outcomes[] = indexer.getOutcomeList();
 
-    final int bias = 0;
-    
     int max_index = 0;
     
     // For each event ...
@@ -123,7 +176,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     }
 
     Problem problem = constructProblem(vy, vx, max_index, bias);
-    Parameter parameter = new Parameter(SolverType.L1R_LR, 1d, 0.001d);
+    Parameter parameter = new Parameter(solverType, c, eps, p);
     
     Model liblinearModel = Linear.train(problem, parameter);
 
