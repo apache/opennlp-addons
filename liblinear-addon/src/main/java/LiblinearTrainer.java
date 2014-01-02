@@ -194,40 +194,4 @@ public class LiblinearTrainer extends AbstractEventTrainer {
   public boolean isSortAndMerge() {
     return true;
   }
-
-  public static void main(String[] args) throws Exception {
-
-    File file = File.createTempFile("svm", "test");
-    file.deleteOnExit();
-
-    Collection<String> lines = new ArrayList<String>();
-    lines.add("1 1:1 3:1 4:1 6:1");
-    lines.add("2 2:1 3:1 5:1 7:1");
-    lines.add("1 3:1 5:1");
-    lines.add("1 1:1 4:1 7:1");
-    lines.add("2 4:1 5:1 7:1");
-    lines.add("1 1:1 4:1 7:1");
-    lines.add("2 4:1 5:1 7:1");
-
-    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-    try {
-      for (String line : lines)
-        writer.append(line).append("\n");
-    } finally {
-      writer.close();
-    }
-
-    Train train = new Train();
-
-    Problem problem = train.readProblem(file, 0d);
-
-    Model model = Linear.train(problem, new Parameter(SolverType.L1R_LR, 10d,
-        0.02d));
-    
-    double result = Linear.predict(model, new Feature[]{new FeatureNode(4, 1d), new FeatureNode(1, 1d)});
-    double outcomes[] = new double[2];
-    double result2 = Linear.predictProbability(model, new Feature[]{new FeatureNode(4, 1d), new FeatureNode(1, 1d)}, outcomes);
-
-    System.out.println(result);
-  }
 }
