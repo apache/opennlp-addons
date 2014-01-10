@@ -34,7 +34,6 @@ import opennlp.tools.util.Span;
  */
 public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
 
-
   DocumentCategorizerME documentCategorizerME;
   DoccatModel doccatModel;
   public static final int RADIUS = 100;
@@ -45,6 +44,8 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
       if (doccatModel == null) {
         String path = properties.getProperty("opennlp.geoentitylinker.modelbasedscorer.modelpath", "");
         if (path.equals("")) {
+          System.err.println(this.getClass().getSimpleName() + ": could not find property \"opennlp.geoentitylinker.modelbasedscorer.modelpath\" : no ModelBasedScoring will be performed");
+
           return;
         }
         doccatModel = new DoccatModel(new File(path));
@@ -63,7 +64,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
       }
 
     } catch (FileNotFoundException ex) {
-      System.err.println("could not find modelpath using EntityLinkerProperties. Property should be \"opennlp.geoentitylinker.modelbasedscorer.modelpath\"");
+      System.err.println(this.getClass().getSimpleName() + ": could not find modelpath using EntityLinkerProperties. Property should be \"opennlp.geoentitylinker.modelbasedscorer.modelpath\"");
     } catch (IOException ex) {
       System.err.println(ex);
     } catch (Exception ex) {
@@ -154,6 +155,4 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
     }
     return scoreMap;
   }
-
-  
 }
