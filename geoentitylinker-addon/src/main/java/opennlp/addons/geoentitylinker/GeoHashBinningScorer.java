@@ -28,18 +28,19 @@ import opennlp.tools.entitylinker.domain.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**
- *Scores toponymns based on geographic point binning (clustering). This classes output is highly dependant on the quality
- * of points returned from the gazateer. False positive hits from the index will pollute this result. Ensure the score cutoff for the
- * Lucene search is set to an appropriate level so this class if not fed poor data.
+ * Scores toponymns based on geographic point binning. Based on the heuristic
+ * that docs are generally about a small amount of locations, so one can detect
+ * outliers by finding those points that are not near the majority
+ *
  */
 public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> {
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans,EntityLinkerProperties properties, CountryContext additionalContext) {
-     score( linkedSpans);
+  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
+    score(linkedSpans);
   }
 
-  private  void score(List<LinkedSpan> geospans) {
+  private void score(List<LinkedSpan> geospans) {
     Map<Double, Double> latLongs = new HashMap<Double, Double>();
 
     /**
@@ -50,7 +51,7 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> 
         if (bl instanceof GazateerEntry) {
           GazateerEntry entry = (GazateerEntry) bl;
           latLongs.put(entry.getLatitude(), entry.getLongitude());
-        
+
         }
       }
     }
@@ -77,7 +78,7 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> 
         if (bl instanceof GazateerEntry) {
           GazateerEntry entry = (GazateerEntry) bl;
           geohash = geoHash(entry.getLatitude(), entry.getLongitude());
-        
+
         }
         if (scores.containsKey(geohash)) {
           score = scores.get(geohash);
@@ -158,9 +159,9 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> 
     for (Long l : diffs) {
       sum += l;
     }
-    Long avg=sum;
-    if(!diffs.isEmpty()){
-     avg = sum / diffs.size();
+    Long avg = sum;
+    if (!diffs.isEmpty()) {
+      avg = sum / diffs.size();
     }
 
 
@@ -273,4 +274,3 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> 
     return d;
   }
 }
-

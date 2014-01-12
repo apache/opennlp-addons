@@ -28,7 +28,13 @@ import opennlp.tools.entitylinker.domain.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**
- * Scores toponyms based on country context as well as fuzzy string matching
+ * Scores toponyms based on their proximity to a country mention. Based on the
+ * heuristic that typonymn mentions are more likely close to their parent
+ * country mentions. For instance, if the toponym Berlin is mentioned near an
+ * indicator of Germany, it is more likely to be Berlin Germany than Berlin
+ * Connecticut.
+ *
+ *
  */
 public class CountryProximityScorer implements LinkedEntityScorer<CountryContext> {
 
@@ -45,8 +51,7 @@ public class CountryProximityScorer implements LinkedEntityScorer<CountryContext
   /**
    * Assigns a score to each BaseLink in each linkedSpan's set of N best
    * matches. Currently the scoring indicates the probability that the toponym
-   * is correct based on the country context in the document and fuzzy string
-   * matching
+   * is correct based on the country context in the document
    *
    * @param linkedData     the linked spans, holds the Namefinder results, and
    *                       the list of BaseLink for each
@@ -101,9 +106,11 @@ public class CountryProximityScorer implements LinkedEntityScorer<CountryContext
    */
   private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences, Map<String, Set<Integer>> countryHits, LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
     Double score = 0.0;
-    //get the index of the actual span, begining of sentence
-    //should generate tokens from sentence and create a char offset...
-    //could have large sentences due to poor sentence detection or wonky doc text
+    /*
+     * get the index of the actual span, begining of sentence //should generate
+     * tokens from sentence and create a char offset... //could have large
+     * sentences due to poor sentence detection or wonky doc text
+     */
     int sentenceIdx = span.getSentenceid();
     int sentIndexInDoc = sentences[sentenceIdx].getStart();
     /**
@@ -151,7 +158,7 @@ public class CountryProximityScorer implements LinkedEntityScorer<CountryContext
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(link.getItemName().toLowerCase()).contains(link.getItemParentID())) {
             //boost the score becuase it is likely that this is the location in the text, so add 50% to the score or set to 1
-            //TODO: make this multiplier configurable
+            //TODO: make this smarter, and utilize province/state info in the future to be even more specific
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 
             if (link.getItemParentID().equals(dominantCode)) {
@@ -166,10 +173,10 @@ public class CountryProximityScorer implements LinkedEntityScorer<CountryContext
   }
 
   /**
-   * takes a map of distances from the NE to each country mention and generates
-   * a map of scores for each country code. The map is then correlated to teh
-   * correlated to the code of the BaseLink parentid for retrieval. Then the
-   * score is added to the overall.
+   * takes a map of distances from the toponym to each country mention and generates
+   * a map of scores for each country code. The map is then correlated to the
+   * code of the BaseLink parentid for retrieval. Then the
+   * score is added to the overall list.
    *
    * @param distanceMap
    * @param sentences
@@ -216,7 +223,7 @@ public class CountryProximityScorer implements LinkedEntityScorer<CountryContext
    * together to smooth out the average, so one distant outlier does not kill
    * the score for an obviously good hit. More elegant solution is possible
    * using Math.pow, and making the score decay with distance by using an
-   * increasing negative exponent
+   * increasing negative exponent (I think)
    *
    * @param normDis the normalized and sorted set of distances as a list
    * @return

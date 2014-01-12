@@ -18,7 +18,7 @@ package opennlp.addons.geoentitylinker;
 import java.util.Objects;
 
 /**
- *Stores a tuple from mysql that is used to find country mentions in document text.
+ *Stores a tuple from the opennlp.geoentitylinker.countrycontext.txt file, which is used to find country mentions in document text.
  *
  */
 public class CountryContextEntry {

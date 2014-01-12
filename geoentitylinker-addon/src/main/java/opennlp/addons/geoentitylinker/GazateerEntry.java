@@ -21,7 +21,7 @@ import opennlp.tools.entitylinker.domain.BaseLink;
 
 /**
  *
- * Stores a record from a geographic placenames gazateer
+ * Stores a minimal amount of information from a geographic placenames gazateer
  */
 public class GazateerEntry extends BaseLink {
 
@@ -29,46 +29,91 @@ public class GazateerEntry extends BaseLink {
   private Double longitude;
   private String source;
   private String indexID;
-  private Map<String, String> indexData=new HashMap<>();
+  private Map<String, String> indexData = new HashMap<>();
 
+  /**
+   * returns the id from the lucene document
+   *
+   * @return
+   */
   public String getIndexID() {
     return indexID;
   }
+  /*
+   * sets the id from the lucene document
+   */
 
   public void setIndexID(String indexID) {
     this.indexID = indexID;
   }
 
+  /**
+   * returns the latitude from the gazateer
+   *
+   * @return
+   */
   public Double getLatitude() {
     return latitude;
   }
 
+  /**
+   * sets the latitude from the gazateer
+   *
+   */
   public void setLatitude(Double latitude) {
     this.latitude = latitude;
   }
 
+  /**
+   * returns the longitude from the gaz
+   *
+   * @return
+   */
   public Double getLongitude() {
     return longitude;
   }
 
+  /**
+   * sets the longitude from the gaz
+   *
+   * @param longitude
+   */
   public void setLongitude(Double longitude) {
     this.longitude = longitude;
   }
 
+  /**
+   * returns the source of the gazateer data
+   *
+   * @return
+   */
   public String getSource() {
     return source;
   }
 
+  /**
+   * sets the source (the source of the gazateer data)
+   *
+   * @param source
+   */
   public void setSource(String source) {
     this.source = source;
   }
 
+  /**
+   * Returns all the other fields in the gazateer in the form of a map
+   *
+   * @return
+   */
   public Map<String, String> getIndexData() {
     return indexData;
   }
 
+  /**
+   * sets the other fields in the gazateer in the form of a map
+   *
+   */
   public void setIndexData(Map<String, String> indexData) {
     this.indexData = indexData;
   }
-  
 }

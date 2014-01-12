@@ -37,29 +37,45 @@ import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
 import static opennlp.addons.geoentitylinker.ModelBasedScorer.RADIUS;
 
-
 /**
  *
  * Tools for setting up GeoEntityLinker gazateers and doccat scoring model
  */
 public class GeoEntityLinkerSetupUtils {
+
   public static ModelBasedScorer scorer;
 
   static {
     scorer = new ModelBasedScorer();
   }
-    public static void createLuceneIndex(File outputIndexDir, File gazateerInputData, GazateerIndexer.GazType type){
-      GazateerIndexer indexer = new GazateerIndexer();
-      try {
-        indexer.index(outputIndexDir, gazateerInputData, type);
-      } catch (Exception ex) {
-       ex.printStackTrace();
-      }
+
+  /**
+   * Generates the lucene indexes of the USGS and GEONAMES gazateers.
+   *
+   * @param outputIndexDir    the destination directory of the index. Must be a
+   *                          directory
+   * @param gazateerInputData the input data file. Must be in geonames gaz
+   *                          format, or USGS format
+   * @param type              the type, USGS, or GEONAMES
+   */
+  public static void createLuceneIndex(File outputIndexDir, File gazateerInputData, GazateerIndexer.GazType type) {
+    GazateerIndexer indexer = new GazateerIndexer();
+    try {
+      indexer.index(outputIndexDir, gazateerInputData, type);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
-    /**
+  }
+
+  /**
+   * Generates a doccat model from proximal features generated from surrounding
+   * context of country mentions. This model is used as a basis for a score
+   * called coutrymodel, which takes the context from around a toponym, and uses
+   * this model to return a score for the country code of the toponym hit in the
+   * gazateer.
    *
    * @param documents         A list of document texts, for best results try to
-   *                          ensure each country you care about will be
+   *                          ensure each country you care about will be well
    *                          represented in the collection
    * @param annotationOutFile the location where the annotated doccat text file
    *                          will be stored
@@ -83,7 +99,7 @@ public class GeoEntityLinkerSetupUtils {
         }
       }
     }
-    System.out.println("Document processing complete. Writing training data to "+ annotationOutFile.getAbsolutePath());
+    System.out.println("Document processing complete. Writing training data to " + annotationOutFile.getAbsolutePath());
     writer.close();
     System.out.println("Building Doccat model...");
     DoccatModel model = null;
@@ -98,7 +114,7 @@ public class GeoEntityLinkerSetupUtils {
       model = DocumentCategorizerME.train("en", sampleStream);
       OutputStream modelOut = new BufferedOutputStream(new FileOutputStream(modelOutFile));
       model.serialize(modelOut);
-       System.out.println("Model complete!");
+      System.out.println("Model complete!");
     } catch (IOException e) {
       // Failed to read or parse training data, training failed
       e.printStackTrace();
@@ -142,5 +158,4 @@ public class GeoEntityLinkerSetupUtils {
     }
     return featureBags;
   }
-
 }

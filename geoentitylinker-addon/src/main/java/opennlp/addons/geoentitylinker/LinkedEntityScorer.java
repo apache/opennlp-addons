@@ -28,6 +28,7 @@ public interface LinkedEntityScorer<T> {
 
 /**
  * Scores a collection of linked entities. Implementations should populate the scoreMap in the list of BaseLink for each linkedSpan
+ * this method internally affects the reference to linkedSpans that was passed in
  * @param linkedSpans the spans that have been linked to some external source and have all the data they need to be scored
  * @param docText the full text of the document.
  * @param sentenceSpans the sentence spans the correspond to the document text

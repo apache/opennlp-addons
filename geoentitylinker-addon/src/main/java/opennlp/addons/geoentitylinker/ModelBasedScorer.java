@@ -37,6 +37,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
   DocumentCategorizerME documentCategorizerME;
   DoccatModel doccatModel;
   public static final int RADIUS = 100;
+  boolean modelexists = false;
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
@@ -44,8 +45,10 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
       if (doccatModel == null) {
         String path = properties.getProperty("opennlp.geoentitylinker.modelbasedscorer.modelpath", "");
         if (path.equals("")) {
-          System.err.println(this.getClass().getSimpleName() + ": could not find property \"opennlp.geoentitylinker.modelbasedscorer.modelpath\" : no ModelBasedScoring will be performed");
-
+          if (!modelexists) {
+            System.err.println(this.getClass().getSimpleName() + ": could not find property \"opennlp.geoentitylinker.modelbasedscorer.modelpath\" : no ModelBasedScoring will be performed");
+          }
+          modelexists = true;
           return;
         }
         doccatModel = new DoccatModel(new File(path));

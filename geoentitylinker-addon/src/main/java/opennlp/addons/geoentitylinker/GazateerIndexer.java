@@ -79,7 +79,13 @@ public class GazateerIndexer {
       }
     }
   }
-
+/**
+ * indexes the USGS or Geonames gazateers.
+ * @param outputIndexDir a DIRECTORY path where you would like to store the output lucene indexes
+ * @param gazateerInputData the file, "as is" that was downloaded from the USGS and GEONAMES website
+ * @param type indicates whether the data is USGS or GEONAMES format
+ * @throws Exception
+ */
   public void index(File outputIndexDir, File gazateerInputData, GazType type) throws Exception {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");

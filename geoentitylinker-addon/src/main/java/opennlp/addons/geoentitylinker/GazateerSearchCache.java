@@ -21,13 +21,17 @@ import java.util.Map;
 
 /**
  *
- * Caches gazateer query results statically
+ * Caches gazateer query results statically. Clears itself if more than 10000 results are cached.
  */
 public class GazateerSearchCache {
 
   private static Map<String, ArrayList<GazateerEntry>> gazCache = new HashMap<>();
 
-
+/**
+ * returns the cached entries. Returns null if the query does not exists in the cache
+ * @param searchString
+ * @return
+ */
   public static synchronized ArrayList<GazateerEntry> get(String searchString) {
     return gazCache.get(searchString);
   }

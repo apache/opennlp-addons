@@ -26,7 +26,7 @@ import opennlp.tools.util.Span;
 
 /**
  *
- * Generates scores for string comparisons.
+ * Generates scores based on string comparisons levenstein and dice
  */
 public class FuzzyStringMatchScorer implements LinkedEntityScorer<CountryContext> {
 

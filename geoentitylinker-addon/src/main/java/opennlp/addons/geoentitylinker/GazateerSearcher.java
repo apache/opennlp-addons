@@ -39,7 +39,7 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 
 /**
  *
- * Searches Gazateers stored in a MMapDirectory lucene index
+ * Searches Gazateers stored in a MMapDirectory Lucene index
  */
 public class GazateerSearcher {
 
@@ -59,18 +59,19 @@ public class GazateerSearcher {
 
   /**
    *
-   * @param searchString the nameed entity to look up in the lucene index
+   * @param searchString the named entity to look up in the lucene index
    * @param rowsReturned how many rows to allow lucene to return
    * @param code         the country code
-   * @param properties   properties file that states where the lucene indexes
-   *                     are
+   * @param properties   the entitylinker.properties file that states where the
+   *                     lucene indexes are
    * @return
    */
   public ArrayList<GazateerEntry> geonamesFind(String searchString, int rowsReturned, String code, EntityLinkerProperties properties) {
     ArrayList<GazateerEntry> linkedData = new ArrayList<>();
     try {
       /**
-       * build the search string
+       * build the search string Sometimes no country context is found. In this
+       * case the code variable will be an empty string
        */
       String luceneQueryString = !code.equals("")
               ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase() + "^1000"
@@ -80,24 +81,27 @@ public class GazateerSearcher {
        */
       ArrayList<GazateerEntry> get = GazateerSearchCache.get(searchString);
       if (get != null) {
+      
         return get;
       }
       if (geonamesIndex == null) {
         String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
-        String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", ".60");
+        if(indexloc.equals("")){
+          System.out.println("Geonames Gaz location not found");
+          return linkedData;
+        }
+        String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
         scoreCutoff = Double.valueOf(cutoff);
         geonamesIndex = new MMapDirectory(new File(indexloc));
         geonamesReader = DirectoryReader.open(geonamesIndex);
         geonamesSearcher = new IndexSearcher(geonamesReader);
+        //TODO: a language code switch statement should be employed here at some point
         geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
 
       }
 
-
-
       QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, geonamesAnalyzer);
       Query q = parser.parse(luceneQueryString);
-
 
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
       double maxScore = (double) search.getMaxScore();
@@ -118,6 +122,12 @@ public class GazateerSearcher {
         for (int idx = 0; idx < fields.size(); idx++) {
           String value = d.get(fields.get(idx).name());
           value = value.toLowerCase();
+          /**
+           * these positions map to the required fields in the gaz TODO: allow a
+           * configurable list of columns that map to the GazateerEntry fields,
+           * then users would be able to plug in any gazateer they have (if they
+           * build a lucene index out of it)
+           */
           switch (idx) {
             case 1:
               entry.setItemID(value);
@@ -140,7 +150,7 @@ public class GazateerSearcher {
           }
           entry.getIndexData().put(fields.get(idx).name(), value);
         }
-        //only keep it if the country code is a match
+        //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
         if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
           linkedData.add(entry);
         }
@@ -182,6 +192,10 @@ public class GazateerSearcher {
       }
       if (usgsIndex == null) {
         String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.usgs", "");
+        if(indexloc.equals("")){
+          System.out.println("USGS Gaz location not found");
+          return linkedData;
+        }
         String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", ".75");
         scoreCutoff = Double.valueOf(cutoff);
         usgsIndex = new MMapDirectory(new File(indexloc));
@@ -264,15 +278,31 @@ public class GazateerSearcher {
     }
   }
 
+  /**
+   * gets rid of entries that are below the score thresh
+   *
+   * @param linkedData
+   */
   private void prune(ArrayList<GazateerEntry> linkedData) {
     for (Iterator<GazateerEntry> itr = linkedData.iterator(); itr.hasNext();) {
       GazateerEntry ge = itr.next();
+      /**
+       * throw away anything under the configured score thresh
+       */
       if (ge.getScoreMap().get("lucene") < scoreCutoff) {
         itr.remove();
       }
     }
   }
 
+  /**
+   * normalizes the different levenstein scores returned from the query into a
+   *
+   * @param valueToNormalize the raw score
+   * @param minimum          the min of the range of scores
+   * @param maximum          the max of the range
+   * @return the normed score
+   */
   private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
     Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
     d = d == null ? 0d : d;

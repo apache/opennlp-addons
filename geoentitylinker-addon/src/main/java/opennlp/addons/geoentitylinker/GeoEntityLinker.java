@@ -26,8 +26,10 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.EntityLinker;
 
 /**
- * Links location entities to gazatteers. Currently supports gazateers in a
- * MySql database (NGA and USGS)
+ * Links location entities to the USGS and GeoNames gazatteers, and uses several
+ * scoring techniques to enable resolution. The gazateers are stored in lucene
+ * indexes. The indexes can be built using the GeoEntityLinkerSetupUtils class
+ * in this same package.
  *
  *
  */

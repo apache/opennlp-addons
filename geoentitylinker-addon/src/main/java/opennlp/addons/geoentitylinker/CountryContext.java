@@ -37,7 +37,6 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
  */
 public class CountryContext {
 
- 
   private List<CountryContextEntry> countrydata;
   private Map<String, Set<String>> nameCodesMap = new HashMap<String, Set<String>>();
   private Map<String, Set<Integer>> countryMentions = new HashMap<String, Set<Integer>>();
@@ -50,10 +49,18 @@ public class CountryContext {
     return countryMentions;
   }
 
+  /**
+   * returns the last set of hits after calling regexFind
+   *
+   * @return
+   */
   public Set<CountryContextEntry> getCountryHits() {
     return countryHits;
   }
-
+/**
+ * returns the last name to codes map after calling regexFind
+ * @return
+ */
   public Map<String, Set<String>> getNameCodesMap() {
     return nameCodesMap;
   }
@@ -63,10 +70,14 @@ public class CountryContext {
   }
 
   /**
-   * Finds mentions of countries based on a list from MySQL stored procedure
-   * called getCountryList. This method finds country mentions in documents,
-   * which is an essential element of the scoring that is done for geo
-   * linkedspans. Lazily loads the list from the database.
+   * Finds mentions of countries to assist in toponym resolution. Countries are
+   * discovered via regex based on a configured file called
+   * opennlp.geoentitylinker.countrycontext.txt. the file is configured using
+   * the entitylinker.properties file as such:
+   * opennlp.geoentitylinker.countrycontext.filepath=/opt/opennlp/opennlp.geoentitylinker.countrycontext.txt
+   *
+   * Finding mentions in documents is very helpful for scoring. Lazily loads the
+   * list from the file.
    *
    * @param docText    the full text of the document
    * @param properties EntityLinkerProperties for getting database connection
