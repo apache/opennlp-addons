@@ -17,6 +17,7 @@ package opennlp.addons.geoentitylinker;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import opennlp.tools.entitylinker.domain.BaseLink;
 
 /**
@@ -116,4 +117,40 @@ public class GazateerEntry extends BaseLink {
   public void setIndexData(Map<String, String> indexData) {
     this.indexData = indexData;
   }
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 29 * hash + Objects.hashCode(this.latitude);
+    hash = 29 * hash + Objects.hashCode(this.longitude);
+    hash = 29 * hash + Objects.hashCode(this.source);
+    hash = 29 * hash + Objects.hashCode(this.indexID);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final GazateerEntry other = (GazateerEntry) obj;
+    if (!Objects.equals(this.latitude, other.latitude)) {
+      return false;
+    }
+    if (!Objects.equals(this.longitude, other.longitude)) {
+      return false;
+    }
+    if (!Objects.equals(this.source, other.source)) {
+      return false;
+    }
+    if (!Objects.equals(this.indexID, other.indexID)) {
+      return false;
+    }
+    return true;
+  }
+
+
 }

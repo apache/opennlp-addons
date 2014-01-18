@@ -53,8 +53,11 @@ public class GazateerSearcher {
   private IndexReader usgsReader;// = DirectoryReader.open(geonamesIndex);
   private IndexSearcher usgsSearcher;// = new IndexSearcher(geonamesReader);
   private Analyzer usgsAnalyzer;
+  private EntityLinkerProperties properties;
 
-  public GazateerSearcher() {
+  public GazateerSearcher(EntityLinkerProperties properties) throws Exception {
+    this.properties = properties;
+    init();
   }
 
   /**
@@ -66,39 +69,26 @@ public class GazateerSearcher {
    *                     lucene indexes are
    * @return
    */
-  public ArrayList<GazateerEntry> geonamesFind(String searchString, int rowsReturned, String code, EntityLinkerProperties properties) {
+  public ArrayList<GazateerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
     ArrayList<GazateerEntry> linkedData = new ArrayList<>();
+    String luceneQueryString = "";
     try {
       /**
        * build the search string Sometimes no country context is found. In this
        * case the code variable will be an empty string
        */
-      String luceneQueryString = !code.equals("")
+      luceneQueryString = !code.equals("")
               ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase() + "^1000"
               : "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim();
       /**
        * check the cache and go no further if the records already exist
        */
-      ArrayList<GazateerEntry> get = GazateerSearchCache.get(searchString);
+      ArrayList<GazateerEntry> get = GazateerSearchCache.get(luceneQueryString);
       if (get != null) {
-      
+
         return get;
       }
-      if (geonamesIndex == null) {
-        String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
-        if(indexloc.equals("")){
-          System.out.println("Geonames Gaz location not found");
-          return linkedData;
-        }
-        String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
-        scoreCutoff = Double.valueOf(cutoff);
-        geonamesIndex = new MMapDirectory(new File(indexloc));
-        geonamesReader = DirectoryReader.open(geonamesIndex);
-        geonamesSearcher = new IndexSearcher(geonamesReader);
-        //TODO: a language code switch statement should be employed here at some point
-        geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
 
-      }
 
       QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, geonamesAnalyzer);
       Query q = parser.parse(luceneQueryString);
@@ -152,19 +142,22 @@ public class GazateerSearcher {
         }
         //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
         if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
-          linkedData.add(entry);
+          if (!linkedData.contains(entry)) {
+            linkedData.add(entry);
+          }
         }
       }
-
-      normalize(linkedData, 0d, maxScore);
-      prune(linkedData);
+      if (!linkedData.isEmpty()) {
+        normalize(linkedData, 0d, maxScore);
+        prune(linkedData);
+      }
     } catch (IOException | ParseException ex) {
       System.err.println(ex);
     }
     /**
      * add the records to the cache for this query
      */
-    GazateerSearchCache.put(searchString, linkedData);
+    GazateerSearchCache.put(luceneQueryString, linkedData);
     return linkedData;
   }
 
@@ -177,43 +170,27 @@ public class GazateerSearcher {
    * @param properties   properties file that states where the lucene indexes
    * @return
    */
-  public ArrayList<GazateerEntry> usgsFind(String searchString, int rowsReturned, EntityLinkerProperties properties) {
+  public ArrayList<GazateerEntry> usgsFind(String searchString, int rowsReturned) {
     ArrayList<GazateerEntry> linkedData = new ArrayList<>();
+    String luceneQueryString = "FEATURE_NAME:" + searchString.toLowerCase().trim() + " OR MAP_NAME: " + searchString.toLowerCase().trim();
     try {
 
-      String luceneQueryString = "FEATURE_NAME:" + searchString.toLowerCase().trim() + " OR MAP_NAME: " + searchString.toLowerCase().trim();
+
       /**
        * hit the cache
        */
-      ArrayList<GazateerEntry> get = GazateerSearchCache.get(searchString);
+      ArrayList<GazateerEntry> get = GazateerSearchCache.get(luceneQueryString);
       if (get != null) {
         //if the name is already there, return the list of cavhed results
         return get;
       }
-      if (usgsIndex == null) {
-        String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.usgs", "");
-        if(indexloc.equals("")){
-          System.out.println("USGS Gaz location not found");
-          return linkedData;
-        }
-        String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", ".75");
-        scoreCutoff = Double.valueOf(cutoff);
-        usgsIndex = new MMapDirectory(new File(indexloc));
-        usgsReader = DirectoryReader.open(usgsIndex);
-        usgsSearcher = new IndexSearcher(usgsReader);
-        usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
-      }
-
-
       QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, usgsAnalyzer);
       Query q = parser.parse(luceneQueryString);
-
 
       TopDocs search = usgsSearcher.search(q, rowsReturned);
       double maxScore = (double) search.getMaxScore();
 
-
-      for (int i = 0; i < search.scoreDocs.length; ++i) {
+      for (int i = 0; i < search.scoreDocs.length; i++) {
         GazateerEntry entry = new GazateerEntry();
         int docId = search.scoreDocs[i].doc;
         double sc = search.scoreDocs[i].score;
@@ -224,8 +201,6 @@ public class GazateerSearcher {
         entry.setIndexID(docId + "");
         entry.setSource("usgs");
         entry.setItemParentID("us");
-
-
         Document d = usgsSearcher.doc(docId);
         List<IndexableField> fields = d.getFields();
         for (int idx = 0; idx < fields.size(); idx++) {
@@ -250,20 +225,21 @@ public class GazateerSearcher {
           }
           entry.getIndexData().put(fields.get(idx).name(), value);
         }
-        linkedData.add(entry);
-
-
+        if (!linkedData.contains(entry)) {
+          linkedData.add(entry);
+        }
       }
-
-      normalize(linkedData, 0d, maxScore);
-      prune(linkedData);
+      if (!linkedData.isEmpty()) {
+        normalize(linkedData, 0d, maxScore);
+        prune(linkedData);
+      }
     } catch (IOException | ParseException ex) {
       System.err.println(ex);
     }
     /**
      * add the records to the cache for this query
      */
-    GazateerSearchCache.put(searchString, linkedData);
+    GazateerSearchCache.put(luceneQueryString, linkedData);
     return linkedData;
   }
 
@@ -307,5 +283,36 @@ public class GazateerSearcher {
     Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
     d = d == null ? 0d : d;
     return d;
+  }
+
+  private void init() throws Exception {
+    if (usgsIndex == null) {
+      String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.usgs", "");
+      if (indexloc.equals("")) {
+        System.out.println("USGS Gaz location not found");
+
+      }
+      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", ".75");
+      scoreCutoff = Double.valueOf(cutoff);
+      usgsIndex = new MMapDirectory(new File(indexloc));
+      usgsReader = DirectoryReader.open(usgsIndex);
+      usgsSearcher = new IndexSearcher(usgsReader);
+      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+    }
+    if (geonamesIndex == null) {
+      String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
+      if (indexloc.equals("")) {
+        System.out.println("Geonames Gaz location not found");
+
+      }
+      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
+      scoreCutoff = Double.valueOf(cutoff);
+      geonamesIndex = new MMapDirectory(new File(indexloc));
+      geonamesReader = DirectoryReader.open(geonamesIndex);
+      geonamesSearcher = new IndexSearcher(geonamesReader);
+      //TODO: a language code switch statement should be employed here at some point
+      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+
+    }
   }
 }

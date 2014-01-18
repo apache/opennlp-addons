@@ -30,15 +30,13 @@ import opennlp.tools.entitylinker.EntityLinker;
  * scoring techniques to enable resolution. The gazateers are stored in lucene
  * indexes. The indexes can be built using the GeoEntityLinkerSetupUtils class
  * in this same package.
- *
- *
  */
-public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
+public class GeoEntityLinker implements EntityLinker<LinkedSpan, EntityLinkerProperties> {
 
   private CountryContext countryContext;
   private Map<String, Set<Integer>> countryMentions;
   private EntityLinkerProperties linkerProperties;
-  private GazateerSearcher gazateerSearcher = new GazateerSearcher();
+  private GazateerSearcher gazateerSearcher;
   private List<LinkedEntityScorer> scorers = new ArrayList<>();
   /**
    * Flag for deciding whether to search gaz only for toponyms within countries
@@ -46,8 +44,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
    */
   private Boolean filterCountryContext = true;
 
-  public GeoEntityLinker() {
-    countryContext = new CountryContext();
+  public GeoEntityLinker() throws Exception {
   }
 
   @Override
@@ -57,7 +54,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     if (linkerProperties == null) {
       throw new IllegalArgumentException("EntityLinkerProperties cannot be null");
     }
-    countryMentions = countryContext.regexfind(doctext, linkerProperties);
+    countryMentions = countryContext.regexfind(doctext);
 
     for (int s = 0; s < sentences.length; s++) {
       Span[] names = namesBySentence[s];
@@ -66,28 +63,33 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
       for (int i = 0; i < matches.length; i++) {
 
-//nga gazateer is for other than US placenames, don't use it unless US is a mention in the document
+        /**
+         * nga gazateer is for other than US placenames,don't want to use it if
+         * US is the only country mentioned in the doc
+         *
+         */
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<BaseLink>();
-        if (!(countryMentions.keySet().contains("us") && countryMentions.keySet().size() == 1) || countryMentions.keySet().size() > 1 || countryMentions.keySet().isEmpty()) {
-          // geoNamesEntries = geoNamesGaz.find(matches[i], names[i], countryMentions, linkerProperties);
+        if (!(countryMentions.keySet().contains("us") && countryMentions.keySet().size() == 1)
+                || countryMentions.keySet().size() > 1 || countryMentions.keySet().isEmpty()) {
+        
           if (!countryMentions.keySet().isEmpty()) {
             for (String code : countryMentions.keySet()) {
               if (!code.equals("us")) {
-                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, code, linkerProperties));
+                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, code));
               }
             }
           } else {
-            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, "", linkerProperties));
+            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, ""));
 
           }
 
         }
-        ArrayList<BaseLink> usgsEntries = new ArrayList<BaseLink>();
+        ArrayList<BaseLink> usgsEntries = new ArrayList<>();
         if (countryMentions.keySet().contains("us") || countryMentions.keySet().isEmpty()) {
           //usgsEntries = usgsGaz.find(matches[i], names[i], linkerProperties);
-          usgsEntries.addAll(gazateerSearcher.usgsFind(matches[i], 3, linkerProperties));
+          usgsEntries.addAll(gazateerSearcher.usgsFind(matches[i], 3));
         }
-        LinkedSpan<BaseLink> geoSpan = new LinkedSpan<BaseLink>(geoNamesEntries, names[i].getStart(), names[i].getEnd());
+        LinkedSpan<BaseLink> geoSpan = new LinkedSpan<>(geoNamesEntries, names[i].getStart(), names[i].getEnd());
 
         if (!usgsEntries.isEmpty()) {
           geoSpan.getLinkedEntries().addAll(usgsEntries);
@@ -102,21 +104,34 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       }
     }
 
+    if (!scorers.isEmpty()) {
+      for (LinkedEntityScorer scorer : scorers) {
+        scorer.score(spans, doctext, sentences, linkerProperties, countryContext);
+      }
+    }
+
+    return spans;
+  }
+
+  private void loadScorers() {
     if (scorers.isEmpty()) {
       scorers.add(new FuzzyStringMatchScorer());
       scorers.add(new GeoHashBinningScorer());
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());
     }
-    for (LinkedEntityScorer scorer : scorers) {
-      scorer.score(spans, doctext, sentences, linkerProperties, countryContext);
-    }
-    return spans;
   }
 
   @Override
-  public void setEntityLinkerProperties(EntityLinkerProperties properties) {
-    this.linkerProperties = properties;
+  public void init(EntityLinkerProperties properties) {
+    try {
+      this.linkerProperties = properties;
+      countryContext = new CountryContext(this.linkerProperties);
+      gazateerSearcher = new GazateerSearcher(this.linkerProperties);
+      loadScorers();
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   @Override

@@ -16,6 +16,7 @@
 package opennlp.addons.geoentitylinker;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,11 +39,19 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 public class CountryContext {
 
   private List<CountryContextEntry> countrydata;
-  private Map<String, Set<String>> nameCodesMap = new HashMap<String, Set<String>>();
-  private Map<String, Set<Integer>> countryMentions = new HashMap<String, Set<Integer>>();
+  private Map<String, Set<String>> nameCodesMap = new HashMap<>();
+  private Map<String, Set<Integer>> countryMentions = new HashMap<>();
   private Set<CountryContextEntry> countryHits = new HashSet<>();
+  private EntityLinkerProperties properties;
 
-  public CountryContext() {
+  public CountryContext(EntityLinkerProperties properties) throws Exception {
+    this.properties = properties;
+    if (countrydata == null) {
+      String path = this.properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
+
+      File countryContextFile = new File(path);
+      countrydata = getCountryContextFromFile(countryContextFile);
+    }
   }
 
   public Map<String, Set<Integer>> getCountryMentions() {
@@ -57,10 +66,12 @@ public class CountryContext {
   public Set<CountryContextEntry> getCountryHits() {
     return countryHits;
   }
-/**
- * returns the last name to codes map after calling regexFind
- * @return
- */
+
+  /**
+   * returns the last name to codes map after calling regexFind
+   *
+   * @return
+   */
   public Map<String, Set<String>> getNameCodesMap() {
     return nameCodesMap;
   }
@@ -83,15 +94,12 @@ public class CountryContext {
    * @param properties EntityLinkerProperties for getting database connection
    * @return
    */
-  public Map<String, Set<Integer>> regexfind(String docText, EntityLinkerProperties properties) {
+  public Map<String, Set<Integer>> regexfind(String docText) {
     countryMentions = new HashMap<>();
     nameCodesMap.clear();
     try {
 
-      if (countrydata == null) {
-        countrydata = getCountryContextFromFile(properties);
-        //   countrydata = getCountryData(properties);
-      }
+
       for (CountryContextEntry entry : countrydata) {
         Pattern regex = Pattern.compile(entry.getFull_name_nd_ro().trim(), Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher rs = regex.matcher(docText);
@@ -133,9 +141,9 @@ public class CountryContext {
     return countryMentions;
   }
 
-  private List<CountryContextEntry> getCountryContextFromFile(EntityLinkerProperties properties) {
+  private List<CountryContextEntry> getCountryContextFromFile(File countryContextFile) {
     List<CountryContextEntry> entries = new ArrayList<>();
-    String path = "";// properties.getProperty("geoentitylinker.countrycontext.filepath", "");
+    String path = countryContextFile.getPath();
     BufferedReader reader;
 
     try {

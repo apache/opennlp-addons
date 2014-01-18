@@ -85,13 +85,13 @@ public class GeoEntityLinkerSetupUtils {
    *                          opennlp.geoentitylinker.countrycontext.filepath
    * @throws IOException
    */
-  public static void buildCountryContextModel(Collection<String> documents, File annotationOutFile, File modelOutFile, EntityLinkerProperties properties) throws IOException {
-    CountryContext context = new CountryContext();
+  public static void buildCountryContextModel(Collection<String> documents, File annotationOutFile, File modelOutFile, EntityLinkerProperties properties) throws Exception {
+    CountryContext context = new CountryContext(properties);
     FileWriter writer = new FileWriter(annotationOutFile, true);
     System.out.println("processing " + documents.size() + " documents");
     for (String docText : documents) {
       System.out.append(".");
-      Map<String, Set<Integer>> regexfind = context.regexfind(docText, properties);
+      Map<String, Set<Integer>> regexfind = context.regexfind(docText);
       Map<String, ArrayList<String>> modelCountryContext = modelCountryContext(docText, context, RADIUS);
       for (String key : modelCountryContext.keySet()) {
         for (String wordbag : modelCountryContext.get(key)) {
