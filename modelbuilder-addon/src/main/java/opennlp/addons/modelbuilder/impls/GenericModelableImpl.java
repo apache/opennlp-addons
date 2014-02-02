@@ -31,6 +31,7 @@ import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.NameSample;
 import opennlp.tools.namefind.NameSampleDataStream;
 import opennlp.tools.namefind.TokenNameFinderModel;
+import opennlp.tools.util.MockInputStreamFactory;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
 
@@ -90,7 +91,7 @@ public class GenericModelableImpl implements Modelable {
       System.out.println("\t\treading training data...");
       Charset charset = Charset.forName("UTF-8");
       ObjectStream<String> lineStream =
-              new PlainTextByLineStream(new FileInputStream(params.getAnnotatedTrainingDataFile()), charset);
+              new PlainTextByLineStream(new MockInputStreamFactory(new FileInputStream(params.getAnnotatedTrainingDataFile())), charset);
       ObjectStream<NameSample> sampleStream = new NameSampleDataStream(lineStream);
 
       TokenNameFinderModel model;
