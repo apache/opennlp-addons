@@ -36,6 +36,10 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
 import static opennlp.addons.geoentitylinker.ModelBasedScorer.RADIUS;
+import opennlp.tools.cmdline.MarkableFileInputStreamFactory;
+import opennlp.tools.ml.model.DataIndexer;
+import opennlp.tools.util.InputStreamFactory;
+import opennlp.tools.util.MockInputStreamFactory;
 
 /**
  *
@@ -107,8 +111,8 @@ public class GeoEntityLinkerSetupUtils {
     InputStream dataIn = new FileInputStream(annotationOutFile);
     try {
 
-      ObjectStream<String> lineStream =
-              new PlainTextByLineStream(dataIn, "UTF-8");
+    
+      ObjectStream<String> lineStream = new PlainTextByLineStream(new MockInputStreamFactory(dataIn), "UTF-8");
       ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
 
       model = DocumentCategorizerME.train("en", sampleStream);
