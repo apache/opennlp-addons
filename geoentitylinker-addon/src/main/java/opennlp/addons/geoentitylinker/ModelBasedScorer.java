@@ -36,7 +36,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
 
   DocumentCategorizerME documentCategorizerME;
   DoccatModel doccatModel;
-  public static final int RADIUS = 100;
+  public static final int RADIUS = 200;
   boolean modelexists = false;
 
   @Override

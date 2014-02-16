@@ -18,7 +18,6 @@ package opennlp.addons.geoentitylinker;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -39,11 +38,14 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 
 /**
  *
- * Searches Gazateers stored in a MMapDirectory Lucene index
+ * Searches Gazateers stored in a MMapDirectory Lucene index. The structure of
+ * these indices are based on loading the indexes using the
+ * GeoEntityLinkerSetupUtils
+ *
  */
 public class GazateerSearcher {
 
-  private double scoreCutoff = .75;
+  private double scoreCutoff = .90;
   private Directory geonamesIndex;//= new MMapDirectory(new File(indexloc));
   private IndexReader geonamesReader;// = DirectoryReader.open(geonamesIndex);
   private IndexSearcher geonamesSearcher;// = new IndexSearcher(geonamesReader);
@@ -94,7 +96,6 @@ public class GazateerSearcher {
       Query q = parser.parse(luceneQueryString);
 
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
-      double maxScore = (double) search.getMaxScore();
 
       for (int i = 0; i < search.scoreDocs.length; ++i) {
         GazateerEntry entry = new GazateerEntry();
@@ -103,7 +104,7 @@ public class GazateerSearcher {
 
         entry.getScoreMap().put("lucene", sc);
 
-        entry.getScoreMap().put("rawlucene", sc);
+
         entry.setIndexID(docId + "");
         entry.setSource("geonames");
 
@@ -140,24 +141,34 @@ public class GazateerSearcher {
           }
           entry.getIndexData().put(fields.get(idx).name(), value);
         }
-        //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
-        if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
-          if (!linkedData.contains(entry)) {
-            linkedData.add(entry);
+        /**
+         * norm the levenstein distance
+         */
+        Double normLev = Double.valueOf(searchString.length()) / Double.valueOf(entry.getItemName().length());
+        /**
+         * only want hits above the levenstein thresh
+         */
+        if (normLev.compareTo(scoreCutoff) >= 0) {
+          //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
+
+          if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
+            entry.getScoreMap().put("normlucene", normLev);
+            //make sure we don't produce a duplicate
+            if (!linkedData.contains(entry)) {
+              linkedData.add(entry);
+              /**
+               * add the records to the cache for this query
+               */
+              GazateerSearchCache.put(luceneQueryString, linkedData);
+            }
           }
         }
       }
-      if (!linkedData.isEmpty()) {
-        normalize(linkedData, 0d, maxScore);
-        prune(linkedData);
-      }
+
     } catch (IOException | ParseException ex) {
       System.err.println(ex);
     }
-    /**
-     * add the records to the cache for this query
-     */
-    GazateerSearchCache.put(luceneQueryString, linkedData);
+
     return linkedData;
   }
 
@@ -188,8 +199,6 @@ public class GazateerSearcher {
       Query q = parser.parse(luceneQueryString);
 
       TopDocs search = usgsSearcher.search(q, rowsReturned);
-      double maxScore = (double) search.getMaxScore();
-
       for (int i = 0; i < search.scoreDocs.length; i++) {
         GazateerEntry entry = new GazateerEntry();
         int docId = search.scoreDocs[i].doc;
@@ -197,7 +206,6 @@ public class GazateerSearcher {
         //keep track of the min score for normalization
 
         entry.getScoreMap().put("lucene", sc);
-        entry.getScoreMap().put("rawlucene", sc);
         entry.setIndexID(docId + "");
         entry.setSource("usgs");
         entry.setItemParentID("us");
@@ -225,64 +233,34 @@ public class GazateerSearcher {
           }
           entry.getIndexData().put(fields.get(idx).name(), value);
         }
-        if (!linkedData.contains(entry)) {
-          linkedData.add(entry);
+        /**
+         * norm the levenstein distance
+         */
+        Double normLev = Double.valueOf(searchString.length()) / Double.valueOf(entry.getItemName().length());
+        /**
+         * only want hits above the levenstein thresh
+         */
+        if (normLev.compareTo(scoreCutoff) >= 0) {
+          //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
+
+          entry.getScoreMap().put("normlucene", normLev);
+          //make sure we don't produce a duplicate
+          if (!linkedData.contains(entry)) {
+            linkedData.add(entry);
+            /**
+             * add the records to the cache for this query
+             */
+            GazateerSearchCache.put(luceneQueryString, linkedData);
+          }
         }
+
       }
-      if (!linkedData.isEmpty()) {
-        normalize(linkedData, 0d, maxScore);
-        prune(linkedData);
-      }
+
     } catch (IOException | ParseException ex) {
       System.err.println(ex);
     }
-    /**
-     * add the records to the cache for this query
-     */
-    GazateerSearchCache.put(luceneQueryString, linkedData);
+
     return linkedData;
-  }
-
-  private void normalize(ArrayList<GazateerEntry> linkedData, Double minScore, Double maxScore) {
-    for (GazateerEntry gazateerEntry : linkedData) {
-
-      double luceneScore = gazateerEntry.getScoreMap().get("lucene");
-      luceneScore = normalize(luceneScore, minScore, maxScore);
-      luceneScore = luceneScore > 1.0 ? 1.0 : luceneScore;
-      luceneScore = (luceneScore == Double.NaN) ? 0.001 : luceneScore;
-      gazateerEntry.getScoreMap().put("lucene", luceneScore);
-    }
-  }
-
-  /**
-   * gets rid of entries that are below the score thresh
-   *
-   * @param linkedData
-   */
-  private void prune(ArrayList<GazateerEntry> linkedData) {
-    for (Iterator<GazateerEntry> itr = linkedData.iterator(); itr.hasNext();) {
-      GazateerEntry ge = itr.next();
-      /**
-       * throw away anything under the configured score thresh
-       */
-      if (ge.getScoreMap().get("lucene") < scoreCutoff) {
-        itr.remove();
-      }
-    }
-  }
-
-  /**
-   * normalizes the different levenstein scores returned from the query into a
-   *
-   * @param valueToNormalize the raw score
-   * @param minimum          the min of the range of scores
-   * @param maximum          the max of the range
-   * @return the normed score
-   */
-  private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
-    Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
-    d = d == null ? 0d : d;
-    return d;
   }
 
   private void init() throws Exception {
@@ -292,7 +270,7 @@ public class GazateerSearcher {
         System.out.println("USGS Gaz location not found");
 
       }
-      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", ".75");
+      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       scoreCutoff = Double.valueOf(cutoff);
       usgsIndex = new MMapDirectory(new File(indexloc));
       usgsReader = DirectoryReader.open(usgsIndex);

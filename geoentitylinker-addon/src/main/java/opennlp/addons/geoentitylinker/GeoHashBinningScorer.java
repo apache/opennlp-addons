@@ -40,7 +40,7 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> 
     List<GazateerEntry> allGazEntries = new ArrayList<>();
 
     /**
-     * collect all the lat longs
+     * collect all the gaz entry references
      */
     for (LinkedSpan<BaseLink> ls : linkedSpans) {
       for (BaseLink bl : ls.getLinkedEntries()) {

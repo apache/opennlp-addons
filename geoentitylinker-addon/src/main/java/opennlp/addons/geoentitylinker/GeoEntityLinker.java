@@ -75,11 +75,11 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan, EntityLinkerPro
           if (!countryMentions.keySet().isEmpty()) {
             for (String code : countryMentions.keySet()) {
               if (!code.equals("us")) {
-                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, code));
+                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 3, code));
               }
             }
           } else {
-            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 10, ""));
+            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 3, ""));
 
           }
 
@@ -115,7 +115,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan, EntityLinkerPro
 
   private void loadScorers() {
     if (scorers.isEmpty()) {
-      scorers.add(new FuzzyStringMatchScorer());
+    //  scorers.add(new FuzzyStringMatchScorer());
       scorers.add(new GeoHashBinningScorer());
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());

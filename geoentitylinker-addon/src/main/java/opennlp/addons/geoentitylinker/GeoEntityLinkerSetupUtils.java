@@ -17,11 +17,9 @@ package opennlp.addons.geoentitylinker;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,10 +33,8 @@ import opennlp.tools.doccat.DocumentSampleStream;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
-import static opennlp.addons.geoentitylinker.ModelBasedScorer.RADIUS;
+
 import opennlp.tools.cmdline.MarkableFileInputStreamFactory;
-import opennlp.tools.ml.model.DataIndexer;
-import opennlp.tools.util.InputStreamFactory;
 
 
 /**
@@ -46,7 +42,7 @@ import opennlp.tools.util.InputStreamFactory;
  * Tools for setting up GeoEntityLinker gazateers and doccat scoring model
  */
 public class GeoEntityLinkerSetupUtils {
-
+  private static final int RADIUS = 200;
   public static ModelBasedScorer scorer;
 
   static {
@@ -108,7 +104,7 @@ public class GeoEntityLinkerSetupUtils {
     System.out.println("Building Doccat model...");
     DoccatModel model = null;
 
-    InputStream dataIn = new FileInputStream(annotationOutFile);
+   // InputStream dataIn = new FileInputStream(annotationOutFile);
     try {
 
     
