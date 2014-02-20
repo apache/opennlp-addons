@@ -17,12 +17,8 @@
  * under the License.
  */
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,23 +33,22 @@ import de.bwaldvogel.liblinear.Model;
 import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
-import de.bwaldvogel.liblinear.Train;
 
 public class LiblinearTrainer extends AbstractEventTrainer {
 
-  private final SolverType solverType;
-  private final Double c;
-  private final Double eps;
-  private final Double p;
+  private SolverType solverType;
+  private Double c;
+  private Double eps;
+  private Double p;
   
-  private final int bias;
+  private int bias;
   
-  // TODO: Is is probably better to specifiy an initalizer method
-  // and throw an exception from it, rather than throwing it here ?!
-  public LiblinearTrainer(Map<String, String> trainParams,
+  public LiblinearTrainer() {
+  }
+
+  @Override
+  public void init(Map<String, String> trainParams,
       Map<String, String> reportMap) {
-    super(trainParams, reportMap);
-    
     String solverTypeName = trainParams.get("solverType");
     
     if (solverTypeName != null) {
@@ -103,9 +98,9 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     }
     else {
       throw new IllegalArgumentException("eps must be specified");
-    }
+    }    
   }
-
+  
   private static Problem constructProblem(List<Double> vy, List<Feature[]> vx, int maxIndex, double bias) {
     
     // Initialize problem
@@ -165,7 +160,8 @@ public class LiblinearTrainer extends AbstractEventTrainer {
 
       // for each feature ...
       for (int fi = 0; fi < features.length; fi++) {
-        x[fi] = new FeatureNode(features[fi] + 1, indexer.getNumTimesEventsSeen()[fi]);
+        // TODO: SHOUDL BE indexer.getNumTimesEventsSeen()[i] and not fi !!!
+        x[fi] = new FeatureNode(features[fi] + 1, indexer.getNumTimesEventsSeen()[i]);
       } 
 
       if (features.length > 0) {
