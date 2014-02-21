@@ -17,15 +17,18 @@ package opennlp.addons.geoentitylinker;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
@@ -33,9 +36,6 @@ import opennlp.tools.doccat.DocumentSampleStream;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
-
-import opennlp.tools.cmdline.MarkableFileInputStreamFactory;
-
 
 /**
  *
@@ -104,11 +104,10 @@ public class GeoEntityLinkerSetupUtils {
     System.out.println("Building Doccat model...");
     DoccatModel model = null;
 
-   // InputStream dataIn = new FileInputStream(annotationOutFile);
+    InputStream dataIn = new FileInputStream(annotationOutFile);
     try {
-
     
-      ObjectStream<String> lineStream = new PlainTextByLineStream(new MarkableFileInputStreamFactory(annotationOutFile), "UTF-8");
+      ObjectStream<String> lineStream = new PlainTextByLineStream(dataIn, "UTF-8");
       ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
 
       model = DocumentCategorizerME.train("en", sampleStream);
