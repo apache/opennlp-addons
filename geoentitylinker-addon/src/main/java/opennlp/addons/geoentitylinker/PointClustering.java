@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  *
- * Clusters a list of lat long points using a simple geohashing approach
+ * Clusters a list of lat long points using a simple geohashing/boxing approach
  */
 public class PointClustering {
 
@@ -35,10 +35,10 @@ public class PointClustering {
    * @param precision
    * @return
    */
-  public Map<String, List<GazateerEntry>> cluster(List<GazateerEntry> entries, int precision) {
-    Map<String, List<GazateerEntry>> map = new HashMap<>();
+  public Map<String, List<GazetteerEntry>> cluster(List<GazetteerEntry> entries, int precision) {
+    Map<String, List<GazetteerEntry>> map = new HashMap<>();
     for (int i = 0; i < entries.size(); i++) {
-      GazateerEntry entry = entries.get(i);
+      GazetteerEntry entry = entries.get(i);
       Double latw = entry.getLatitude();
       Double lonw = entry.getLongitude();
 
@@ -47,7 +47,7 @@ public class PointClustering {
       if (map.containsKey(key)) {
         map.get(key).add(entry);
       } else {
-        List<GazateerEntry> newlist = new ArrayList<>();
+        List<GazetteerEntry> newlist = new ArrayList<>();
         newlist.add(entry);
         map.put(key, newlist);
       }
@@ -55,7 +55,7 @@ public class PointClustering {
     return map;
   }
 
-  public void scoreClusters(Map<String, List<GazateerEntry>> clusters) {
+  public void scoreClusters(Map<String, List<GazetteerEntry>> clusters) {
     Double min = 0d;
     Double max = -1d;
     for (String key : clusters.keySet()) {
@@ -67,7 +67,7 @@ public class PointClustering {
     for (String key : clusters.keySet()) {
       int size = clusters.get(key).size();
       Double score = normalize(Double.valueOf(size), min, max);
-      for (GazateerEntry entry : clusters.get(key)) {
+      for (GazetteerEntry entry : clusters.get(key)) {
         entry.getScoreMap().put("geohashbin", score);
       }
     }
@@ -87,8 +87,8 @@ public class PointClustering {
     String geoHash = "";
     lat = lat + 90;
     lon = lon + 180;
-    String latString = String.valueOf(lat);
-    String lonString = String.valueOf(lon);
+    String latString = String.valueOf(lat).replace(".", "");
+    String lonString = String.valueOf(lon).replace(".", "");
     int length = latString.length() > lonString.length() ? lonString.length() : latString.length();
     while (length < 12) {
       latString += "0";

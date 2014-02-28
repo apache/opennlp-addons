@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.domain.BaseLink;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**
@@ -32,27 +32,27 @@ import opennlp.tools.util.Span;
 public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> {
 
   private final PointClustering CLUSTERER = new PointClustering();
-  private int PRECISION = 4;
+  private int PRECISION = 3;
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
      //Map<Double, Double> latLongs = new HashMap<Double, Double>();
-    List<GazateerEntry> allGazEntries = new ArrayList<>();
+    List<GazetteerEntry> allGazEntries = new ArrayList<>();
 
     /**
      * collect all the gaz entry references
      */
     for (LinkedSpan<BaseLink> ls : linkedSpans) {
       for (BaseLink bl : ls.getLinkedEntries()) {
-        if (bl instanceof GazateerEntry) {
-          allGazEntries.add((GazateerEntry) bl);
+        if (bl instanceof GazetteerEntry) {
+          allGazEntries.add((GazetteerEntry) bl);
         }
       }
     }
     /**
      * use the point clustering to score each hit
      */
-    Map<String, List<GazateerEntry>> cluster = CLUSTERER.cluster(allGazEntries, PRECISION);
+    Map<String, List<GazetteerEntry>> cluster = CLUSTERER.cluster(allGazEntries, PRECISION);
     CLUSTERER.scoreClusters(cluster);
 
   }

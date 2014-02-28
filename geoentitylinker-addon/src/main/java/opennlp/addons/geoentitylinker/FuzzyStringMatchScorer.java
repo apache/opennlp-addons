@@ -19,8 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.domain.BaseLink;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.ngram.NGramGenerator;
 import opennlp.tools.util.Span;
 

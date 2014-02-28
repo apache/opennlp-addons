@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import opennlp.tools.entitylinker.domain.BaseLink;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.EntityLinker;
@@ -31,12 +31,12 @@ import opennlp.tools.entitylinker.EntityLinker;
  * indexes. The indexes can be built using the GeoEntityLinkerSetupUtils class
  * in this same package.
  */
-public class GeoEntityLinker implements EntityLinker<LinkedSpan, EntityLinkerProperties> {
+public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   private CountryContext countryContext;
   private Map<String, Set<Integer>> countryMentions;
   private EntityLinkerProperties linkerProperties;
-  private GazateerSearcher gazateerSearcher;
+  private GazetteerSearcher gazateerSearcher;
   private List<LinkedEntityScorer> scorers = new ArrayList<>();
   /**
    * Flag for deciding whether to search gaz only for toponyms within countries
@@ -127,7 +127,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan, EntityLinkerPro
     try {
       this.linkerProperties = properties;
       countryContext = new CountryContext(this.linkerProperties);
-      gazateerSearcher = new GazateerSearcher(this.linkerProperties);
+      gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
       loadScorers();
     } catch (Exception ex) {
       throw new RuntimeException(ex);

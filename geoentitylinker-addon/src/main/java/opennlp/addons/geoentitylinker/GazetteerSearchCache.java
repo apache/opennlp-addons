@@ -23,20 +23,20 @@ import java.util.Map;
  *
  * Caches gazateer query results statically. Clears itself if more than 10000 results are cached.
  */
-public class GazateerSearchCache {
+public class GazetteerSearchCache {
 
-  private static Map<String, ArrayList<GazateerEntry>> gazCache = new HashMap<>();
+  private static Map<String, ArrayList<GazetteerEntry>> gazCache = new HashMap<>();
 
 /**
  * returns the cached entries. Returns null if the query does not exists in the cache
  * @param searchString
  * @return
  */
-  public static synchronized ArrayList<GazateerEntry> get(String searchString) {
+  public static synchronized ArrayList<GazetteerEntry> get(String searchString) {
     return gazCache.get(searchString);
   }
 
-  public static synchronized void put(String searchString, ArrayList<GazateerEntry> hits) {
+  public static synchronized void put(String searchString, ArrayList<GazetteerEntry> hits) {
     if (gazCache.size() > 10000) {
       gazCache.clear();
     }

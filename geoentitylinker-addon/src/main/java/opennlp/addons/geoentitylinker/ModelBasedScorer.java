@@ -24,8 +24,8 @@ import java.util.Map;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.domain.BaseLink;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**

@@ -18,13 +18,13 @@ package opennlp.addons.geoentitylinker;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import opennlp.tools.entitylinker.domain.BaseLink;
+import opennlp.tools.entitylinker.BaseLink;
 
 /**
  *
  * Stores a minimal amount of information from a geographic placenames gazateer
  */
-public class GazateerEntry extends BaseLink {
+public class GazetteerEntry extends BaseLink {
 
   private Double latitude;
   private Double longitude;
@@ -111,11 +111,18 @@ public class GazateerEntry extends BaseLink {
   }
 
   /**
-   * sets the other fields in the gazateer in the form of a map
+   * sets the other fields in the gazeteer in the form of a map
    *
+   * @param indexData stores all fields in the index as fieldname:value
    */
   public void setIndexData(Map<String, String> indexData) {
     this.indexData = indexData;
+  }
+
+  @Override
+  public String toString() {
+
+    return super.toString() + "\n GazateerEntry{\n" + "\tlatitude=" + latitude + ", \n\tlongitude=" + longitude + ", \n\tsource=" + source + ", \n\tindexID=" + indexID + ", \n\tindexData=" + indexData + "\n}";
   }
 
   @Override
@@ -136,7 +143,7 @@ public class GazateerEntry extends BaseLink {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    final GazateerEntry other = (GazateerEntry) obj;
+    final GazetteerEntry other = (GazetteerEntry) obj;
     if (!Objects.equals(this.latitude, other.latitude)) {
       return false;
     }

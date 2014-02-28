@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.domain.BaseLink;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**

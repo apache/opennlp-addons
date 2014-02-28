@@ -58,8 +58,8 @@ public class GeoEntityLinkerSetupUtils {
    *                          format, or USGS format
    * @param type              the type, USGS, or GEONAMES
    */
-  public static void createLuceneIndex(File outputIndexDir, File gazateerInputData, GazateerIndexer.GazType type) {
-    GazateerIndexer indexer = new GazateerIndexer();
+  public static void createLuceneIndex(File outputIndexDir, File gazateerInputData, GazetteerIndexer.GazType type) {
+    GazetteerIndexer indexer = new GazetteerIndexer();
     try {
       indexer.index(outputIndexDir, gazateerInputData, type);
     } catch (Exception ex) {

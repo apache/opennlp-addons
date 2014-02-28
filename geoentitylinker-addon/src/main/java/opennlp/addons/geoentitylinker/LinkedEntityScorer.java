@@ -17,7 +17,7 @@ package opennlp.addons.geoentitylinker;
 
 import java.util.List;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.domain.LinkedSpan;
+import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**

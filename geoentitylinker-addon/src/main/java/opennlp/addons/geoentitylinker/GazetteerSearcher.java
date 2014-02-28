@@ -43,7 +43,7 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
  * GeoEntityLinkerSetupUtils
  *
  */
-public class GazateerSearcher {
+public class GazetteerSearcher {
 
   private double scoreCutoff = .90;
   private Directory geonamesIndex;//= new MMapDirectory(new File(indexloc));
@@ -57,7 +57,7 @@ public class GazateerSearcher {
   private Analyzer usgsAnalyzer;
   private EntityLinkerProperties properties;
 
-  public GazateerSearcher(EntityLinkerProperties properties) throws Exception {
+  public GazetteerSearcher(EntityLinkerProperties properties) throws Exception {
     this.properties = properties;
     init();
   }
@@ -67,12 +67,14 @@ public class GazateerSearcher {
    * @param searchString the named entity to look up in the lucene index
    * @param rowsReturned how many rows to allow lucene to return
    * @param code         the country code
-   * @param properties   the entitylinker.properties file that states where the
-   *                     lucene indexes are
+
    * @return
    */
-  public ArrayList<GazateerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
-    ArrayList<GazateerEntry> linkedData = new ArrayList<>();
+  public ArrayList<GazetteerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
+    ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
+    if(code.toLowerCase().equals("in") && searchString.toLowerCase().equals("india")){
+      System.out.println("india");
+    }
     String luceneQueryString = "";
     try {
       /**
@@ -80,12 +82,12 @@ public class GazateerSearcher {
        * case the code variable will be an empty string
        */
       luceneQueryString = !code.equals("")
-              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase() + "^1000"
+              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:\""+code.toLowerCase()+"\"" //[\"" + code.toLowerCase()+"\" TO \"" + code.toLowerCase() + "\"]"
               : "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim();
       /**
        * check the cache and go no further if the records already exist
        */
-      ArrayList<GazateerEntry> get = GazateerSearchCache.get(luceneQueryString);
+      ArrayList<GazetteerEntry> get = GazetteerSearchCache.get(luceneQueryString);
       if (get != null) {
 
         return get;
@@ -98,7 +100,7 @@ public class GazateerSearcher {
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
 
       for (int i = 0; i < search.scoreDocs.length; ++i) {
-        GazateerEntry entry = new GazateerEntry();
+        GazetteerEntry entry = new GazetteerEntry();
         int docId = search.scoreDocs[i].doc;
         double sc = search.scoreDocs[i].score;
 
@@ -134,6 +136,9 @@ public class GazateerSearcher {
               break;
             case 12:
               entry.setItemParentID(value);
+              if(entry.getItemParentID().equals("in")){
+                System.out.println("");
+              }
               break;
             case 23:
               entry.setItemName(value);
@@ -159,7 +164,7 @@ public class GazateerSearcher {
               /**
                * add the records to the cache for this query
                */
-              GazateerSearchCache.put(luceneQueryString, linkedData);
+              GazetteerSearchCache.put(luceneQueryString, linkedData);
             }
           }
         }
@@ -181,8 +186,8 @@ public class GazateerSearcher {
    * @param properties   properties file that states where the lucene indexes
    * @return
    */
-  public ArrayList<GazateerEntry> usgsFind(String searchString, int rowsReturned) {
-    ArrayList<GazateerEntry> linkedData = new ArrayList<>();
+  public ArrayList<GazetteerEntry> usgsFind(String searchString, int rowsReturned) {
+    ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
     String luceneQueryString = "FEATURE_NAME:" + searchString.toLowerCase().trim() + " OR MAP_NAME: " + searchString.toLowerCase().trim();
     try {
 
@@ -190,7 +195,7 @@ public class GazateerSearcher {
       /**
        * hit the cache
        */
-      ArrayList<GazateerEntry> get = GazateerSearchCache.get(luceneQueryString);
+      ArrayList<GazetteerEntry> get = GazetteerSearchCache.get(luceneQueryString);
       if (get != null) {
         //if the name is already there, return the list of cavhed results
         return get;
@@ -200,7 +205,7 @@ public class GazateerSearcher {
 
       TopDocs search = usgsSearcher.search(q, rowsReturned);
       for (int i = 0; i < search.scoreDocs.length; i++) {
-        GazateerEntry entry = new GazateerEntry();
+        GazetteerEntry entry = new GazetteerEntry();
         int docId = search.scoreDocs[i].doc;
         double sc = search.scoreDocs[i].score;
         //keep track of the min score for normalization
@@ -250,7 +255,7 @@ public class GazateerSearcher {
             /**
              * add the records to the cache for this query
              */
-            GazateerSearchCache.put(luceneQueryString, linkedData);
+            GazetteerSearchCache.put(luceneQueryString, linkedData);
           }
         }
 

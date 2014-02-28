@@ -19,18 +19,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.ar.ArabicAnalyzer;
-import org.apache.lucene.analysis.fa.PersianAnalyzer;
-import org.apache.lucene.analysis.ru.RussianAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.th.ThaiAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -42,12 +37,16 @@ import org.apache.lucene.util.Version;
  *
  * Creates two lucene indexes, geonames and usgs for use in GeoEntityLinker
  */
-public class GazateerIndexer {
+public class GazetteerIndexer {
 
-  public GazateerIndexer() {
-    loadAnalyzerMap();
+  public GazetteerIndexer() {
+    // loadAnalyzerMap();
   }
-  Map<String, Analyzer> languageAnalyzerMap = new HashMap<>();
+
+  /**
+   * build this into a future release, causing problems at query time
+   */
+  // Map<String, Analyzer> languageAnalyzerMap = new HashMap<>();
 
   public static interface Separable {
 
@@ -57,35 +56,40 @@ public class GazateerIndexer {
   public enum GazType implements Separable {
 
     GEONAMES {
-      @Override
-      public String toString() {
-        return "/opennlp_geoentitylinker_geonames_idx";
-      }
+              @Override
+              public String toString() {
+                return "/opennlp_geoentitylinker_geonames_idx";
+              }
 
-      @Override
-      public String getSeparator() {
-        return "\t";
-      }
-    },
+              @Override
+              public String getSeparator() {
+                return "\t";
+              }
+            },
     USGS {
-      @Override
-      public String toString() {
-        return "/opennlp_geoentitylinker_usgsgaz_idx";
-      }
+              @Override
+              public String toString() {
+                return "/opennlp_geoentitylinker_usgsgaz_idx";
+              }
 
-      @Override
-      public String getSeparator() {
-        return "\\|";
-      }
-    }
+              @Override
+              public String getSeparator() {
+                return "\\|";
+              }
+            }
   }
-/**
- * indexes the USGS or Geonames gazateers.
- * @param outputIndexDir a DIRECTORY path where you would like to store the output lucene indexes
- * @param gazateerInputData the file, "as is" that was downloaded from the USGS and GEONAMES website
- * @param type indicates whether the data is USGS or GEONAMES format
- * @throws Exception
- */
+
+  /**
+   * indexes the USGS or Geonames gazateers.
+   *
+   * @param outputIndexDir    a DIRECTORY path where you would like to store the
+   *                          output lucene indexes
+   * @param gazateerInputData the file, "as is" that was downloaded from the
+   *                          USGS and GEONAMES website
+   * @param type              indicates whether the data is USGS or GEONAMES
+   *                          format
+   * @throws Exception
+   */
   public void index(File outputIndexDir, File gazateerInputData, GazType type) throws Exception {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
@@ -109,7 +113,7 @@ public class GazateerIndexer {
     BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData));
     List<String> fields = new ArrayList<String>();
     int counter = 0;
-    int langCodeIndex = 0;
+    // int langCodeIndex = 0;
     System.out.println("reading gazateer data from file...........");
     while (reader.read() != -1) {
       String line = reader.readLine();
@@ -119,36 +123,19 @@ public class GazateerIndexer {
         for (int i = 0; i < values.length; i++) {
           String columnName = values[i];
           fields.add(columnName.replace("»¿", "").trim());
-          if (columnName.toLowerCase().equals("lc")) {
-            langCodeIndex = i;
-          }
+         
         }
-
 
       } else {
         Document doc = new Document();
         for (int i = 0; i < fields.size() - 1; i++) {
+
           doc.add(new TextField(fields.get(i), values[i], Field.Store.YES));
+
         }
-        if (type == GazType.GEONAMES) {
-          /**
-           * see if the map contains a language specific analyzer
-           */
-          if (languageAnalyzerMap.containsKey(values[langCodeIndex])) {
-            /*
-             * if so retrieve it from the map
-             */
-            Analyzer analyzer = languageAnalyzerMap.get(values[langCodeIndex]);
-            /**
-             * index the doc using the specified analyzer
-             */
-            w.addDocument(doc, analyzer);
-          } else {
-            w.addDocument(doc);
-          }
-        } else {
+      
           w.addDocument(doc);
-        }
+        
       }
       counter++;
       if (counter % 10000 == 0) {
@@ -160,14 +147,15 @@ public class GazateerIndexer {
     w.commit();
     System.out.println("Completed indexing gaz! index name is: " + type.toString());
   }
-/**
- * TODO: make these analyzers configurable
- */
-  private void loadAnalyzerMap() {
-    languageAnalyzerMap.put("ara", new ArabicAnalyzer(Version.LUCENE_45));
-    languageAnalyzerMap.put("tha", new ThaiAnalyzer(Version.LUCENE_45));
-    languageAnalyzerMap.put("rus", new RussianAnalyzer(Version.LUCENE_45));
-    languageAnalyzerMap.put("fas", new PersianAnalyzer(Version.LUCENE_45));
- 
-  }
+
+  /**
+   * TODO: make these analyzers configurable
+   */
+//  private void loadAnalyzerMap() {
+////    languageAnalyzerMap.put("ara", new ArabicAnalyzer(Version.LUCENE_45));
+////    languageAnalyzerMap.put("tha", new ThaiAnalyzer(Version.LUCENE_45));
+////    languageAnalyzerMap.put("rus", new RussianAnalyzer(Version.LUCENE_45));
+////    languageAnalyzerMap.put("fas", new PersianAnalyzer(Version.LUCENE_45));
+//
+//  }
 }
