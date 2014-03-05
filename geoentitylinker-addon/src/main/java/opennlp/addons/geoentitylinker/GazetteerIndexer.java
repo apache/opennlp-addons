@@ -40,13 +40,9 @@ import org.apache.lucene.util.Version;
 public class GazetteerIndexer {
 
   public GazetteerIndexer() {
-    // loadAnalyzerMap();
+
   }
 
-  /**
-   * build this into a future release, causing problems at query time
-   */
-  // Map<String, Analyzer> languageAnalyzerMap = new HashMap<>();
 
   public static interface Separable {
 
@@ -82,15 +78,15 @@ public class GazetteerIndexer {
   /**
    * indexes the USGS or Geonames gazateers.
    *
-   * @param outputIndexDir    a DIRECTORY path where you would like to store the
-   *                          output lucene indexes
-   * @param gazateerInputData the file, "as is" that was downloaded from the
-   *                          USGS and GEONAMES website
-   * @param type              indicates whether the data is USGS or GEONAMES
-   *                          format
+   * @param outputIndexDir     a DIRECTORY path where you would like to store
+   *                           the output lucene indexes
+   * @param gazetteerInputData the file, "as is" that was downloaded from the
+   *                           USGS and GEONAMES website
+   * @param type               indicates whether the data is USGS or GEONAMES
+   *                           format
    * @throws Exception
    */
-  public void index(File outputIndexDir, File gazateerInputData, GazType type) throws Exception {
+  public void index(File outputIndexDir, File gazetteerInputData, GazType type) throws Exception {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
     }
@@ -103,7 +99,7 @@ public class GazetteerIndexer {
 
     IndexWriter w = new IndexWriter(index, config);
 
-    readFile(gazateerInputData, w, type);
+    readFile(gazetteerInputData, w, type);
     w.commit();
     w.close();
 
@@ -114,31 +110,24 @@ public class GazetteerIndexer {
     List<String> fields = new ArrayList<String>();
     int counter = 0;
     // int langCodeIndex = 0;
-    System.out.println("reading gazateer data from file...........");
+    System.out.println("reading gazetteer data from file...........");
     while (reader.read() != -1) {
       String line = reader.readLine();
       String[] values = line.split(type.getSeparator());
       if (counter == 0) {
-        // build fields
-        for (int i = 0; i < values.length; i++) {
-          String columnName = values[i];
+        for (String columnName : values) {
           fields.add(columnName.replace("»¿", "").trim());
-         
         }
 
       } else {
         Document doc = new Document();
-        for (int i = 0; i < fields.size() - 1; i++) {
-
-          doc.add(new TextField(fields.get(i), values[i], Field.Store.YES));
-
-        }
-      
-          w.addDocument(doc);
-        
+        for (int i = 0; i < fields.size() - 1; i++) {         
+          doc.add(new TextField(fields.get(i), values[i].trim(), Field.Store.YES));
+        }     
+        w.addDocument(doc);
       }
       counter++;
-      if (counter % 10000 == 0) {
+      if (counter % 100000 == 0) {
         w.commit();
         System.out.println(counter + " .........committed to index..............");
       }

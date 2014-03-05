@@ -42,7 +42,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
    * Flag for deciding whether to search gaz only for toponyms within countries
    * that are mentioned in the document
    */
-  private Boolean filterCountryContext = true;
+ // private Boolean filterCountryContext = true;
 
   public GeoEntityLinker() throws Exception {
   }

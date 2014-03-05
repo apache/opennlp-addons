@@ -38,7 +38,7 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 
 /**
  *
- * Searches Gazateers stored in a MMapDirectory Lucene index. The structure of
+ * Searches Gazetteers stored in a MMapDirectory Lucene index. The structure of
  * these indices are based on loading the indexes using the
  * GeoEntityLinkerSetupUtils
  *
@@ -67,12 +67,13 @@ public class GazetteerSearcher {
    * @param searchString the named entity to look up in the lucene index
    * @param rowsReturned how many rows to allow lucene to return
    * @param code         the country code
-
+   *
    * @return
    */
   public ArrayList<GazetteerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
-    if(code.toLowerCase().equals("in") && searchString.toLowerCase().equals("india")){
+    if (code.toLowerCase().equals("in") && searchString.toLowerCase().equals("india")) {
+      rowsReturned=100;
       System.out.println("india");
     }
     String luceneQueryString = "";
@@ -82,7 +83,7 @@ public class GazetteerSearcher {
        * case the code variable will be an empty string
        */
       luceneQueryString = !code.equals("")
-              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:\""+code.toLowerCase()+"\"" //[\"" + code.toLowerCase()+"\" TO \"" + code.toLowerCase() + "\"]"
+              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase()+"^90000" //[\"" + code.toLowerCase()+"\" TO \"" + code.toLowerCase() + "\"]"
               : "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim();
       /**
        * check the cache and go no further if the records already exist
@@ -93,9 +94,9 @@ public class GazetteerSearcher {
         return get;
       }
 
-
       QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, geonamesAnalyzer);
       Query q = parser.parse(luceneQueryString);
+
 
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
 
@@ -105,8 +106,6 @@ public class GazetteerSearcher {
         double sc = search.scoreDocs[i].score;
 
         entry.getScoreMap().put("lucene", sc);
-
-
         entry.setIndexID(docId + "");
         entry.setSource("geonames");
 
@@ -136,8 +135,8 @@ public class GazetteerSearcher {
               break;
             case 12:
               entry.setItemParentID(value);
-              if(entry.getItemParentID().equals("in")){
-                System.out.println("");
+              if(!value.toLowerCase().equals(code.toLowerCase())){
+                continue;
               }
               break;
             case 23:
@@ -190,7 +189,6 @@ public class GazetteerSearcher {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
     String luceneQueryString = "FEATURE_NAME:" + searchString.toLowerCase().trim() + " OR MAP_NAME: " + searchString.toLowerCase().trim();
     try {
-
 
       /**
        * hit the cache

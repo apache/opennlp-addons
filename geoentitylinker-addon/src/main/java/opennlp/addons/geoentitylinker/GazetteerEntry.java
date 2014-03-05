@@ -122,7 +122,7 @@ public class GazetteerEntry extends BaseLink {
   @Override
   public String toString() {
 
-    return super.toString() + "\n GazateerEntry{\n" + "\tlatitude=" + latitude + ", \n\tlongitude=" + longitude + ", \n\tsource=" + source + ", \n\tindexID=" + indexID + ", \n\tindexData=" + indexData + "\n}";
+    return super.toString() + "\n\t\tGazateerEntry\n" + "\t\tlatitude=" + latitude + ", \n\t\tlongitude=" + longitude + ", \n\t\tsource=" + source + ", \n\t\tindexID=" + indexID + ",\n\t\tindexData=" + indexData + "\n";
   }
 
   @Override
