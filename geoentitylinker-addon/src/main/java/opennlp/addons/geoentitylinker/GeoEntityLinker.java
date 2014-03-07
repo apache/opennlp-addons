@@ -38,14 +38,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   private EntityLinkerProperties linkerProperties;
   private GazetteerSearcher gazateerSearcher;
   private List<LinkedEntityScorer> scorers = new ArrayList<>();
-  /**
-   * Flag for deciding whether to search gaz only for toponyms within countries
-   * that are mentioned in the document
-   */
- // private Boolean filterCountryContext = true;
 
-  public GeoEntityLinker() throws Exception {
-  }
 
   @Override
   public List<LinkedSpan> find(String doctext, Span[] sentences, String[][] tokensBySentence, Span[][] namesBySentence) {
@@ -68,18 +61,18 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
          * US is the only country mentioned in the doc
          *
          */
-        ArrayList<BaseLink> geoNamesEntries = new ArrayList<BaseLink>();
+        ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
         if (!(countryMentions.keySet().contains("us") && countryMentions.keySet().size() == 1)
                 || countryMentions.keySet().size() > 1 || countryMentions.keySet().isEmpty()) {
         
           if (!countryMentions.keySet().isEmpty()) {
             for (String code : countryMentions.keySet()) {
               if (!code.equals("us")) {
-                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 3, code));
+                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 5, code));
               }
             }
           } else {
-            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 3, ""));
+            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 5, ""));
 
           }
 
@@ -115,7 +108,6 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   private void loadScorers() {
     if (scorers.isEmpty()) {
-    //  scorers.add(new FuzzyStringMatchScorer());
       scorers.add(new GeoHashBinningScorer());
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());

@@ -35,6 +35,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.util.Version;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
+import org.apache.lucene.analysis.util.CharArraySet;
 
 /**
  *
@@ -72,18 +73,14 @@ public class GazetteerSearcher {
    */
   public ArrayList<GazetteerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
-    if (code.toLowerCase().equals("in") && searchString.toLowerCase().equals("india")) {
-      rowsReturned=100;
-      System.out.println("india");
-    }
-    String luceneQueryString = "";
+
     try {
       /**
        * build the search string Sometimes no country context is found. In this
        * case the code variable will be an empty string
        */
-      luceneQueryString = !code.equals("")
-              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase()+"^90000" //[\"" + code.toLowerCase()+"\" TO \"" + code.toLowerCase() + "\"]"
+      String luceneQueryString = !code.equals("")
+              ? "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim() + " AND CC1:" + code.toLowerCase()//+"^90000" //[\"" + code.toLowerCase()+"\" TO \"" + code.toLowerCase() + "\"]"
               : "FULL_NAME_ND_RO:" + searchString.toLowerCase().trim();
       /**
        * check the cache and go no further if the records already exist
@@ -96,7 +93,6 @@ public class GazetteerSearcher {
 
       QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, geonamesAnalyzer);
       Query q = parser.parse(luceneQueryString);
-
 
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
 
@@ -135,7 +131,7 @@ public class GazetteerSearcher {
               break;
             case 12:
               entry.setItemParentID(value);
-              if(!value.toLowerCase().equals(code.toLowerCase())){
+              if (!value.toLowerCase().equals(code.toLowerCase())) {
                 continue;
               }
               break;
@@ -153,8 +149,6 @@ public class GazetteerSearcher {
          * only want hits above the levenstein thresh
          */
         if (normLev.compareTo(scoreCutoff) >= 0) {
-          //only keep it if the country code is a match. even when the code is passed in as a weighted condition, there is no == equiv in lucene
-
           if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
             entry.getScoreMap().put("normlucene", normLev);
             //make sure we don't produce a duplicate
@@ -182,7 +176,6 @@ public class GazetteerSearcher {
    * @param searchString the nameed entity to look up in the lucene index
    * @param rowsReturned how many rows to allow lucene to return
    *
-   * @param properties   properties file that states where the lucene indexes
    * @return
    */
   public ArrayList<GazetteerEntry> usgsFind(String searchString, int rowsReturned) {
@@ -278,7 +271,7 @@ public class GazetteerSearcher {
       usgsIndex = new MMapDirectory(new File(indexloc));
       usgsReader = DirectoryReader.open(usgsIndex);
       usgsSearcher = new IndexSearcher(usgsReader);
-      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
     }
     if (geonamesIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
@@ -292,7 +285,7 @@ public class GazetteerSearcher {
       geonamesReader = DirectoryReader.open(geonamesIndex);
       geonamesSearcher = new IndexSearcher(geonamesReader);
       //TODO: a language code switch statement should be employed here at some point
-      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
 
     }
   }

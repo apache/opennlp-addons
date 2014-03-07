@@ -23,9 +23,9 @@ import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -94,7 +94,7 @@ public class GazetteerIndexer {
     String indexloc = outputIndexDir + type.toString();
     Directory index = new MMapDirectory(new File(indexloc));
 
-    Analyzer a = new StandardAnalyzer(Version.LUCENE_45);
+    Analyzer a = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
     IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_45, a);
 
     IndexWriter w = new IndexWriter(index, config);
@@ -107,9 +107,8 @@ public class GazetteerIndexer {
 
   public void readFile(File gazateerInputData, IndexWriter w, GazType type) throws Exception {
     BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData));
-    List<String> fields = new ArrayList<String>();
+    List<String> fields = new ArrayList<>();
     int counter = 0;
-    // int langCodeIndex = 0;
     System.out.println("reading gazetteer data from file...........");
     while (reader.read() != -1) {
       String line = reader.readLine();
@@ -137,14 +136,4 @@ public class GazetteerIndexer {
     System.out.println("Completed indexing gaz! index name is: " + type.toString());
   }
 
-  /**
-   * TODO: make these analyzers configurable
-   */
-//  private void loadAnalyzerMap() {
-////    languageAnalyzerMap.put("ara", new ArabicAnalyzer(Version.LUCENE_45));
-////    languageAnalyzerMap.put("tha", new ThaiAnalyzer(Version.LUCENE_45));
-////    languageAnalyzerMap.put("rus", new RussianAnalyzer(Version.LUCENE_45));
-////    languageAnalyzerMap.put("fas", new PersianAnalyzer(Version.LUCENE_45));
-//
-//  }
 }
