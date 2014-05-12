@@ -39,7 +39,6 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   private GazetteerSearcher gazateerSearcher;
   private List<LinkedEntityScorer> scorers = new ArrayList<>();
 
-
   @Override
   public List<LinkedSpan> find(String doctext, Span[] sentences, String[][] tokensBySentence, Span[][] namesBySentence) {
     ArrayList<LinkedSpan> spans = new ArrayList<LinkedSpan>();
@@ -64,7 +63,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
         if (!(countryMentions.keySet().contains("us") && countryMentions.keySet().size() == 1)
                 || countryMentions.keySet().size() > 1 || countryMentions.keySet().isEmpty()) {
-        
+
           if (!countryMentions.keySet().isEmpty()) {
             for (String code : countryMentions.keySet()) {
               if (!code.equals("us")) {
@@ -82,7 +81,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
           //usgsEntries = usgsGaz.find(matches[i], names[i], linkerProperties);
           usgsEntries.addAll(gazateerSearcher.usgsFind(matches[i], 3));
         }
-        LinkedSpan<BaseLink> geoSpan = new LinkedSpan<>(geoNamesEntries, names[i].getStart(), names[i].getEnd());
+        LinkedSpan<BaseLink> geoSpan = new LinkedSpan<>(geoNamesEntries, names[i].getStart(), names[i].getEnd(), "location",names[i].getProb());
+    
 
         if (!usgsEntries.isEmpty()) {
           geoSpan.getLinkedEntries().addAll(usgsEntries);

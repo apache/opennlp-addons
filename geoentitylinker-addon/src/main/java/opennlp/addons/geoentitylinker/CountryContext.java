@@ -25,11 +25,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
+import org.apache.log4j.Logger;
 
 /**
  * Finds instances of country mentions in a String, typically a document text.
@@ -38,22 +38,23 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
  */
 public class CountryContext {
 
+  private static final Logger LOGGER = Logger.getLogger(CountryContext.class);
   private List<CountryContextEntry> countrydata;
   private Map<String, Set<String>> nameCodesMap = new HashMap<>();
   private Map<String, Set<Integer>> countryMentions = new HashMap<>();
   private Set<CountryContextEntry> countryHits = new HashSet<>();
   private EntityLinkerProperties properties;
-
+  
   public CountryContext(EntityLinkerProperties properties) throws Exception {
     this.properties = properties;
     if (countrydata == null) {
       String path = this.properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
-
+      
       File countryContextFile = new File(path);
       countrydata = getCountryContextFromFile(countryContextFile);
     }
   }
-
+  
   public Map<String, Set<Integer>> getCountryMentions() {
     return countryMentions;
   }
@@ -75,7 +76,7 @@ public class CountryContext {
   public Map<String, Set<String>> getNameCodesMap() {
     return nameCodesMap;
   }
-
+  
   public void setNameCodesMap(Map<String, Set<String>> nameCodesMap) {
     this.nameCodesMap = nameCodesMap;
   }
@@ -90,7 +91,7 @@ public class CountryContext {
    * Finding mentions in documents is very helpful for scoring. Lazily loads the
    * list from the file.
    *
-   * @param docText    the full text of the document
+   * @param docText the full text of the document
    * @param properties EntityLinkerProperties for getting database connection
    * @return
    */
@@ -98,13 +99,12 @@ public class CountryContext {
     countryMentions = new HashMap<>();
     nameCodesMap.clear();
     try {
-
-
+      
       for (CountryContextEntry entry : countrydata) {
         Pattern regex = Pattern.compile(entry.getFull_name_nd_ro().trim(), Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher rs = regex.matcher(docText);
         String code = entry.getCc1().toLowerCase();
-
+        
         boolean found = false;
         while (rs.find()) {
           found = true;
@@ -130,27 +130,26 @@ public class CountryContext {
         if (found) {
           countryHits.add(entry);
         }
-
+        
       }
-
+      
     } catch (Exception ex) {
-      Logger.getLogger(CountryContext.class.getName()).log(Level.SEVERE, null, ex);
+      LOGGER.error(ex);
     }
-
-
+    
     return countryMentions;
   }
-
+  
   private List<CountryContextEntry> getCountryContextFromFile(File countryContextFile) {
     List<CountryContextEntry> entries = new ArrayList<>();
     String path = countryContextFile.getPath();
     BufferedReader reader;
-
+    
     try {
       path = properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
-
+      
       reader = new BufferedReader(new FileReader(path));
-
+      
       while (reader.read() != -1) {
         String line = reader.readLine();
         String[] values = line.split("\t");
@@ -166,10 +165,10 @@ public class CountryContext {
         entries.add(entry);
       }
       reader.close();
-    } catch (IOException e) {
-      System.err.println(e);
+    } catch (IOException ex) {
+      LOGGER.error(ex);
     }
     return entries;
-
+    
   }
 }

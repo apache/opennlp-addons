@@ -35,6 +35,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.util.Version;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
+import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.util.CharArraySet;
 
 /**
@@ -46,6 +47,8 @@ import org.apache.lucene.analysis.util.CharArraySet;
  */
 public class GazetteerSearcher {
 
+  private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
+  private static final Logger LOGGER = Logger.getLogger(GazetteerSearcher.class);
   private double scoreCutoff = .90;
   private Directory geonamesIndex;//= new MMapDirectory(new File(indexloc));
   private IndexReader geonamesReader;// = DirectoryReader.open(geonamesIndex);
@@ -67,13 +70,16 @@ public class GazetteerSearcher {
    *
    * @param searchString the named entity to look up in the lucene index
    * @param rowsReturned how many rows to allow lucene to return
-   * @param code         the country code
+   * @param code the country code
    *
    * @return
    */
   public ArrayList<GazetteerEntry> geonamesFind(String searchString, int rowsReturned, String code) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
-
+    searchString = cleanInput(searchString);
+    if (searchString.isEmpty()) {
+      return linkedData;
+    }
     try {
       /**
        * build the search string Sometimes no country context is found. In this
@@ -91,7 +97,7 @@ public class GazetteerSearcher {
         return get;
       }
 
-      QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, geonamesAnalyzer);
+      QueryParser parser = new QueryParser(Version.LUCENE_48, luceneQueryString, geonamesAnalyzer);
       Query q = parser.parse(luceneQueryString);
 
       TopDocs search = geonamesSearcher.search(q, rowsReturned);
@@ -164,7 +170,7 @@ public class GazetteerSearcher {
       }
 
     } catch (IOException | ParseException ex) {
-      System.err.println(ex);
+      LOGGER.error(ex);
     }
 
     return linkedData;
@@ -180,6 +186,10 @@ public class GazetteerSearcher {
    */
   public ArrayList<GazetteerEntry> usgsFind(String searchString, int rowsReturned) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
+     searchString = cleanInput(searchString);
+    if (searchString.isEmpty()) {
+      return linkedData;
+    }
     String luceneQueryString = "FEATURE_NAME:" + searchString.toLowerCase().trim() + " OR MAP_NAME: " + searchString.toLowerCase().trim();
     try {
 
@@ -191,7 +201,7 @@ public class GazetteerSearcher {
         //if the name is already there, return the list of cavhed results
         return get;
       }
-      QueryParser parser = new QueryParser(Version.LUCENE_45, luceneQueryString, usgsAnalyzer);
+      QueryParser parser = new QueryParser(Version.LUCENE_48, luceneQueryString, usgsAnalyzer);
       Query q = parser.parse(luceneQueryString);
 
       TopDocs search = usgsSearcher.search(q, rowsReturned);
@@ -253,30 +263,34 @@ public class GazetteerSearcher {
       }
 
     } catch (IOException | ParseException ex) {
-      System.err.println(ex);
+      LOGGER.error(ex);
     }
 
     return linkedData;
+  }
+
+  private String cleanInput(String input) {
+    return input.replaceAll(REGEX_CLEAN, "").trim();
   }
 
   private void init() throws Exception {
     if (usgsIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.usgs", "");
       if (indexloc.equals("")) {
-        System.out.println("USGS Gaz location not found");
-
+        // System.out.println("USGS Gaz location not found");
+        LOGGER.error(new Exception("USGS Gaz location not found"));
       }
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       scoreCutoff = Double.valueOf(cutoff);
       usgsIndex = new MMapDirectory(new File(indexloc));
       usgsReader = DirectoryReader.open(usgsIndex);
       usgsSearcher = new IndexSearcher(usgsReader);
-      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
+      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
     }
     if (geonamesIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
       if (indexloc.equals("")) {
-        System.out.println("Geonames Gaz location not found");
+        LOGGER.error(new Exception("Geonames Gaz location not found"));
 
       }
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
@@ -285,7 +299,7 @@ public class GazetteerSearcher {
       geonamesReader = DirectoryReader.open(geonamesIndex);
       geonamesSearcher = new IndexSearcher(geonamesReader);
       //TODO: a language code switch statement should be employed here at some point
-      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
+      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
 
     }
   }

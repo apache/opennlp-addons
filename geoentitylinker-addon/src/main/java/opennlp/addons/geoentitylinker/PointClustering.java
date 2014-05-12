@@ -15,6 +15,9 @@
  */
 package opennlp.addons.geoentitylinker;
 
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.io.GeohashUtils;
+import com.spatial4j.core.shape.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +45,7 @@ public class PointClustering {
       Double latw = entry.getLatitude();
       Double lonw = entry.getLongitude();
 
-
-      String key = simpleGeohash(latw, lonw).substring(0, precision);
+      String key = geoHash(latw, lonw).substring(0, precision);
       if (map.containsKey(key)) {
         map.get(key).add(entry);
       } else {
@@ -72,7 +74,44 @@ public class PointClustering {
       }
     }
 
+  }
 
+  /**
+   * Returns a geohash based on Lucene Spatial
+   *
+   * @param lat the input latitude Y
+   * @param lon the input longitude X
+   * @return
+   */
+  public String geoHash(Double lat, Double lon) {
+    String encodeLatLon = GeohashUtils.encodeLatLon(lat, lon);
+    return encodeLatLon;
+  }
+
+  /**
+   * Returns the X and Y point for the geohash. Element 0 is the X (longitude)
+   * element 1 is the Y (latitude)
+   *
+   * @param geohash
+   * @return
+   */
+  public double[] geoHashToPoint(String geohash) {
+    Point decode = GeohashUtils.decode(geohash, SpatialContext.GEO);
+    double[] coords = new double[]{decode.getX(), decode.getY()};
+    return coords;
+  }
+
+  /**
+   * Returns the X and Y point for the geohash. Element 0 is the X (longitude)
+   * element 1 is the Y (latitude)
+   *
+   * @param geohash
+   * @return
+   */
+  public String geoHashToPointStr(String geohash) {
+    Point decode = GeohashUtils.decode(geohash, SpatialContext.GEO);
+    String point = decode.getX() + "," + decode.getY();
+    return point;
   }
 
   /**

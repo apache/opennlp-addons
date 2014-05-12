@@ -27,6 +27,7 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -34,6 +35,7 @@ import opennlp.tools.util.Span;
  */
 public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
 
+  private static final Logger LOGGER = Logger.getLogger(ModelBasedScorer.class);
   DocumentCategorizerME documentCategorizerME;
   DoccatModel doccatModel;
   public static final int RADIUS = 200;
@@ -45,12 +47,9 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
       if (doccatModel == null) {
         String path = properties.getProperty("opennlp.geoentitylinker.modelbasedscorer.modelpath", "");
         if (path.equals("")) {
-          if (!modelexists) {
-            System.err.println(this.getClass().getSimpleName() + ": could not find property \"opennlp.geoentitylinker.modelbasedscorer.modelpath\" : no ModelBasedScoring will be performed");
-          }
-          modelexists = true;
           return;
         }
+        modelexists = true;
         doccatModel = new DoccatModel(new File(path));
         documentCategorizerME = new DocumentCategorizerME(doccatModel);
       }
@@ -67,11 +66,11 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
       }
 
     } catch (FileNotFoundException ex) {
-      System.err.println(this.getClass().getSimpleName() + ": could not find modelpath using EntityLinkerProperties. Property should be \"opennlp.geoentitylinker.modelbasedscorer.modelpath\"");
+      LOGGER.error(ex);
     } catch (IOException ex) {
-      System.err.println(ex);
+      LOGGER.error(ex);
     } catch (Exception ex) {
-      System.err.println(ex);
+      LOGGER.error(ex);
     }
   }
 
@@ -80,11 +79,11 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
    * radius of a mention within the doctext
    *
    * @param linkedSpans
+   * @param sentenceSpans
    * @param docText
-   * @param additionalContext
    * @param radius
    * @return a map of the index of the linked span to the string of surrounding
-   *         text: Map<indexofspan,surrounding text>
+   * text: Map<indexofspan,surrounding text>
    */
   public Map<Integer, String> generateProximalFeatures(List<LinkedSpan> linkedSpans, Span[] sentenceSpans, String docText, int radius) {
     Map<Integer, String> featureBags = new HashMap<>();
@@ -114,7 +113,6 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
     for (Map.Entry<Integer, Integer> entry : nameMentionMap.entrySet()) {
       featureBags.put(entry.getKey(), getTextChunk(entry.getValue(), docText, radius));
     }
-
 
     return featureBags;
   }

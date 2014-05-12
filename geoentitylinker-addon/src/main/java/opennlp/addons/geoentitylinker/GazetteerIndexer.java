@@ -94,8 +94,8 @@ public class GazetteerIndexer {
     String indexloc = outputIndexDir + type.toString();
     Directory index = new MMapDirectory(new File(indexloc));
 
-    Analyzer a = new StandardAnalyzer(Version.LUCENE_45, new CharArraySet(Version.LUCENE_45, new ArrayList(), true));
-    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_45, a);
+    Analyzer a = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, a);
 
     IndexWriter w = new IndexWriter(index, config);
 
