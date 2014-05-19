@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -49,7 +50,8 @@ public class GazetteerSearcher {
 
   private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
   private static final Logger LOGGER = Logger.getLogger(GazetteerSearcher.class);
-  private double scoreCutoff = .90;
+  private double scoreCutoff = .70;
+  private boolean doubleQuoteAllSearchTerms = false;
   private Directory geonamesIndex;//= new MMapDirectory(new File(indexloc));
   private IndexReader geonamesReader;// = DirectoryReader.open(geonamesIndex);
   private IndexSearcher geonamesSearcher;// = new IndexSearcher(geonamesReader);
@@ -61,7 +63,17 @@ public class GazetteerSearcher {
   private Analyzer usgsAnalyzer;
   private EntityLinkerProperties properties;
 
+  public static void main(String[] args) {
+    try {
+      boolean b = Boolean.valueOf("true");
 
+      new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties"))).geonamesFind("townsville, queensland", 5, "");
+    } catch (IOException ex) {
+      java.util.logging.Logger.getLogger(GazetteerSearcher.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (Exception ex) {
+      java.util.logging.Logger.getLogger(GazetteerSearcher.class.getName()).log(Level.SEVERE, null, ex);
+    }
+  }
 
   public GazetteerSearcher(EntityLinkerProperties properties) throws Exception {
     this.properties = properties;
@@ -272,14 +284,19 @@ public class GazetteerSearcher {
   }
 
   /**
-   * Replaces any noise chars with 
+   * Replaces any noise chars with a space, and depending on configuration adds double quotes to the string
+   *
    * @param input
-   * @return 
+   * @return
    */
   private String cleanInput(String input) {
     String output = input.replaceAll(REGEX_CLEAN, " ").trim();
-    System.out.println(output);
-    return "\"" + output + "\"";
+    if (doubleQuoteAllSearchTerms) {
+      return "\"" + output + "\"";
+    } else {
+      return output;
+    }
+
   }
 
   private void init() throws Exception {
@@ -290,7 +307,10 @@ public class GazetteerSearcher {
         LOGGER.error(new Exception("USGS Gaz location not found"));
       }
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
+
       scoreCutoff = Double.valueOf(cutoff);
+      String doubleQuote = properties.getProperty("opennlp.geoentitylinker.gaz.doublequote", String.valueOf(doubleQuoteAllSearchTerms));
+      doubleQuoteAllSearchTerms = Boolean.valueOf(doubleQuote);
       usgsIndex = new MMapDirectory(new File(indexloc));
       usgsReader = DirectoryReader.open(usgsIndex);
       usgsSearcher = new IndexSearcher(usgsReader);
