@@ -61,6 +61,8 @@ public class GazetteerSearcher {
   private Analyzer usgsAnalyzer;
   private EntityLinkerProperties properties;
 
+
+
   public GazetteerSearcher(EntityLinkerProperties properties) throws Exception {
     this.properties = properties;
     init();
@@ -155,7 +157,7 @@ public class GazetteerSearcher {
          * only want hits above the levenstein thresh
          */
         if (normLev.compareTo(scoreCutoff) >= 0) {
-          if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase())) {
+          if (entry.getItemParentID().toLowerCase().equals(code.toLowerCase()) || code.toLowerCase().equals("")) {
             entry.getScoreMap().put("normlucene", normLev);
             //make sure we don't produce a duplicate
             if (!linkedData.contains(entry)) {
@@ -186,7 +188,7 @@ public class GazetteerSearcher {
    */
   public ArrayList<GazetteerEntry> usgsFind(String searchString, int rowsReturned) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
-     searchString = cleanInput(searchString);
+    searchString = cleanInput(searchString);
     if (searchString.isEmpty()) {
       return linkedData;
     }
@@ -269,8 +271,15 @@ public class GazetteerSearcher {
     return linkedData;
   }
 
+  /**
+   * Replaces any noise chars with 
+   * @param input
+   * @return 
+   */
   private String cleanInput(String input) {
-    return input.replaceAll(REGEX_CLEAN, "").trim();
+    String output = input.replaceAll(REGEX_CLEAN, " ").trim();
+    System.out.println(output);
+    return "\"" + output + "\"";
   }
 
   private void init() throws Exception {
