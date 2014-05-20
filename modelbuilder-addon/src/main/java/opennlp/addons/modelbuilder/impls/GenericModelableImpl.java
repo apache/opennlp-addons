@@ -27,12 +27,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import opennlp.addons.modelbuilder.Modelable;
-import opennlp.tools.cmdline.MarkableFileInputStreamFactory;
+import opennlp.tools.util.MarkableFileInputStreamFactory;
+
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.NameSample;
 import opennlp.tools.namefind.NameSampleDataStream;
 import opennlp.tools.namefind.TokenNameFinderModel;
-import opennlp.tools.util.InputStreamFactory;
 
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
