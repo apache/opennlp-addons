@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
@@ -29,20 +30,20 @@ import opennlp.tools.util.Span;
 
 /**
  * Scores toponyms based on their proximity to a country mention. Based on the
- * heuristic that typonymn mentions are more likely close to their parent
+ * heuristic that toponymn mentions are more likely close to their parent
  * country mentions. For instance, if the toponym Berlin is mentioned near an
  * indicator of Germany, it is more likely to be Berlin Germany than Berlin
- * Connecticut.
+ * Connecticut (if Connecticut is mentioned further down in the article).
  *
  *
  */
-public class CountryProximityScorer implements LinkedEntityScorer<CountryContext> {
+public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
   private Map<String, Set<String>> nameCodesMap;
   String dominantCode = "";
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
+  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
 
     score(linkedSpans, additionalContext.getCountryMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
 

@@ -31,6 +31,9 @@ public class GazetteerEntry extends BaseLink {
   private String source;
   private String indexID;
   private Map<String, String> indexData = new HashMap<>();
+  private String countryCode;
+  private String provinceCode;
+  private String hierarchy;
 
   /**
    * returns the id from the lucene document
@@ -159,5 +162,28 @@ public class GazetteerEntry extends BaseLink {
     return true;
   }
 
+  public String getCountryCode() {
+    return countryCode;
+  }
+
+  public void setCountryCode(String countryCode) {
+    this.countryCode = countryCode;
+  }
+
+  public String getProvinceCode() {
+    return provinceCode;
+  }
+
+  public void setProvinceCode(String provinceCode) {
+    this.provinceCode = provinceCode;
+  }
+
+  public String getHierarchy() {
+    return hierarchy;
+  }
+
+  public void setHierarchy(String hierarchy) {
+    this.hierarchy = hierarchy;
+  }
 
 }

@@ -13,34 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import opennlp.addons.geoentitylinker.AdminBoundaryContext;
+import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
-import opennlp.tools.ngram.NGramGenerator;
 import opennlp.tools.util.Span;
 
 /**
  *
  * Generates scores based on string comparisons levenstein and dice
  */
-public class FuzzyStringMatchScorer implements LinkedEntityScorer<CountryContext> {
+public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
+  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     for (LinkedSpan<BaseLink> linkedSpan : linkedSpans) {
       for (BaseLink link : linkedSpan.getLinkedEntries()) {
-        Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase().replace(" ", ""), link.getItemName().toLowerCase().replace(" ", ""), 2);
-        link.getScoreMap().put("dice", dice);
-        Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase().replace(" ", ""), link.getItemName().toLowerCase().replace(" ", ""));
-        link.getScoreMap().put("levenshtein", ld);
+        if (link instanceof GazetteerEntry) {
+          GazetteerEntry entry = (GazetteerEntry) link;
+          String hierarchy = entry.getHierarchy();
+          if (hierarchy != null) {
+            Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase(), 2);
+            link.getScoreMap().put("hierarchydicecoef", dice);
+            Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase().toLowerCase());
+            link.getScoreMap().put("hierarchylevenshtein", ld);
+          }
+        }
       }
     }
-
 
   }
 
@@ -48,8 +55,8 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<CountryContext
    * Generates a score based on an overlap of nGrams between two strings using
    * the DiceCoefficient technique.
    *
-   * @param s1     first string
-   * @param s2     second string
+   * @param s1 first string
+   * @param s2 second string
    * @param nGrams number of chars in each gram
    * @return
    */
@@ -57,8 +64,22 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<CountryContext
     if (s1.equals("") || s1.equals("")) {
       return 0d;
     }
-    List<String> s1Grams = NGramGenerator.generate(s1.toCharArray(), nGrams, "");
-    List<String> s2Grams = NGramGenerator.generate(s2.toCharArray(), nGrams, "");
+    List<String> s1Grams = new ArrayList<>();
+    List<String> s2Grams = new ArrayList<>();
+    String[] split1 = s1.split("[ ,]");
+    for (String token : split1) {
+      if (token.trim().equals("")) {
+        continue;
+      }
+      s1Grams.add(token);
+    }
+    String[] split2 = s2.split("[ ,]");
+    for (String token : split2) {
+      if (token.trim().equals("")) {
+        continue;
+      }
+      s2Grams.add(token);
+    }
 
     Set<String> overlap = new HashSet<String>(s1Grams);
     overlap.retainAll(s2Grams);

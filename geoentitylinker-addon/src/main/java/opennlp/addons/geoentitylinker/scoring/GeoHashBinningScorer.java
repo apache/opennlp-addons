@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import opennlp.addons.geoentitylinker.AdminBoundaryContext;
+import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
@@ -29,13 +31,13 @@ import opennlp.tools.util.Span;
  * outliers by finding those points that are not near the majority
  *
  */
-public class GeoHashBinningScorer implements LinkedEntityScorer<CountryContext> {
+public class GeoHashBinningScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
   private final PointClustering CLUSTERER = new PointClustering();
   private int PRECISION = 3;
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
+  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties,  AdminBoundaryContext additionalContext) {
      //Map<Double, Double> latLongs = new HashMap<Double, Double>();
     List<GazetteerEntry> allGazEntries = new ArrayList<>();
 

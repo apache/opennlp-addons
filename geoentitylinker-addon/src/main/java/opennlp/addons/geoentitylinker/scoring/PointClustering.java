@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.io.GeohashUtils;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import opennlp.addons.geoentitylinker.GazetteerEntry;
 
 /**
  *
@@ -114,36 +115,6 @@ public class PointClustering {
     return point;
   }
 
-  /**
-   * Hashes a lat long based on adding 90 or 180 and then interlarding lat lon
-   * chars. reduces a set of points to a sortable set
-   *
-   * @param lat
-   * @param lon
-   * @return
-   */
-  public String simpleGeohash(Double lat, Double lon) {
-    String geoHash = "";
-    lat = lat + 90;
-    lon = lon + 180;
-    String latString = String.valueOf(lat).replace(".", "");
-    String lonString = String.valueOf(lon).replace(".", "");
-    int length = latString.length() > lonString.length() ? lonString.length() : latString.length();
-    while (length < 12) {
-      latString += "0";
-      lonString += "0";
-      length++;
-    }
-    latString = latString.substring(0, 10);
-    lonString = lonString.substring(0, 10);
-    char[] latChars = latString.toCharArray();
-    char[] lonChars = lonString.toCharArray();
-
-    for (int i = 0; i < latChars.length; i++) {
-      geoHash += String.valueOf(latChars[i]) + String.valueOf(lonChars[i]);
-    }
-    return geoHash;
-  }
 
   private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
     Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;

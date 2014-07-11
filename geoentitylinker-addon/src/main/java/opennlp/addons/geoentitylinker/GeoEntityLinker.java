@@ -15,6 +15,11 @@
  */
 package opennlp.addons.geoentitylinker;
 
+import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
+import opennlp.addons.geoentitylinker.scoring.LinkedEntityScorer;
+import opennlp.addons.geoentitylinker.scoring.CountryProximityScorer;
+import opennlp.addons.geoentitylinker.scoring.GeoHashBinningScorer;
+import opennlp.addons.geoentitylinker.scoring.FuzzyStringMatchScorer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +38,11 @@ import opennlp.tools.entitylinker.EntityLinker;
  */
 public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
-  private CountryContext countryContext;
+  private AdminBoundaryContextGenerator countryContext;
   private Map<String, Set<Integer>> countryMentions;
   private EntityLinkerProperties linkerProperties;
   private GazetteerSearcher gazateerSearcher;
-  private List<LinkedEntityScorer> scorers = new ArrayList<>();
+  private List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
 
   @Override
   public List<LinkedSpan> find(String doctext, Span[] sentences, String[][] tokensBySentence, Span[][] namesBySentence) {
@@ -46,8 +51,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     if (linkerProperties == null) {
       throw new IllegalArgumentException("EntityLinkerProperties cannot be null");
     }
-    countryMentions = countryContext.regexfind(doctext);
-
+    //countryMentions = countryContext.regexfind(doctext);
+    AdminBoundaryContext context = countryContext.getContext(doctext);
     for (int s = 0; s < sentences.length; s++) {
       Span[] names = namesBySentence[s];
       String[] tokens = tokensBySentence[s];
@@ -55,51 +60,27 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
       for (int i = 0; i < matches.length; i++) {
 
-        /**
-         * nga gazateer is for other than US placenames,don't want to use it if
-         * US is the only country mentioned in the doc
-         *
-         */
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
-        if (!(countryMentions.keySet().contains("us") && countryMentions.keySet().size() == 1)
-                || countryMentions.keySet().size() > 1 || countryMentions.keySet().isEmpty()) {
-
-          if (!countryMentions.keySet().isEmpty()) {
-            for (String code : countryMentions.keySet()) {
-              if (!code.equals("us")) {
-                geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 5, code));
-              }
-            }
-          } else {
-            geoNamesEntries.addAll(gazateerSearcher.geonamesFind(matches[i], 5, ""));
-
+        if (!context.getWhereClauses().isEmpty()) {
+          for (String whereclause : context.getWhereClauses()) {
+            geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, whereclause));
           }
-
+        }else{//this means there were no where clauses generated so the where clause will default to look at the entire index
+          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, " gaztype:* "));
         }
-        ArrayList<BaseLink> usgsEntries = new ArrayList<>();
-        if (countryMentions.keySet().contains("us") || countryMentions.keySet().isEmpty()) {
-          //usgsEntries = usgsGaz.find(matches[i], names[i], linkerProperties);
-          usgsEntries.addAll(gazateerSearcher.usgsFind(matches[i], 3));
-        }
-        LinkedSpan<BaseLink> geoSpan = new LinkedSpan<>(geoNamesEntries, names[i].getStart(), names[i].getEnd(), "location",names[i].getProb());
-    
-
-        if (!usgsEntries.isEmpty()) {
-          geoSpan.getLinkedEntries().addAll(usgsEntries);
-          geoSpan.setSearchTerm(matches[i]);
-        }
-
-        if (!geoSpan.getLinkedEntries().isEmpty()) {
-          geoSpan.setSearchTerm(matches[i]);
-          geoSpan.setSentenceid(s);
-          spans.add(geoSpan);
-        }
+        //start generating queries
+        LinkedSpan newspan = new LinkedSpan(geoNamesEntries, names[i], 0);
+        newspan.setSearchTerm(matches[i]);
+        newspan.setLinkedEntries(geoNamesEntries);
+        newspan.setSentenceid(s);
+        spans.add(newspan);
       }
+
     }
 
     if (!scorers.isEmpty()) {
       for (LinkedEntityScorer scorer : scorers) {
-        scorer.score(spans, doctext, sentences, linkerProperties, countryContext);
+        scorer.score(spans, doctext, sentences, linkerProperties, context);
       }
     }
 
@@ -111,6 +92,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       scorers.add(new GeoHashBinningScorer());
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());
+      scorers.add(new FuzzyStringMatchScorer());
+     // scorers.add(new ProvinceProximityScorer());
     }
   }
 
@@ -118,7 +101,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   public void init(EntityLinkerProperties properties) {
     try {
       this.linkerProperties = properties;
-      countryContext = new CountryContext(this.linkerProperties);
+      countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
       gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
       loadScorers();
     } catch (Exception ex) {

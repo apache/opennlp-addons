@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
 import java.util.List;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
@@ -23,6 +23,7 @@ import opennlp.tools.util.Span;
 /**
  * Structure for scoring linked entities. The Map logically represents a pair :
  * "Score type" to the "actual Score."
+ * @param <T> a generic for providing additional context
  */
 public interface LinkedEntityScorer<T> {
 
@@ -32,6 +33,7 @@ public interface LinkedEntityScorer<T> {
  * @param linkedSpans the spans that have been linked to some external source and have all the data they need to be scored
  * @param docText the full text of the document.
  * @param sentenceSpans the sentence spans the correspond to the document text
+   * @param properties the entitylinker properties config file
  * @param additionalContext any additional data required to perform the scoring operation
  * @return void
  */

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -28,6 +28,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import opennlp.addons.geoentitylinker.AdminBoundaryContextGenerator;
+import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
 
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -41,6 +43,7 @@ import opennlp.tools.util.PlainTextByLineStream;
  *
  * Tools for setting up GeoEntityLinker gazateers and doccat scoring model
  */
+@Deprecated
 public class GeoEntityLinkerSetupUtils {
   private static final int RADIUS = 200;
   public static ModelBasedScorer scorer;
@@ -86,7 +89,7 @@ public class GeoEntityLinkerSetupUtils {
    * @throws IOException
    */
   public static void buildCountryContextModel(Collection<String> documents, File annotationOutFile, File modelOutFile, EntityLinkerProperties properties) throws Exception {
-    CountryContext context = new CountryContext(properties);
+    AdminBoundaryContextGenerator context = new AdminBoundaryContextGenerator(properties);
     FileWriter writer = new FileWriter(annotationOutFile, true);
     System.out.println("processing " + documents.size() + " documents");
     for (String docText : documents) {
@@ -131,7 +134,7 @@ public class GeoEntityLinkerSetupUtils {
    * @param radius
    * @return
    */
-  private static Map<String, ArrayList<String>> modelCountryContext(String docText, CountryContext additionalContext, int radius) {
+  private static Map<String, ArrayList<String>> modelCountryContext(String docText, AdminBoundaryContextGenerator additionalContext, int radius) {
     Map<String, ArrayList< String>> featureBags = new HashMap<>();
     Map<String, Set<Integer>> countryMentions = additionalContext.getCountryMentions();
     /**

@@ -28,7 +28,7 @@ public class GazetteerSearchCache {
   private static Map<String, ArrayList<GazetteerEntry>> gazCache = new HashMap<>();
 
 /**
- * returns the cached entries. Returns null if the query does not exists in the cache
+ * returns the cached entries. Returns null if the query does not exist in the cache
  * @param searchString
  * @return
  */

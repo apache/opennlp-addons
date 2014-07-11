@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package opennlp.addons.geoentitylinker;
+package opennlp.addons.geoentitylinker.scoring;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
@@ -33,7 +34,7 @@ import org.apache.log4j.Logger;
  *
  * Utilizes a doccat model to score toponyms based on surrounding context
  */
-public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
+public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
   private static final Logger LOGGER = Logger.getLogger(ModelBasedScorer.class);
   DocumentCategorizerME documentCategorizerME;
@@ -42,7 +43,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<CountryContext> {
   boolean modelexists = false;
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, CountryContext additionalContext) {
+  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     try {
       if (doccatModel == null) {
         String path = properties.getProperty("opennlp.geoentitylinker.modelbasedscorer.modelpath", "");
