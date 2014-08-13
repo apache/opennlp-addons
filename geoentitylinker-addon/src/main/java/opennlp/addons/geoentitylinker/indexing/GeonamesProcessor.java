@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,25 +163,30 @@ public class GeonamesProcessor {
         // System.out.println(line);
 
       }
-      writer.close();
+
     } catch (IOException ex) {
       ex.printStackTrace();
     }
     System.out.println("successfully wrote Geonames entries to country oontext file");
   }
 
- /**
-  * 
-  * @param gazateerInputData the Geonames allCounties.txt file
-  * @param type the types of gaz entry, usgs, geonames, or regions
-  * @param adms the province info
-  * @param countrycodes the country code info
-  * @param w the lucene index writer
-  * @throws Exception 
-  */
+  /**
+   *
+   * @param gazateerInputData the Geonames allCounties.txt file
+   * @param type the types of gaz entry, usgs, geonames, or regions
+   * @param adms the province info
+   * @param countrycodes the country code info
+   * @param w the lucene index writer
+   * @throws Exception
+   */
   public static void readFile(File gazateerInputData, GazetteerIndexer.GazType type, Map<String, AdminBoundary> adms, Map<String, String> countrycodes, IndexWriter w) throws Exception {
 
     BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData));
+    String[] boosts = "ADM1 ADM1H ADM2 ADM2H ADM3 ADM3H ADM4 ADM4H ADM5 ADMD ADMDH PCLD PCLH PCLI PCLIX TERR PCLIX PPL PPLA PPLA2 PPLA3 PPLA4 PPLC PPLCH PPLF PPLG PPLH PPLL PPLQ PPLR PPLS PPLX STLMT".split(" ");
+    Map<String, Float> boostMap = new HashMap<>();
+    for (String boost : boosts) {
+      boostMap.put(boost.toLowerCase(), 10f);
+    }
     String[] fieldStrings = new String[]{
       "geonameid",
       "name",
@@ -225,7 +229,7 @@ public class GeonamesProcessor {
       String placeName = values[2];
       String lat = values[4];
       String lon = values[5];
-      String dsg = values[7];
+      String dsg = values[7].toLowerCase();
       String id = values[0];
       String concatIndexEntry = "";
       if (adm != null) {
@@ -255,13 +259,20 @@ public class GeonamesProcessor {
       doc.add(new TextField("placename", placeName, Field.Store.YES));
       doc.add(new TextField("latitude", lat, Field.Store.YES));
       doc.add(new TextField("longitude", lon, Field.Store.YES));
-      doc.add(new TextField("loctype", dsg, Field.Store.YES));
+      if (boostMap.containsKey(dsg)) {
+        TextField f = new TextField("loctype", dsg, Field.Store.YES);
+        f.setBoost(boostMap.get(dsg));
+        doc.add(f);
+      } else {
+        doc.add(new TextField("loctype", dsg, Field.Store.YES));
+      }
       doc.add(new TextField("admincode", (ccode + "." + admincode).toLowerCase(), Field.Store.YES));
       doc.add(new TextField("countrycode", ccode.toLowerCase(), Field.Store.YES));
       doc.add(new TextField("countycode", "", Field.Store.YES));
 
       doc.add(new TextField("locid", id, Field.Store.YES));
       doc.add(new TextField("gazsource", "geonames", Field.Store.YES));
+
       w.addDocument(doc);
 
       counter++;
@@ -272,7 +283,7 @@ public class GeonamesProcessor {
 
     }
 
-    System.out.println("Completed indexing gaz! index name is: " + type.toString());
+    System.out.println("Completed indexing geonames gaz! index name is: " + type.toString());
   }
 
 }

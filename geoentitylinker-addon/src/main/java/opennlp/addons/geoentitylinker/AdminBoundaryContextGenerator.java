@@ -140,9 +140,7 @@ public class AdminBoundaryContextGenerator {
    */
   private AdminBoundaryContext process(String text) {
     try {
-      if (text.contains("Convoy of terror")) {
-        System.out.println("");
-      }
+    
       reset();
       Map<String, Set<Integer>> countryhitMap = regexfind(text, countryMap, countryHitSet);
       if (!countryhitMap.isEmpty()) {
@@ -282,7 +280,7 @@ public class AdminBoundaryContextGenerator {
         if (name == null) {
           continue;
         }
-        name = "[^\\p{L}\\p{Nd}]" + name.replace(", the", "") + "[^\\p{L}\\p{Nd}]";
+        name = "(^|[^\\p{L}\\p{Nd}])" + name.replace(", the", "") + "([^\\p{L}\\p{Nd}]|$)";
         Pattern regex = Pattern.compile(name, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher rs = regex.matcher(docText);
         String code = entry.toLowerCase();

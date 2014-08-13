@@ -15,6 +15,7 @@
  */
 package opennlp.addons.geoentitylinker;
 
+import java.io.IOException;
 import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
 import opennlp.addons.geoentitylinker.scoring.LinkedEntityScorer;
 import opennlp.addons.geoentitylinker.scoring.CountryProximityScorer;
@@ -65,10 +66,12 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
           for (String whereclause : context.getWhereClauses()) {
             geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, whereclause));
           }
-        }else{//this means there were no where clauses generated so the where clause will default to look at the entire index
-          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, " gaztype:* "));
+        } else {//this means there were no where clauses generated so the where clause will default to look at the entire index
+          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, " gaztype:usgs geonames regions "));
         }
-        //start generating queries
+        if (geoNamesEntries.isEmpty()) {
+          continue;
+        }
         LinkedSpan newspan = new LinkedSpan(geoNamesEntries, names[i], 0);
         newspan.setSearchTerm(matches[i]);
         newspan.setLinkedEntries(geoNamesEntries);
@@ -93,19 +96,19 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());
       scorers.add(new FuzzyStringMatchScorer());
-     // scorers.add(new ProvinceProximityScorer());
+      // scorers.add(new ProvinceProximityScorer());
     }
   }
 
   @Override
-  public void init(EntityLinkerProperties properties) {
+  public void init(EntityLinkerProperties properties) throws IOException {
     try {
       this.linkerProperties = properties;
       countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
       gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
       loadScorers();
     } catch (Exception ex) {
-      throw new RuntimeException(ex);
+      throw new IOException(ex);
     }
   }
 

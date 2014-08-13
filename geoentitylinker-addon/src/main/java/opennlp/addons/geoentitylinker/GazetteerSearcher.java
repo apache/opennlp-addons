@@ -38,7 +38,6 @@ import org.apache.lucene.util.Version;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.search.Sort;
 
 /**
  *
@@ -49,10 +48,13 @@ import org.apache.lucene.search.Sort;
  */
 public class GazetteerSearcher {
 
+  //private static final String boostedTerms = " AND loctype(ADM1^1 ADM1H^1 ADM2^1 ADM2H^1 ADM3^1 ADM3H^1 ADM4^1 ADM4H^1 ADM5^1 ADMD^1 ADMDH^1 PCLD^1 PCLH^1 PCLI^1 PCLIX^1 TERR^1 PCLIX^1 PPL^1 PPLA^1 PPLA2^1 PPLA3^1 PPLA4^1 PPLC^1 PPLCH^1 PPLF^1 PPLG^1 PPLH^1 PPLL^1 PPLQ^1 PPLR^1 PPLS^1 PPLX^1 STLMT^1) ";
+
   private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
   private static final Logger LOGGER = Logger.getLogger(GazetteerSearcher.class);
   private double scoreCutoff = .70;
-  private boolean doubleQuoteAllSearchTerms = false;
+  private boolean doubleQuoteAllSearchTerms = true;
+  private boolean useHierarchyField = false;
   private Directory geonamesIndex;//= new MMapDirectory(new File(indexloc));
   private IndexReader geonamesReader;// = DirectoryReader.open(geonamesIndex);
   private IndexSearcher geonamesSearcher;// = new IndexSearcher(geonamesReader);
@@ -85,13 +87,16 @@ public class GazetteerSearcher {
     this.properties = properties;
     init();
   }
-/**
- * Searches the single lucene index that includes the location hierarchy.
- * @param searchString the location name to search for
- * @param rowsReturned how many index entries to return (top N...)
- * @param whereClause the conditional statement that defines the index type and the country oode.
- * @return 
- */
+
+  /**
+   * Searches the single lucene index that includes the location hierarchy.
+   *
+   * @param searchString the location name to search for
+   * @param rowsReturned how many index entries to return (top N...)
+   * @param whereClause the conditional statement that defines the index type
+   * and the country oode.
+   * @return
+   */
   public ArrayList<GazetteerEntry> find(String searchString, int rowsReturned, String whereClause) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
     searchString = cleanInput(searchString);
@@ -104,12 +109,11 @@ public class GazetteerSearcher {
        * case the code variables will be empty strings
        */
       String placeNameQueryString = "placename:(" + searchString.toLowerCase() + ") AND " + whereClause;
-      if (searchString.trim().contains(" ")) {
+      if (searchString.trim().contains(" ") && useHierarchyField) {
         placeNameQueryString = "(placename:(" + searchString.toLowerCase() + ") AND hierarchy:(" + formatForHierarchy(searchString) + "))"
                 + " AND " + whereClause;
       }
-
-      //  luceneQueryString = "hierarchy:(tampa florida) AND gazsource:usgs";
+       
       /**
        * check the cache and go no further if the records already exist
        */
@@ -123,14 +127,13 @@ public class GazetteerSearcher {
        */
       QueryParser parser = new QueryParser(Version.LUCENE_48, placeNameQueryString, opennlpAnalyzer);
       Query q = parser.parse(placeNameQueryString);
-      
-      TopDocs bestDocs = opennlpSearcher.search(q, rowsReturned, Sort.RELEVANCE);
-  
+
+      TopDocs bestDocs = opennlpSearcher.search(q, rowsReturned);
+
       for (int i = 0; i < bestDocs.scoreDocs.length; ++i) {
         GazetteerEntry entry = new GazetteerEntry();
         int docId = bestDocs.scoreDocs[i].doc;
         double sc = bestDocs.scoreDocs[i].score;
-
         entry.getScoreMap().put("lucene", sc);
         entry.setIndexID(docId + "");
 
@@ -165,23 +168,23 @@ public class GazetteerSearcher {
          */
         int maxLen = searchString.length() > entry.getItemName().length() ? searchString.length() : entry.getItemName().length();
 
-        Double normLev = Math.abs(1-(sc / (double) maxLen));//searchString.length() / (double) entry.getItemName().length();
+        Double normLev = Math.abs(1 - (sc / (double) maxLen));//searchString.length() / (double) entry.getItemName().length();
         /**
          * only want hits above the levenstein thresh. This should be a low
          * thresh due to the use of the hierarchy field in the index
          */
-        if (normLev.compareTo(scoreCutoff) >= 0) {
-//          if (entry.getItemParentID().toLowerCase().equals(parentid.toLowerCase()) || parentid.toLowerCase().equals("")) {
-          entry.getScoreMap().put("normlucene", normLev);
-          //make sure we don't produce a duplicate
-          if (!linkedData.contains(entry)) {
-            linkedData.add(entry);
-            /**
-             * add the records to the cache for this query
-             */
-            GazetteerSearchCache.put(placeNameQueryString, linkedData);
+        if (normLev > scoreCutoff) {
+          if (entry.getItemParentID().toLowerCase().equals(parentid.toLowerCase()) || parentid.toLowerCase().equals("")) {
+            entry.getScoreMap().put("normlucene", normLev);
+            //make sure we don't produce a duplicate
+            if (!linkedData.contains(entry)) {
+              linkedData.add(entry);
+              /**
+               * add the records to the cache for this query
+               */
+              GazetteerSearchCache.put(placeNameQueryString, linkedData);
+            }
           }
-//          }
         }
       }
 
@@ -311,7 +314,7 @@ public class GazetteerSearcher {
    *
    * @return
    */
-    @Deprecated
+  @Deprecated
   public ArrayList<GazetteerEntry> usgsFind(String searchString, int rowsReturned) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
     searchString = cleanInput(searchString);
@@ -406,6 +409,7 @@ public class GazetteerSearcher {
    */
   private String cleanInput(String input) {
     String output = input.replaceAll(REGEX_CLEAN, " ").trim();
+    output = output.replace("  ", " ");
     if (doubleQuoteAllSearchTerms) {
       return "\"" + output + "\"";
     } else {
@@ -415,56 +419,35 @@ public class GazetteerSearcher {
   }
 
   private void init() throws Exception {
-//    if (usgsIndex == null) {
-//      String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.usgs", "");
-//      if (indexloc.equals("")) {
-//        // System.out.println("USGS Gaz location not found");
-//        LOGGER.error(new Exception("USGS Gaz location not found"));
-//      }
-//      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
-//
-//      scoreCutoff = Double.valueOf(cutoff);
-//      String doubleQuote = properties.getProperty("opennlp.geoentitylinker.gaz.doublequote", String.valueOf(doubleQuoteAllSearchTerms));
-//      doubleQuoteAllSearchTerms = Boolean.valueOf(doubleQuote);
-//      usgsIndex = new MMapDirectory(new File(indexloc));
-//      usgsReader = DirectoryReader.open(usgsIndex);
-//      usgsSearcher = new IndexSearcher(usgsReader);
-//      usgsAnalyzer = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-//    }
-//    if (geonamesIndex == null) {
-//      String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz.geonames", "");
-//      if (indexloc.equals("")) {
-//        LOGGER.error(new Exception("Geonames Gaz location not found"));
-//
-//      }
-//      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
-//      scoreCutoff = Double.valueOf(cutoff);
-//      geonamesIndex = new MMapDirectory(new File(indexloc));
-//      geonamesReader = DirectoryReader.open(geonamesIndex);
-//      geonamesSearcher = new IndexSearcher(geonamesReader);
-//      //TODO: a language code switch statement should be employed here at some point
-//      geonamesAnalyzer = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-//
-//    }
+
     if (opennlpIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz", "");
       if (indexloc.equals("")) {
         LOGGER.error(new Exception("Opennlp combined Gaz directory location not found"));
 
       }
-      //  String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
-      //  scoreCutoff = Double.valueOf(cutoff);
+
       opennlpIndex = new MMapDirectory(new File(indexloc));
       opennlpReader = DirectoryReader.open(opennlpIndex);
       opennlpSearcher = new IndexSearcher(opennlpReader);
       //TODO: a language code switch statement should be employed here at some point
       opennlpAnalyzer = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
+      String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));
+      if (cutoff != null && !cutoff.isEmpty()) {
+        scoreCutoff = Double.valueOf(cutoff);
+      }
+      if (usehierarchy != null && !usehierarchy.isEmpty()) {
+        useHierarchyField = Boolean.valueOf(usehierarchy);
+      }
+      //  opennlp.geoentitylinker.gaz.doublequote=false
+      //opennlp.geoentitylinker.gaz.hierarchyfield=false
 
     }
   }
 
   private String formatForHierarchy(String searchTerm) {
-    String[] parts = searchTerm.split(" ");
+    String[] parts = cleanInput(searchTerm).split(" ");
     String out = "";
     if (parts.length != 0) {
       for (String string : parts) {

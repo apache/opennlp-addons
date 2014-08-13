@@ -179,7 +179,6 @@ public class USGSProcessor {
       ///  System.out.println(line);
 
       }
-      writer.close();
     } catch (IOException ex) {
       Logger.getLogger(GeonamesProcessor.class.getName()).log(Level.SEVERE, null, ex);
     }

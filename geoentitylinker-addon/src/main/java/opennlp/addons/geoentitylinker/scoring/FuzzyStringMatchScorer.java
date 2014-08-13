@@ -61,7 +61,7 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
    * @return
    */
   public double getDiceCoefficient(String s1, String s2, int nGrams) {
-    if (s1.equals("") || s1.equals("")) {
+    if (s1.isEmpty() || s2.isEmpty()) {
       return 0d;
     }
     List<String> s1Grams = new ArrayList<>();
