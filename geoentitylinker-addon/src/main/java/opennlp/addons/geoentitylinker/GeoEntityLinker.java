@@ -106,7 +106,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
           for (String object : o1scoreMap.keySet()) {
             if (object.equals("typescore")
                     || object.equals("countrycontext")
-                    || object.equals("normlucene")
+                    || object.equals("placenamedicecoef")
                     || object.equals("geohashbin")) {
               sumo1 += o1scoreMap.get(object);
               sumo2 += o2scoreMap.get(object);

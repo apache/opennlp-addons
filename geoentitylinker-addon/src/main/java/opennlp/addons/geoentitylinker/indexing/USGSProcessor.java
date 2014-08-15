@@ -57,6 +57,7 @@ public class USGSProcessor {
 
   public static void readFile(File gazateerInputData, IndexWriter w, GazetteerIndexer.GazType type, Map<String, AdminBoundary> lookupMap) throws Exception {
 
+    Map<String, StateCentroid> states = new HashMap<>();
     BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData));
     List<String> fields = new ArrayList<>();
     int counter = 0;
@@ -93,7 +94,21 @@ public class USGSProcessor {
           countyCode = get.getCountyCode();
         }
         String hierarchy = get.getCountryName() + ", " + get.getProvinceName() + ", " + countyname + ", " + placeName;
-       // doc.add(new TextField("countryname", "united states", Field.Store.YES));
+
+        if (states.containsKey(get.getProvinceName())) {
+          StateCentroid entry = states.get(get.getProvinceName());
+          entry.count++;
+          entry.latSum += Double.valueOf(lat);
+          entry.longSum += Double.valueOf(lon);
+        } else {
+          StateCentroid centroid = new StateCentroid();
+          centroid.statecode = get.getProvCode();
+          centroid.count = 1;
+          centroid.latSum = Double.valueOf(lat);
+          centroid.longSum = Double.valueOf(lon);
+          states.put(get.getProvinceName(), centroid);
+        }
+
         doc.add(new TextField("hierarchy", hierarchy, Field.Store.YES));
         doc.add(new TextField("placename", placeName, Field.Store.YES));
         doc.add(new TextField("latitude", lat, Field.Store.YES));
@@ -114,8 +129,54 @@ public class USGSProcessor {
       }
 
     }
+   
+  
+    for (String state : states.keySet()) {
+      StateCentroid get = states.get(state);
+      Document doc = new Document();
+      doc.add(new TextField("hierarchy", "united states, " + state, Field.Store.YES));
+      doc.add(new TextField("placename", state, Field.Store.YES));
+      //calculate a centroid for all the points that were in the state
+      doc.add(new TextField("latitude", (get.latSum / get.count) + "", Field.Store.YES));
+      doc.add(new TextField("longitude", (get.longSum / get.count) + "", Field.Store.YES));
+      doc.add(new StringField("loctype", "adm1", Field.Store.YES));
+      doc.add(new StringField("admincode", get.statecode, Field.Store.YES));
+      doc.add(new StringField("countrycode", "us", Field.Store.YES));
+      doc.add(new StringField("countycode", "", Field.Store.YES));
+
+      doc.add(new StringField("locid", "us_state:" + state, Field.Store.YES));
+      doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
+      w.addDocument(doc);
+      
+     // System.out.println(get.statecode + "," + (get.latSum / get.count) + "," + (get.longSum / get.count));
+    }
+    Document doc = new Document();
+    doc.add(new TextField("hierarchy", "united states", Field.Store.YES));
+    doc.add(new TextField("placename", "united states", Field.Store.YES));
+    //calculate a centroid for all the points that were in the state
+    doc.add(new TextField("latitude", 39.0 + "", Field.Store.YES));
+    doc.add(new TextField("longitude", -103.0 + "", Field.Store.YES));
+    doc.add(new StringField("loctype", "pcli", Field.Store.YES));
+    doc.add(new StringField("admincode", "", Field.Store.YES));
+    doc.add(new StringField("countrycode", "us", Field.Store.YES));
+    doc.add(new StringField("countycode", "", Field.Store.YES));
+
+    doc.add(new StringField("locid", "us_centroid" + "unitedstates", Field.Store.YES));
+    doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
+    //System.out.println("uscentroid," + (sumofLatSums / sumOfCounts) + "," + (sumofLonSums / sumOfCounts));
+
+    w.addDocument(doc);
     w.commit();
+
     System.out.println("Completed indexing USGS gaz!");
+  }
+
+  private static class StateCentroid {
+
+    double latSum;
+    double longSum;
+    String statecode;
+    int count;
   }
 
   private static Map<String, AdminBoundary> getProvData(File govUnitsFile, GazetteerIndexer.GazType type) {

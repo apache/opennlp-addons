@@ -50,7 +50,6 @@ import org.apache.lucene.analysis.util.CharArraySet;
  */
 public class GazetteerSearcher {
 
-  //private static final String boostedTerms = " AND loctype(ADM1^1 ADM1H^1 ADM2^1 ADM2H^1 ADM3^1 ADM3H^1 ADM4^1 ADM4H^1 ADM5^1 ADMD^1 ADMDH^1 PCLD^1 PCLH^1 PCLI^1 PCLIX^1 TERR^1 PCLIX^1 PPL^1 PPLA^1 PPLA2^1 PPLA3^1 PPLA4^1 PPLC^1 PPLCH^1 PPLF^1 PPLG^1 PPLH^1 PPLL^1 PPLQ^1 PPLR^1 PPLS^1 PPLX^1 STLMT^1) ";
   private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
   private static final Logger LOGGER = Logger.getLogger(GazetteerSearcher.class);
   private double scoreCutoff = .70;
@@ -74,7 +73,7 @@ public class GazetteerSearcher {
     try {
       boolean b = Boolean.valueOf("true");
 
-      new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties"))).find("italy", 5, " countrycode:it AND gazsource:geonames");
+      new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties"))).find("alabama", 5, " countrycode:us AND gazsource:usgs");
     } catch (IOException ex) {
       java.util.logging.Logger.getLogger(GazetteerSearcher.class.getName()).log(Level.SEVERE, null, ex);
     } catch (Exception ex) {

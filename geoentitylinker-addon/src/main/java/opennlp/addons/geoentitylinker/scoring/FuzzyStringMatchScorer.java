@@ -42,8 +42,14 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
           if (hierarchy != null) {
             Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase(), 2);
             link.getScoreMap().put("hierarchydicecoef", dice);
-            Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase().toLowerCase());
+            Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase());
             link.getScoreMap().put("hierarchylevenshtein", ld);
+          }
+          String placename = entry.getItemName().toLowerCase();
+           if (placename != null) {
+            Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), placename, 2);
+            link.getScoreMap().put("placenamedicecoef", dice);
+            
           }
         }
       }
