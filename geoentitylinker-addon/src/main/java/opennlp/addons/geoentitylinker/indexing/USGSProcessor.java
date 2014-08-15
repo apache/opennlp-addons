@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import opennlp.addons.geoentitylinker.AdminBoundary;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 
 import org.apache.lucene.index.IndexWriter;
@@ -86,24 +87,24 @@ public class USGSProcessor {
         String countyname = "";
         String countyCode = get.getCountyCode();
         if (!get.getCountyName().equals("NO_DATA_FOUND_VALUE")) {
-          countyname =  get.getCountyName();
+          countyname = get.getCountyName();
         }
         if (!get.getCountyCode().equals("NO_DATA_FOUND_VALUE")) {
           countyCode = get.getCountyCode();
         }
-        String hierarchy = get.getCountryName() + ", " + get.getProvinceName() +", "+ countyname + ", " + placeName;
-
+        String hierarchy = get.getCountryName() + ", " + get.getProvinceName() + ", " + countyname + ", " + placeName;
+       // doc.add(new TextField("countryname", "united states", Field.Store.YES));
         doc.add(new TextField("hierarchy", hierarchy, Field.Store.YES));
         doc.add(new TextField("placename", placeName, Field.Store.YES));
         doc.add(new TextField("latitude", lat, Field.Store.YES));
         doc.add(new TextField("longitude", lon, Field.Store.YES));
-        doc.add(new TextField("loctype", dsg, Field.Store.YES));
-        doc.add(new TextField("admincode", (get.getCountryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
-        doc.add(new TextField("countrycode", get.getCountryCode().toLowerCase(), Field.Store.YES));
-        doc.add(new TextField("countycode", (get.getCountryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(), Field.Store.YES));
+        doc.add(new StringField("loctype", dsg, Field.Store.YES));
+        doc.add(new StringField("admincode", (get.getCountryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
+        doc.add(new StringField("countrycode", get.getCountryCode().toLowerCase(), Field.Store.YES));
+        doc.add(new StringField("countycode", (get.getCountryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(), Field.Store.YES));
 
-        doc.add(new TextField("locid", id, Field.Store.YES));
-        doc.add(new TextField("gazsource", "usgs", Field.Store.YES));
+        doc.add(new StringField("locid", id, Field.Store.YES));
+        doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
         w.addDocument(doc);
       }
       counter++;
@@ -118,7 +119,7 @@ public class USGSProcessor {
   }
 
   private static Map<String, AdminBoundary> getProvData(File govUnitsFile, GazetteerIndexer.GazType type) {
- System.out.println("Attempting to read USGS province (State) data from: " + govUnitsFile.getPath());
+    System.out.println("Attempting to read USGS province (State) data from: " + govUnitsFile.getPath());
     Map<String, AdminBoundary> outmap = new HashMap<>();
     BufferedReader reader;
 
@@ -153,7 +154,7 @@ public class USGSProcessor {
     } catch (IOException ex) {
       ex.printStackTrace();
     }
-  System.out.println("Successfully read USGS province (State) data from: " + govUnitsFile.getPath());
+    System.out.println("Successfully read USGS province (State) data from: " + govUnitsFile.getPath());
 
     return outmap;
 
@@ -176,7 +177,7 @@ public class USGSProcessor {
          */
         String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + adm.getCountyCode() + "\t" + country + "\t" + province + "\t" + adm.getCountyName() + "\n";
         writer.write(line);
-      ///  System.out.println(line);
+        ///  System.out.println(line);
 
       }
     } catch (IOException ex) {

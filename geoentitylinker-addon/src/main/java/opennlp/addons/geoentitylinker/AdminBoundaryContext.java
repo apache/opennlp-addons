@@ -117,16 +117,16 @@ public class AdminBoundaryContext {
       }
       Map<String, String> provs = new HashMap<>();
 
-      if (!provsForCountry.isEmpty()) {
-        for (String pcode : provsForCountry.keySet()) {
-          if (this.getProvHits().contains(pcode)) {
-            provs.put(pcode, provsForCountry.get(pcode));
-
-            clauses.add(" countrycode:" + countryCode + " AND admincode:" + pcode + gazType);
-
-          }
-        }
-      }
+//      if (!provsForCountry.isEmpty()) {
+//        for (String pcode : provsForCountry.keySet()) {
+//          if (this.getProvHits().contains(pcode)) {
+//            provs.put(pcode, provsForCountry.get(pcode));
+//
+//            clauses.add(" countrycode:" + countryCode + " AND admincode:" + pcode + gazType);
+//
+//          }
+//        }
+//      }
       if (provs.isEmpty()) {
         //got a country with no mentioned provs
         clauses.add(" countrycode:" + countryCode + gazType);

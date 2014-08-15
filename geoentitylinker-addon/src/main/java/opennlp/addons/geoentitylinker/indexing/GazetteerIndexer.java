@@ -18,8 +18,12 @@ package opennlp.addons.geoentitylinker.indexing;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.IndexWriter;
@@ -88,8 +92,8 @@ public class GazetteerIndexer {
   /**
    *
    * @param geonamesData the actual Geonames gazetteer data downloaded from
-   * here: http://download.geonames.org/export/dump/ then click on this
-   * link 'allCountries.zip'
+   * here: http://download.geonames.org/export/dump/ then click on this link
+   * 'allCountries.zip'
    * @param geoNamesCountryInfo the countryinfo lookup table that can be
    * downloaded from here
    * http://download.geonames.org/export/dump/countryinfo.txt
@@ -146,9 +150,19 @@ public class GazetteerIndexer {
 
     String indexloc = outputIndexDir.getPath() + "/opennlp_geoentitylinker_gazetteer";
     Directory index = new MMapDirectory(new File(indexloc));
-
     Analyzer a = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, a);
+    Map<String, Analyzer> analyMap = new HashMap<>();
+
+    analyMap.put("countrycode", new KeywordAnalyzer());
+    analyMap.put("admincode", new KeywordAnalyzer());
+    analyMap.put("loctype", new KeywordAnalyzer());
+    analyMap.put("countycode", new KeywordAnalyzer());
+    analyMap.put("gazsource", new KeywordAnalyzer());
+    
+    PerFieldAnalyzerWrapper aWrapper
+            = new PerFieldAnalyzerWrapper(a, analyMap);
+
+    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, aWrapper);
 
     IndexWriter w = new IndexWriter(index, config);
     USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
@@ -160,68 +174,5 @@ public class GazetteerIndexer {
     w.close();
     System.out.println("\nIndexing complete. Be sure to add '" + indexloc + "' and context file '" + outputCountryContextFile.getPath() + "' to entitylinker.properties file");
   }
-
-  /**
-   * indexes the USGS or Geonames gazateers.
-   *
-   * @param outputIndexDir a DIRECTORY path where you would like to store the
-   * output lucene indexes
-   * @param gazetteerInputData the file, "as is" that was downloaded from the
-   * USGS and GEONAMES website
-   * @param type indicates whether the data is USGS or GEONAMES format
-   * @throws Exception
-   */
-  @Deprecated
-  public void index(File outputIndexDir, File gazetteerInputData, GazType type) throws Exception {
-    if (!outputIndexDir.isDirectory()) {
-      throw new IllegalArgumentException("outputIndexDir must be a directory.");
-
-    }
-
-    String indexloc = outputIndexDir + type.toString();
-    Directory index = new MMapDirectory(new File(indexloc));
-
-    Analyzer a = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, a);
-
-    IndexWriter w = new IndexWriter(index, config);
-    //  GeonamesProcessor.process(new File("C:\\temp\\gazetteers\\geonamesdata\\countrycodes.txt"), new File("C:\\temp\\gazetteers\\geonamesdata\\admin1CodesASCII.txt"), gazetteerInputData, null, w);
-    // USGSProcessor.process(gazetteerInputData, outputIndexDir, w);
-    //  readFile(gazetteerInputData, w, type);
-    w.commit();
-    w.close();
-
-  }
-//
-//  public void readFile(File gazateerInputData, IndexWriter w, GazType type) throws Exception {
-//    BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData));
-//    List<String> fields = new ArrayList<>();
-//    int counter = 0;
-//    System.out.println("reading gazetteer data from file...........");
-//    while (reader.read() != -1) {
-//      String line = reader.readLine();
-//      String[] values = line.split(type.getSeparator());
-//      if (counter == 0) {
-//        for (String columnName : values) {
-//          fields.add(columnName.replace("»¿", "").trim());
-//        }
-//
-//      } else {
-//        Document doc = new Document();
-//        for (int i = 0; i < fields.size() - 1; i++) {
-//          doc.add(new TextField(fields.get(i), values[i].trim(), Field.Store.YES));
-//        }
-//        w.addDocument(doc);
-//      }
-//      counter++;
-//      if (counter % 100000 == 0) {
-//        w.commit();
-//        System.out.println(counter + " .........committed to index..............");
-//      }
-//
-//    }
-//    w.commit();
-//    System.out.println("Completed indexing gaz! index name is: " + type.toString());
-//  }
 
 }

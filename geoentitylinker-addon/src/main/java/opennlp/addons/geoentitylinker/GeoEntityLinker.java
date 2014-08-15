@@ -22,9 +22,11 @@ import opennlp.addons.geoentitylinker.scoring.CountryProximityScorer;
 import opennlp.addons.geoentitylinker.scoring.GeoHashBinningScorer;
 import opennlp.addons.geoentitylinker.scoring.FuzzyStringMatchScorer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
@@ -39,8 +41,8 @@ import opennlp.tools.entitylinker.EntityLinker;
  */
 public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
+  private static Integer topN = 2;
   private AdminBoundaryContextGenerator countryContext;
-  private Map<String, Set<Integer>> countryMentions;
   private EntityLinkerProperties linkerProperties;
   private GazetteerSearcher gazateerSearcher;
   private List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
@@ -64,10 +66,10 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
         if (!context.getWhereClauses().isEmpty()) {
           for (String whereclause : context.getWhereClauses()) {
-            geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, whereclause));
+            geoNamesEntries.addAll(gazateerSearcher.find(matches[i], topN, whereclause));
           }
         } else {//this means there were no where clauses generated so the where clause will default to look at the entire index
-          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], 3, " gaztype:usgs geonames regions "));
+          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions "));
         }
         if (geoNamesEntries.isEmpty()) {
           continue;
@@ -86,6 +88,36 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         scorer.score(spans, doctext, sentences, linkerProperties, context);
       }
     }
+    /**
+     * sort the data with the best score on top based on the sum of the scores below from the score map for each baselink object
+     */
+    for (LinkedSpan<BaseLink> s : spans) {
+      ArrayList<BaseLink> linkedData = s.getLinkedEntries();
+      Collections.sort(linkedData, Collections.reverseOrder(new Comparator<BaseLink>() {
+        @Override
+        public int compare(BaseLink o1, BaseLink o2) {
+          HashMap<String, Double> o1scoreMap = o1.getScoreMap();
+          HashMap<String, Double> o2scoreMap = o2.getScoreMap();
+          if (o1scoreMap.size() != o2scoreMap.size()) {
+            return 0;
+          }
+          double sumo1 = 0d;
+          double sumo2 = 0d;
+          for (String object : o1scoreMap.keySet()) {
+            if (object.equals("typescore")
+                    || object.equals("countrycontext")
+                    || object.equals("normlucene")
+                    || object.equals("geohashbin")) {
+              sumo1 += o1scoreMap.get(object);
+              sumo2 += o2scoreMap.get(object);
+            }
+          }
+
+          return Double.compare(sumo1,
+                  sumo2);
+        }
+      }));
+    }
 
     return spans;
   }
@@ -96,16 +128,25 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());
       scorers.add(new FuzzyStringMatchScorer());
-      // scorers.add(new ProvinceProximityScorer());
+      scorers.add(new PlacetypeScorer());
     }
   }
 
+  
   @Override
   public void init(EntityLinkerProperties properties) throws IOException {
     try {
       this.linkerProperties = properties;
       countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
       gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
+      String rowsRetStr = this.linkerProperties.getProperty("opennlp.geoentitylinker.gaz.rowsreturned", "2");
+      Integer rws = 2;
+      try {
+        rws = Integer.valueOf(rowsRetStr);
+      } catch (NumberFormatException e) {
+        rws = 2;
+      }
+      topN = rws;
       loadScorers();
     } catch (Exception ex) {
       throw new IOException(ex);

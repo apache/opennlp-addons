@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 
@@ -80,15 +81,15 @@ public class RegionProcessor {
 
         doc.add(new TextField("hierarchy", hierarchy, Field.Store.YES));
         doc.add(new TextField("placename", placeName, Field.Store.YES));
-        doc.add(new TextField("latitude", lat, Field.Store.YES));
-        doc.add(new TextField("longitude", lon, Field.Store.YES));
-        doc.add(new TextField("loctype", dsg, Field.Store.YES));
-        doc.add(new TextField("admincode", "", Field.Store.YES));
-        doc.add(new TextField("countrycode", id, Field.Store.YES));
-        doc.add(new TextField("countycode", "", Field.Store.YES));
+        doc.add(new StringField("latitude", lat, Field.Store.YES));
+        doc.add(new StringField("longitude", lon, Field.Store.YES));
+        doc.add(new StringField("loctype", dsg, Field.Store.YES));
+        doc.add(new StringField("admincode", "", Field.Store.YES));
+        doc.add(new StringField("countrycode", id, Field.Store.YES));
+        doc.add(new StringField("countycode", "", Field.Store.YES));
 
-        doc.add(new TextField("locid", id, Field.Store.YES));
-        doc.add(new TextField("gazsource", "region", Field.Store.YES));
+        doc.add(new StringField("locid", id, Field.Store.YES));
+        doc.add(new StringField("gazsource", "region", Field.Store.YES));
         //countrycontext file format
         // US	KY	131	United States	Kentucky	Leslie
 

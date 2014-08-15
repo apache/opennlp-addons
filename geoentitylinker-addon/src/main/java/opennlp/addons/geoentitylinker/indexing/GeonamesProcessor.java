@@ -29,6 +29,7 @@ import java.util.Set;
 import opennlp.addons.geoentitylinker.AdminBoundary;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 
@@ -230,13 +231,17 @@ public class GeonamesProcessor {
       String lat = values[4];
       String lon = values[5];
       String dsg = values[7].toLowerCase();
+
       String id = values[0];
       String concatIndexEntry = "";
+      String countryname = "";
       if (adm != null) {
         concatIndexEntry = adm.getCountryName() + ", " + adm.getProvinceName() + ", " + placeName;
+        countryname = adm.getCountryName();
       } else {
         //there is no admin info, but we can still use the countrycode to concat the country name
         String n = countrycodes.get(ccode);
+        countryname = n;
         if (n != null) {
           concatIndexEntry = n + ", " + placeName;
         } else {
@@ -251,27 +256,30 @@ public class GeonamesProcessor {
         doc.add(new TextField(fields.get(i), values[i].trim(), Field.Store.YES));
 
       }
-
+      if (dsg.equals("pcli")) {
+        System.out.println("placename: " + placeName + " RESET TO: " + countryname);
+        placeName = countryname;
+      }
       /**
        * add standard fields to the index
        */
       doc.add(new TextField("hierarchy", concatIndexEntry, Field.Store.YES));
       doc.add(new TextField("placename", placeName, Field.Store.YES));
+      // doc.add(new TextField("countryname", countryname, Field.Store.YES));
+      //System.out.println(placeName);
+
       doc.add(new TextField("latitude", lat, Field.Store.YES));
       doc.add(new TextField("longitude", lon, Field.Store.YES));
-      if (boostMap.containsKey(dsg)) {
-        TextField f = new TextField("loctype", dsg, Field.Store.YES);
-        f.setBoost(boostMap.get(dsg));
-        doc.add(f);
-      } else {
-        doc.add(new TextField("loctype", dsg, Field.Store.YES));
+      doc.add(new StringField("loctype", dsg, Field.Store.YES));
+      doc.add(new StringField("admincode", (ccode + "." + admincode).toLowerCase(), Field.Store.YES));
+      doc.add(new StringField("countrycode", ccode.toLowerCase(), Field.Store.YES));
+      doc.add(new StringField("countycode", "", Field.Store.YES));
+      doc.add(new StringField("locid", id, Field.Store.YES));
+      placeName = placeName.replace("republic of", "").replace("federative", "");
+      if (id.equals("3175395")) {
+        System.out.println(placeName);
       }
-      doc.add(new TextField("admincode", (ccode + "." + admincode).toLowerCase(), Field.Store.YES));
-      doc.add(new TextField("countrycode", ccode.toLowerCase(), Field.Store.YES));
-      doc.add(new TextField("countycode", "", Field.Store.YES));
-
-      doc.add(new TextField("locid", id, Field.Store.YES));
-      doc.add(new TextField("gazsource", "geonames", Field.Store.YES));
+      doc.add(new StringField("gazsource", "geonames", Field.Store.YES));
 
       w.addDocument(doc);
 
