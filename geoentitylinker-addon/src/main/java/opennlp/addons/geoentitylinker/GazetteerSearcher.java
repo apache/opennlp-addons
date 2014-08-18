@@ -40,6 +40,7 @@ import org.apache.lucene.util.Version;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.util.CharArraySet;
 
 /**
@@ -56,12 +57,7 @@ public class GazetteerSearcher {
   private boolean doubleQuoteAllSearchTerms = false;
   private boolean useHierarchyField = false;
 
-  private IndexSearcher geonamesSearcher;// = new IndexSearcher(geonamesReader);
-  private Analyzer geonamesAnalyzer;
-  //usgs US gazateer
 
-  private IndexSearcher usgsSearcher;// = new IndexSearcher(geonamesReader);
-  private Analyzer usgsAnalyzer;
   private EntityLinkerProperties properties;
 
   private Directory opennlpIndex;//= new MMapDirectory(new File(indexloc));
@@ -167,7 +163,7 @@ public class GazetteerSearcher {
          */
         int maxLen = searchString.length() > entry.getItemName().length() ? searchString.length() : entry.getItemName().length();
 
-        Double normLev = Math.abs(1 - (sc / (double) maxLen));//searchString.length() / (double) entry.getItemName().length();
+        Double normLev = Math.abs(1 - (sc / (double) maxLen));
         /**
          * only want hits above the levenstein thresh. This should be a low
          * thresh due to the use of the hierarchy field in the index
@@ -226,7 +222,6 @@ public class GazetteerSearcher {
       opennlpIndex = new MMapDirectory(new File(indexloc));
       opennlpReader = DirectoryReader.open(opennlpIndex);
       opennlpSearcher = new IndexSearcher(opennlpReader);
-      //TODO: a language code switch statement should be employed here at some point
       opennlpAnalyzer
               = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
               new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
@@ -237,6 +232,11 @@ public class GazetteerSearcher {
       analyMap.put("loctype", new KeywordAnalyzer());
       analyMap.put("countycode", new KeywordAnalyzer());
       analyMap.put("gazsource", new KeywordAnalyzer());
+      
+      
+    opennlpAnalyzer
+            = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
+
 
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));

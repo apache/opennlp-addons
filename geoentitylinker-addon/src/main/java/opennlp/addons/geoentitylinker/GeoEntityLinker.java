@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
+import opennlp.addons.geoentitylinker.scoring.ProvinceProximityScorer;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
@@ -89,7 +90,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       }
     }
     /**
-     * sort the data with the best score on top based on the sum of the scores below from the score map for each baselink object
+     * sort the data with the best score on top based on the sum of the scores
+     * below from the score map for each baselink object
      */
     for (LinkedSpan<BaseLink> s : spans) {
       ArrayList<BaseLink> linkedData = s.getLinkedEntries();
@@ -124,6 +126,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   private void loadScorers() {
     if (scorers.isEmpty()) {
+      scorers.add(new ProvinceProximityScorer());
       scorers.add(new GeoHashBinningScorer());
       scorers.add(new CountryProximityScorer());
       scorers.add(new ModelBasedScorer());
@@ -132,7 +135,6 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     }
   }
 
-  
   @Override
   public void init(EntityLinkerProperties properties) throws IOException {
     try {

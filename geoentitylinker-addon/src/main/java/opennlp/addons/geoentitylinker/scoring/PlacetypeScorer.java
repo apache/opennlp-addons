@@ -40,12 +40,12 @@ public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext>
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
-    for(LinkedSpan<GazetteerEntry> geospan : linkedSpans){
+    for (LinkedSpan<GazetteerEntry> geospan : linkedSpans) {
       ArrayList<GazetteerEntry> linkedEntries = geospan.getLinkedEntries();
       for (GazetteerEntry gazetteerEntry : linkedEntries) {
         String type = gazetteerEntry.getItemType().toLowerCase();
         Double score = getScore(type);
-        if(score==null){
+        if (score == null) {
           score = 0d;
         }
         gazetteerEntry.getScoreMap().put("typescore", score);
@@ -63,12 +63,14 @@ public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext>
       for (String type : boosts) {
         if (type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), 1d);
-        } else if (type.startsWith("PCL") && !type.equals("PCLI")) {
+        } else if (type.startsWith("P") && !type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), .5d);
         } else if (type.startsWith("ADM")) {
           boosetedTypes.put(type.toLowerCase(), .75d);
         }
+
       }
+      boosetedTypes.put("pplc", .9);
     }
   }
 

@@ -34,7 +34,7 @@ import opennlp.tools.util.Span;
  * heuristic that toponymn mentions are more likely close to their parent
  * province mentions. For instance, if the toponym Berlin is mentioned near an
  * indicator of Connecticut, it is more likely to be Berlin Connecticut than
- * Berlin Germany (if Germany did not exist in, or is mentioned further down in,
+ * Berlin Germany (if Germany did not exist in, or is mentioned further away in
  * the article).
  *
  *
@@ -51,7 +51,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
     } else {
       for (LinkedSpan<BaseLink> span : linkedSpans) {
         for (BaseLink link : span.getLinkedEntries()) {
-          link.getScoreMap().put("provincecontext", Double.NaN);
+          link.getScoreMap().put("provincecontext", 0d);
         }
       }
     }
@@ -163,7 +163,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
       if (scoreMap.containsKey(spanCountryCode)) {
 
         score = scoreMap.get(spanCountryCode);
-        ///does the name extracted match a country name?
+        ///does the name extracted match a province name?
         if (nameCodesMap.containsKey(entry.getItemName().toLowerCase())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(entry.getItemName().toLowerCase()).contains(entry.getProvinceCode())) {
@@ -183,8 +183,8 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
   }
 
   /**
-   * takes a map of distances from the toponym to each country mention and
-   * generates a map of scores for each country code. The map is then correlated
+   * takes a map of distances from the toponym to each province mention and
+   * generates a map of scores for each province code. The map is then correlated
    * to the code of the BaseLink parentid for retrieval. Then the score is added
    * to the overall list.
    *
@@ -232,7 +232,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    * together to smooth out the average, so one distant outlier does not kill
    * the score for an obviously good hit. More elegant solution is possible
    * using Math.pow, and making the score decay with distance by using an
-   * increasing negative exponent (I think)
+   * increasing negative exponent
    *
    * @param normDis the normalized and sorted set of distances as a list
    * @return
