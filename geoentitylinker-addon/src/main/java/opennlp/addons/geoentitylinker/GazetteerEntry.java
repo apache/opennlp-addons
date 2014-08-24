@@ -130,11 +130,9 @@ public class GazetteerEntry extends BaseLink {
 
   @Override
   public int hashCode() {
-    int hash = 7;
-    hash = 29 * hash + Objects.hashCode(this.latitude);
-    hash = 29 * hash + Objects.hashCode(this.longitude);
-    hash = 29 * hash + Objects.hashCode(this.source);
-    hash = 29 * hash + Objects.hashCode(this.indexID);
+    int hash = 5;
+    hash = 71 * hash + Objects.hashCode(this.source);
+    hash = 71 * hash + Objects.hashCode(this.indexID);
     return hash;
   }
 
@@ -147,12 +145,6 @@ public class GazetteerEntry extends BaseLink {
       return false;
     }
     final GazetteerEntry other = (GazetteerEntry) obj;
-    if (!Objects.equals(this.latitude, other.latitude)) {
-      return false;
-    }
-    if (!Objects.equals(this.longitude, other.longitude)) {
-      return false;
-    }
     if (!Objects.equals(this.source, other.source)) {
       return false;
     }
@@ -162,6 +154,7 @@ public class GazetteerEntry extends BaseLink {
     return true;
   }
 
+ 
   public String getCountryCode() {
     return countryCode;
   }

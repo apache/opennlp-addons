@@ -35,8 +35,8 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.EntityLinker;
 
 /**
- * Links location entities to the USGS and GeoNames gazatteers, and uses several
- * scoring techniques to enable resolution. The gazateers are stored in lucene
+ * Links location entities to the USGS and GeoNames gazetteers, and uses several
+ * scoring techniques to enable resolution. The gazetteers are stored in lucene
  * indexes. The indexes can be built using the GeoEntityLinkerSetupUtils class
  * in this same package.
  */
@@ -67,16 +67,28 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
         if (!context.getWhereClauses().isEmpty()) {
           for (String whereclause : context.getWhereClauses()) {
-            geoNamesEntries.addAll(gazateerSearcher.find(matches[i], topN, whereclause));
+            ArrayList<GazetteerEntry> find = gazateerSearcher.find(matches[i], topN, whereclause);
+            for (GazetteerEntry gazetteerEntry : find) {
+              if (!geoNamesEntries.contains(gazetteerEntry)) {
+                geoNamesEntries.add(gazetteerEntry);
+              }
+            }
+
           }
         } else {//this means there were no where clauses generated so the where clause will default to look at the entire index
-          geoNamesEntries.addAll(gazateerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions "));
+          ArrayList<GazetteerEntry> find = gazateerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions ");
+          for (GazetteerEntry gazetteerEntry : find) {
+            if (!geoNamesEntries.contains(gazetteerEntry)) {
+              geoNamesEntries.add(gazetteerEntry);
+            }
+          }
         }
         if (geoNamesEntries.isEmpty()) {
           continue;
         }
         /**
-         * Normalize the returned scores for this name... this will assist the sort
+         * Normalize the returned scores for this name... this will assist the
+         * sort
          */
         if (!spans.isEmpty()) {
 
