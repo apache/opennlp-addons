@@ -31,7 +31,7 @@ import opennlp.tools.util.Span;
  */
 public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
-  private static final String[] boosts = "ADM1 ADM1H ADM2 ADM2H ADM3 ADM3H ADM4 ADM4H ADM5 ADMD ADMDH PCLD PCLH PCLI PCLIX TERR PCLIX PPL PPLA PPLA2 PPLA3 PPLA4 PPLC PPLCH PPLF PPLG PPLH PPLL PPLQ PPLR PPLS PPLX STLMT".split(" ");
+  private static final String[] boosts = "ADM1 ADM1H ADM2 ADM2H ADM3 ADM3H ADM4 ADM4H ADM5 ADMD ADMDH PCLD PCLH PCLI PCLIX TERR PCLIX PPL PPLA PPLA2 PPLA3 PPLA4 PPLC PPLCH PPLF PPLG PPLH PPLL PPLQ PPLR PPLS PPLX STLMT civil Populated_Place".split(" ");
   private Map<String, Double> boosetedTypes = new HashMap<>();
 
   public PlacetypeScorer() {
@@ -63,10 +63,15 @@ public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext>
       for (String type : boosts) {
         if (type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), 1d);
-        } else if (type.startsWith("P") && !type.equals("PCLI")) {
+        } else if ((type.startsWith("PC")|| type.startsWith("PP")) && !type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), .5d);
         } else if (type.startsWith("ADM")) {
           boosetedTypes.put(type.toLowerCase(), .75d);
+        }else if (type.toLowerCase().equals("civil")){
+          boosetedTypes.put(type.toLowerCase(), .9d);
+        }
+        if(type.toLowerCase().equals("populated_place")){
+           boosetedTypes.put("Populated Place", .75d);
         }
 
       }

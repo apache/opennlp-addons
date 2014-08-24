@@ -57,7 +57,6 @@ public class GazetteerSearcher {
   private boolean doubleQuoteAllSearchTerms = false;
   private boolean useHierarchyField = false;
 
-
   private EntityLinkerProperties properties;
 
   private Directory opennlpIndex;//= new MMapDirectory(new File(indexloc));
@@ -124,11 +123,14 @@ public class GazetteerSearcher {
       //Filter filter = new QueryWrapperFilter(new QueryParser(Version.LUCENE_48, whereClause, opennlpAnalyzer).parse(whereClause));      
 
       TopDocs bestDocs = opennlpSearcher.search(q, rowsReturned);
-
+      Double maxscore = 0d;
       for (int i = 0; i < bestDocs.scoreDocs.length; ++i) {
         GazetteerEntry entry = new GazetteerEntry();
         int docId = bestDocs.scoreDocs[i].doc;
         double sc = bestDocs.scoreDocs[i].score;
+        if (maxscore.compareTo(sc) < 0) {
+          maxscore = sc;
+        }
         entry.getScoreMap().put("lucene", sc);
         entry.setIndexID(docId + "");
 
@@ -158,19 +160,13 @@ public class GazetteerSearcher {
         for (int idx = 0; idx < fields.size(); idx++) {
           entry.getIndexData().put(fields.get(idx).name(), d.get(fields.get(idx).name()));
         }
-        /**
-         * norm the levenstein distance
-         */
-        int maxLen = searchString.length() > entry.getItemName().length() ? searchString.length() : entry.getItemName().length();
-
-        Double normLev = Math.abs(1 - (sc / (double) maxLen));
+       
         /**
          * only want hits above the levenstein thresh. This should be a low
          * thresh due to the use of the hierarchy field in the index
          */
         // if (normLev > scoreCutoff) {
         if (entry.getItemParentID().toLowerCase().equals(parentid.toLowerCase()) || parentid.toLowerCase().equals("")) {
-          entry.getScoreMap().put("normlucene", normLev);
           //make sure we don't produce a duplicate
           if (!linkedData.contains(entry)) {
             linkedData.add(entry);
@@ -182,15 +178,15 @@ public class GazetteerSearcher {
         }
         //}
       }
-
+      
     } catch (IOException | ParseException ex) {
       LOGGER.error(ex);
     }
 
-  
-
     return linkedData;
   }
+
+ 
 
   /**
    * Replaces any noise chars with a space, and depending on configuration adds
@@ -232,11 +228,9 @@ public class GazetteerSearcher {
       analyMap.put("loctype", new KeywordAnalyzer());
       analyMap.put("countycode", new KeywordAnalyzer());
       analyMap.put("gazsource", new KeywordAnalyzer());
-      
-      
-    opennlpAnalyzer
-            = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
 
+      opennlpAnalyzer
+              = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
 
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));

@@ -75,6 +75,24 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         if (geoNamesEntries.isEmpty()) {
           continue;
         }
+        /**
+         * Normalize the returned scores for this name... this will assist the sort
+         */
+        if (!spans.isEmpty()) {
+
+          Double maxscore = 0d;
+          for (BaseLink gazetteerEntry : geoNamesEntries) {
+            Double deNormScore = gazetteerEntry.getScoreMap().get("lucene");
+            if (deNormScore.compareTo(maxscore) > 0) {
+              maxscore = deNormScore;
+            }
+          }
+          for (BaseLink gazetteerEntry : geoNamesEntries) {
+            Double deNormScore = gazetteerEntry.getScoreMap().get("lucene");
+            Double normalize = normalize(deNormScore, 0d, maxscore);
+            gazetteerEntry.getScoreMap().put("normlucene", normalize);
+          }
+        }
         LinkedSpan newspan = new LinkedSpan(geoNamesEntries, names[i], 0);
         newspan.setSearchTerm(matches[i]);
         newspan.setLinkedEntries(geoNamesEntries);
@@ -109,7 +127,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
             if (object.equals("typescore")
                     || object.equals("countrycontext")
                     || object.equals("placenamedicecoef")
-                    || object.equals("geohashbin")) {
+                    || object.equals("geohashbin")
+                    || object.equals("normlucene")) {
               sumo1 += o1scoreMap.get(object);
               sumo2 += o2scoreMap.get(object);
             }
@@ -122,6 +141,21 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     }
 
     return spans;
+  }
+
+  /**
+   * transposes a value within one range to a relative value in a different
+   * range. Used to normalize distances in this class.
+   *
+   * @param valueToNormalize the value to place within the new range
+   * @param minimum the min of the set to be transposed
+   * @param maximum the max of the set to be transposed
+   * @return
+   */
+  private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
+    Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
+    d = d == Double.NaN ? 0d : d;
+    return d;
   }
 
   private void loadScorers() {
