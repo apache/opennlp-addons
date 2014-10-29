@@ -35,7 +35,6 @@ public interface LinkedEntityScorer<T> {
  * @param sentenceSpans the sentence spans the correspond to the document text
    * @param properties the entitylinker properties config file
  * @param additionalContext any additional data required to perform the scoring operation
- * @return void
  */
   void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, T additionalContext);
 }

@@ -84,7 +84,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
    * @param docText
    * @param radius
    * @return a map of the index of the linked span to the string of surrounding
-   * text: Map<indexofspan,surrounding text>
+   * text: Map&lt;indexofspan,surrounding text&gt;
    */
   public Map<Integer, String> generateProximalFeatures(List<LinkedSpan> linkedSpans, Span[] sentenceSpans, String docText, int radius) {
     Map<Integer, String> featureBags = new HashMap<>();
