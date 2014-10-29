@@ -49,7 +49,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   private List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
 
   @Override
-  public List<LinkedSpan> find(String doctext, Span[] sentences, String[][] tokensBySentence, Span[][] namesBySentence) {
+  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence, Span[][] namesBySentence) {
     ArrayList<LinkedSpan> spans = new ArrayList<LinkedSpan>();
 
     if (linkerProperties == null) {
@@ -59,7 +59,10 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     AdminBoundaryContext context = countryContext.getContext(doctext);
     for (int s = 0; s < sentences.length; s++) {
       Span[] names = namesBySentence[s];
-      String[] tokens = tokensBySentence[s];
+      
+      Span[] tokenSpans = tokensBySentence[s];
+      String[] tokens = Span.spansToStrings(tokenSpans, sentences[s].getCoveredText(doctext));
+      
       String[] matches = Span.spansToStrings(names, tokens);
 
       for (int i = 0; i < matches.length; i++) {
@@ -202,17 +205,9 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   }
 
   @Override
-  public List<LinkedSpan> find(String text, Span[] sentences, Span[] tokens, Span[] nameSpans) {
-    throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document for proper scoring. This method is unsupported"); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public List<LinkedSpan> find(String text, Span[] sentences, Span[] tokens, Span[] nameSpans, int sentenceIndex) {
-    throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document for proper scoring. This method is unsupported"); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public List<LinkedSpan> find(String text, Span[] sentences, String[] tokens, Span[] nameSpans) {
-    throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document for proper scoring. This method is unsupported"); //To change body of generated methods, choose Tools | Templates.
+  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence, 
+		  Span[][] namesBySentence, int sentenceIndex) {
+    throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document "
+    		+ "for proper scoring. This method is unsupported");
   }
 }
