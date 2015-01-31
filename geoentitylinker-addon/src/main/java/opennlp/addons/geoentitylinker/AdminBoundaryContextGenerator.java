@@ -81,14 +81,22 @@ public class AdminBoundaryContextGenerator {
     }
   }
 
-  public AdminBoundaryContextGenerator(EntityLinkerProperties properties) throws Exception {
+  public AdminBoundaryContextGenerator(EntityLinkerProperties properties) throws IOException{
     this.properties = properties;
     if (countrydata == null) {
       String path = this.properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
-
+      if (path == null || path.trim().isEmpty()) {
+        throw new IOException("missing country context data configuration. Property opennlp.geoentitylinker.countrycontext.filepath must have a valid path value in entitylinker properties file");
+      }
       File countryContextFile = new File(path);
+      if (countryContextFile == null || !countryContextFile.exists()) {
+        throw new IOException("missing country context file");
+      }
       //countrydata = getCountryContextFromFile(countryContextFile);
       adminBoundaryData = getContextFromFile(countryContextFile);
+      if (adminBoundaryData.isEmpty()) {
+        throw new IOException("missing country context data");
+      }
     }
   }
 
@@ -140,7 +148,7 @@ public class AdminBoundaryContextGenerator {
    */
   private AdminBoundaryContext process(String text) {
     try {
-    
+
       reset();
       Map<String, Set<Integer>> countryhitMap = regexfind(text, countryMap, countryHitSet);
       if (!countryhitMap.isEmpty()) {
