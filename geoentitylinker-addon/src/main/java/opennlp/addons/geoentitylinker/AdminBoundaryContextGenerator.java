@@ -74,14 +74,14 @@ public class AdminBoundaryContextGenerator {
       GeoEntityLinker linker = new GeoEntityLinker();
       linker.init(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties")));
 
-      countryContext.process("This artcle is about fairfax county virginia in the north of florida in the united states. It is also about Moscow and atlanta. Hillsborough county florida is a shithole. Eastern Africa people are cool.");
-
+      AdminBoundaryContext c = countryContext.process("This artcle is about fairfax county virginia in the north of florida in the united states. It is also about Moscow and atlanta. Hillsborough county florida is a nice place. Eastern Africa people are cool.");
+      System.out.println(c);
     } catch (Exception ex) {
       java.util.logging.Logger.getLogger(AdminBoundaryContextGenerator.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
 
-  public AdminBoundaryContextGenerator(EntityLinkerProperties properties) throws IOException{
+  public AdminBoundaryContextGenerator(EntityLinkerProperties properties) throws IOException {
     this.properties = properties;
     if (countrydata == null) {
       String path = this.properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
@@ -155,12 +155,12 @@ public class AdminBoundaryContextGenerator {
         for (String cc : countryhitMap.keySet()) {
           Map<String, String> provsForCc = provMap.get(cc);
           if (provsForCc != null) {
-            provMentions = regexfind(text, provsForCc, provHits);
+            provMentions.putAll(regexfind(text, provsForCc, provHits));
             if (provMentions != null) {
               for (String prov : provMentions.keySet()) {
                 Map<String, String> get = countyMap.get(prov);
                 if (get != null) {
-                  countyMentions = regexfind(text, get, countyHits);
+                  countyMentions.putAll(regexfind(text, get, countyHits));
                 }
               }
             }
@@ -208,64 +208,6 @@ public class AdminBoundaryContextGenerator {
     return null;
   }
 
-  /**
-   * Finds mentions of countries to assist in toponym resolution. Countries are
-   * discovered via regex based on a configured file called
-   * opennlp.geoentitylinker.countrycontext.txt. the file is configured using
-   * the entitylinker.properties file as such:
-   * opennlp.geoentitylinker.countrycontext.filepath=/opt/opennlp/opennlp.geoentitylinker.countrycontext.txt
-   *
-   * Finding mentions in documents is very helpful for scoring. Lazily loads the
-   * list from the file.
-   *
-   * @param docText the full text of the document
-   * @return
-   */
-  @Deprecated
-  public Map<String, Set<Integer>> regexfind(String docText) {
-    countryMentions = new HashMap<>();
-    nameCodesMap.clear();
-    try {
-
-      for (CountryContextEntry entry : countrydata) {
-        Pattern regex = Pattern.compile(entry.getFull_name_nd_ro().trim(), Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-        Matcher rs = regex.matcher(docText);
-        String code = entry.getCc1().toLowerCase();
-
-        boolean found = false;
-        while (rs.find()) {
-          found = true;
-          Integer start = rs.start();
-          String hit = rs.group().toLowerCase();
-          if (countryMentions.containsKey(code)) {
-            countryMentions.get(code).add(start);
-          } else {
-            Set<Integer> newset = new HashSet<Integer>();
-            newset.add(start);
-            countryMentions.put(code, newset);
-          }
-          if (!hit.equals("")) {
-            if (this.nameCodesMap.containsKey(hit)) {
-              nameCodesMap.get(hit).add(code);
-            } else {
-              HashSet<String> newset = new HashSet<String>();
-              newset.add(code);
-              nameCodesMap.put(hit, newset);
-            }
-          }
-        }
-        if (found) {
-          countryHits.add(entry);
-        }
-
-      }
-
-    } catch (Exception ex) {
-      LOGGER.error(ex);
-    }
-
-    return countryMentions;
-  }
 
   /**
    * discovers indicators of admin boundary data using regex.
@@ -292,7 +234,7 @@ public class AdminBoundaryContextGenerator {
         Pattern regex = Pattern.compile(name, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher rs = regex.matcher(docText);
         String code = entry.toLowerCase();
-
+        code = code.trim().replace("ï»¿", "");
         boolean found = false;
         while (rs.find()) {
           found = true;
@@ -349,7 +291,7 @@ public class AdminBoundaryContextGenerator {
         }
         if (values.length == 6) {
           AdminBoundary entry = new AdminBoundary(
-                  values[0].toLowerCase().trim(),
+                  values[0].toLowerCase().trim().replace("ï»¿", ""),
                   values[3].toLowerCase().trim(),
                   values[1].toLowerCase().trim(),
                   values[4].toLowerCase().trim(),
@@ -358,7 +300,7 @@ public class AdminBoundaryContextGenerator {
           entries.add(entry);
         } else {
           AdminBoundary entry = new AdminBoundary(
-                  values[0].toLowerCase().trim(),
+                values[0].toLowerCase().trim().replace("ï»¿", ""),
                   values[3].toLowerCase().trim(),
                   values[1].toLowerCase().trim(),
                   values[4].toLowerCase().trim(),

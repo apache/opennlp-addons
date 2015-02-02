@@ -44,7 +44,7 @@ public class GazetteerIndexer {
       i.index(new File("C:\\temp\\gazetteers\\geonamesdata\\allcountries\\allCountries.txt"),
               new File("C:\\temp\\gazetteers\\geonamesdata\\countryinfo.txt"),
               new File("C:\\temp\\gazetteers\\geonamesdata\\admin1CodesASCII.txt"),
-              new File("C:\\temp\\gazetteers\\usgsdata\\NationalFile_20140601.txt"),
+              new File("C:\\temp\\gazetteers\\usgsdata\\NationalFile_20141202.txt.txt"),
               new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"),
               new File("C:\\temp\\gazetteers\\"),
               new File("C:\\temp\\gazetteers\\newCountryContextFile.txt"),

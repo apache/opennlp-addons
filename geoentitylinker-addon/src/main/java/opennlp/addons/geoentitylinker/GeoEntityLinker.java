@@ -186,7 +186,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   @Override
   public void init(EntityLinkerProperties properties) throws IOException {
-    try {
+   
       this.linkerProperties = properties;
       countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
       gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
@@ -199,9 +199,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
       }
       topN = rws;
       loadScorers();
-    } catch (Exception ex) {
-      throw new IOException(ex);
-    }
+    
   }
 
   @Override

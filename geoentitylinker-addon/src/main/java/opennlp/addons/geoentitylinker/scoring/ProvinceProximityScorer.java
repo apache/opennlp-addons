@@ -156,9 +156,12 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
      * span is referring to the toponym form this code key>
      */
     Map<String, Double> scoreMap = analyzeMap(distancesFromCodeMap, sentences, span);
+    if (scoreMap.isEmpty()) {
+      return span;
+    }
     for (BaseLink link : span.getLinkedEntries()) {
       //getItemParentId is the country code
-    GazetteerEntry entry = (GazetteerEntry)link;
+      GazetteerEntry entry = (GazetteerEntry) link;
       String spanCountryCode = entry.getProvinceCode();
       if (scoreMap.containsKey(spanCountryCode)) {
 
@@ -184,9 +187,9 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
 
   /**
    * takes a map of distances from the toponym to each province mention and
-   * generates a map of scores for each province code. The map is then correlated
-   * to the code of the BaseLink parentid for retrieval. Then the score is added
-   * to the overall list.
+   * generates a map of scores for each province code. The map is then
+   * correlated to the code of the BaseLink parentid for retrieval. Then the
+   * score is added to the overall list.
    *
    * @param distanceMap
    * @param sentences

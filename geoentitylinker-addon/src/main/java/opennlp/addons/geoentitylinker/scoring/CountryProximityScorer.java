@@ -168,6 +168,7 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
           }
         }
       }
+      
       link.getScoreMap().put("countrycontext", score);
     }
     return span;

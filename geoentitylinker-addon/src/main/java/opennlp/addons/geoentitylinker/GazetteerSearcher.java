@@ -76,7 +76,7 @@ public class GazetteerSearcher {
     }
   }
 
-  public GazetteerSearcher(EntityLinkerProperties properties) throws Exception {
+  public GazetteerSearcher(EntityLinkerProperties properties) throws IOException {
     this.properties = properties;
     init();
   }
@@ -206,7 +206,7 @@ public class GazetteerSearcher {
 
   }
 
-  private void init() throws Exception {
+  private void init() throws IOException {
 
     if (opennlpIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz", "");
