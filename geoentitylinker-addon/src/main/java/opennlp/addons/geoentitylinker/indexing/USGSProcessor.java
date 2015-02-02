@@ -244,6 +244,6 @@ public class USGSProcessor {
     } catch (IOException ex) {
       Logger.getLogger(GeonamesProcessor.class.getName()).log(Level.SEVERE, null, ex);
     }
-    System.out.println("successfully wrote USGS entries to country oontext file");
+    System.out.println("successfully wrote USGS entries to country context file");
   }
 }
