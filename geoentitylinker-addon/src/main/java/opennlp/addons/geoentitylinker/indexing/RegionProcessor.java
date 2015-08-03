@@ -27,10 +27,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 
-/**
- *
- * @author mgiaconia
- */
 public class RegionProcessor {
 
   public static void main(String[] args) {

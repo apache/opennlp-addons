@@ -20,10 +20,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- *
- * @author mgiaconia
- */
 public class AdminBoundaryContext {
 
   private final Map<String, Set<Integer>> countryMentions;

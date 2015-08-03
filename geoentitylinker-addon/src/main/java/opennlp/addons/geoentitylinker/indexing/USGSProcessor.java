@@ -34,10 +34,6 @@ import org.apache.lucene.document.TextField;
 
 import org.apache.lucene.index.IndexWriter;
 
-/**
- *
- * @author mgiaconia
- */
 public class USGSProcessor {
 
   public static void main(String[] args) {

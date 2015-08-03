@@ -33,10 +33,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 
-/**
- *
- * @author mgiaconia
- */
 public class GeonamesProcessor {
 
   public static void process(File countryCodesLookupFile, File adm1CodesLookupFile, File geonamesGazetteerFile, File outputCountryContextFile, IndexWriter w) throws Exception {

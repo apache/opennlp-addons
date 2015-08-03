@@ -20,8 +20,6 @@ import java.util.Objects;
 /**
  * Stores an admin boundary down to the US county level. Only US places from the
  * USGS Gazetteer will have county level info
- *
- * @author mgiaconia
  */
 public class AdminBoundary {
 
