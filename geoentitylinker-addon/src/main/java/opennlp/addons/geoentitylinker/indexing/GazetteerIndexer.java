@@ -33,22 +33,39 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.util.Version;
 
 /**
- *
- * Creates two lucene indexes, geonames and usgs for use in GeoEntityLinker
+ * Creates two lucene indexes, geonames and usgs for use in GeoEntityLinker.
  */
 public class GazetteerIndexer {
 
   public static void main(String[] args) {
+
+    if (args.length != 8) {
+      System.out.println("Usage: GazetteerIndexer geonamesData geoNamesCountryInfo geonamesAdmin1CodesASCII "
+          + "usgsDataFile usgsGovUnitsFile outputIndexDir outputCountryContextFile regionsFile");
+      System.out.println();
+      System.out.println("The GazetteerIndexer.index methods javadoc explains how to retrieve the data files.");
+      return;
+    }
+
+    File geonamesData = new File(args[0]); 
+    File geoNamesCountryInfo = new File(args[1]); 
+    File geonamesAdmin1CodesASCII = new File(args[2]);
+    File usgsDataFile = new File(args[3]); 
+    File usgsGovUnitsFile = new File(args[4]); 
+    File outputIndexDir = new File(args[5]); 
+    File outputCountryContextFile = new File(args[6]); 
+    File regionsFile = new File(args[7]);
+    
     try {
       GazetteerIndexer i = new GazetteerIndexer();
-      i.index(new File("C:\\temp\\gazetteers\\geonamesdata\\allcountries\\allCountries.txt"),
-              new File("C:\\temp\\gazetteers\\geonamesdata\\countryinfo.txt"),
-              new File("C:\\temp\\gazetteers\\geonamesdata\\admin1CodesASCII.txt"),
-              new File("C:\\temp\\gazetteers\\usgsdata\\NationalFile_20141202.txt.txt"),
-              new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"),
-              new File("C:\\temp\\gazetteers\\"),
-              new File("C:\\temp\\gazetteers\\newCountryContextFile.txt"),
-              new File("C:\\temp\\gazetteers\\regions.txt"));
+      i.index(geonamesData,
+          geoNamesCountryInfo,
+          geonamesAdmin1CodesASCII,
+          usgsDataFile,
+          usgsGovUnitsFile,
+          outputIndexDir,
+          outputCountryContextFile,
+          regionsFile);
     } catch (Exception ex) {
       ex.printStackTrace();
     }
