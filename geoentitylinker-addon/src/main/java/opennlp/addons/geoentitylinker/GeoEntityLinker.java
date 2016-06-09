@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
 import opennlp.addons.geoentitylinker.scoring.ProvinceProximityScorer;
@@ -59,10 +60,10 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     AdminBoundaryContext context = countryContext.getContext(doctext);
     for (int s = 0; s < sentences.length; s++) {
       Span[] names = namesBySentence[s];
-      
+
       Span[] tokenSpans = tokensBySentence[s];
       String[] tokens = Span.spansToStrings(tokenSpans, sentences[s].getCoveredText(doctext));
-      
+
       String[] matches = Span.spansToStrings(names, tokens);
 
       for (int i = 0; i < matches.length; i++) {
@@ -140,19 +141,30 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
           double sumo2 = 0d;
           for (String object : o1scoreMap.keySet()) {
             if (object.equals("typescore")
-                    || object.equals("countrycontext")
-                    || object.equals("placenamedicecoef")
-                    || object.equals("geohashbin")
-                    || object.equals("normlucene")) {
+                || object.equals("countrycontext")
+                || object.equals("placenamedicecoef")
+                || object.equals("provincecontext")
+                || object.equals("geohashbin")
+                || object.equals("normlucene")) {
               sumo1 += o1scoreMap.get(object);
               sumo2 += o2scoreMap.get(object);
             }
           }
 
           return Double.compare(sumo1,
-                  sumo2);
+              sumo2);
         }
       }));
+      //prune the list to topN
+      Iterator iterator = linkedData.iterator();
+      int n = 0;
+      while (iterator.hasNext()) {
+        if (n >= topN) {
+          iterator.remove();
+        }
+        iterator.next();
+        n++;
+      }
     }
 
     return spans;
@@ -186,26 +198,26 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   @Override
   public void init(EntityLinkerProperties properties) throws IOException {
-   
-      this.linkerProperties = properties;
-      countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
-      gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
-      String rowsRetStr = this.linkerProperties.getProperty("opennlp.geoentitylinker.gaz.rowsreturned", "2");
-      Integer rws = 2;
-      try {
-        rws = Integer.valueOf(rowsRetStr);
-      } catch (NumberFormatException e) {
-        rws = 2;
-      }
-      topN = rws;
-      loadScorers();
-    
+
+    this.linkerProperties = properties;
+    countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
+    gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
+    String rowsRetStr = this.linkerProperties.getProperty("opennlp.geoentitylinker.gaz.rowsreturned", "2");
+    Integer rws = 2;
+    try {
+      rws = Integer.valueOf(rowsRetStr);
+    } catch (NumberFormatException e) {
+      rws = 2;
+    }
+    topN = rws;
+    loadScorers();
+
   }
 
   @Override
-  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence, 
-		  Span[][] namesBySentence, int sentenceIndex) {
+  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence,
+      Span[][] namesBySentence, int sentenceIndex) {
     throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document "
-    		+ "for proper scoring. This method is unsupported");
+        + "for proper scoring. This method is unsupported");
   }
 }

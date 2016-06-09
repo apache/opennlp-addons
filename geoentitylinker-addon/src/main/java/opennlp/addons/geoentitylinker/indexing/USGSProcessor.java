@@ -82,7 +82,13 @@ public class USGSProcessor {
         String admincode = values[3];
         AdminBoundary get = lookupMap.get(admincode + "." + ccode);
         String countyname = "";
+        if (get == null) {
+          System.out.println("null...continuing to index" + " ccode: " + ccode + " , admincode: " + admincode + " , placename: " + placeName);
+          continue;
+
+        }
         String countyCode = get.getCountyCode();
+
         if (!get.getCountyName().equals("NO_DATA_FOUND_VALUE")) {
           countyname = get.getCountyName();
         }
@@ -125,8 +131,7 @@ public class USGSProcessor {
       }
 
     }
-   
-  
+
     for (String state : states.keySet()) {
       StateCentroid get = states.get(state);
       Document doc = new Document();
@@ -143,8 +148,8 @@ public class USGSProcessor {
       doc.add(new StringField("locid", "us_state:" + state, Field.Store.YES));
       doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
       w.addDocument(doc);
-      
-     // System.out.println(get.statecode + "," + (get.latSum / get.count) + "," + (get.longSum / get.count));
+
+      // System.out.println(get.statecode + "," + (get.latSum / get.count) + "," + (get.longSum / get.count));
     }
     Document doc = new Document();
     doc.add(new TextField("hierarchy", "united states", Field.Store.YES));
@@ -202,7 +207,7 @@ public class USGSProcessor {
         String stateName = values[6];
         String countryCode = values[7];
         String countryName = values[8];
-        AdminBoundary adminBoundary = new AdminBoundary(countryCode, countryName, stateCode, stateName, countyCode, countyName);
+        AdminBoundary adminBoundary = new AdminBoundary(countryCode, countryName, stateCode, stateName, countyCode, countyName, null, null, null);
         outmap.put(stateCode + "." + countyCode, adminBoundary);
         //  System.out.println(adminBoundary);
 
@@ -232,7 +237,8 @@ public class USGSProcessor {
          * this is the standard format of the country context file... Geonames
          * data will have an empty string for the county
          */
-        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + adm.getCountyCode() + "\t" + country + "\t" + province + "\t" + adm.getCountyName() + "\n";
+        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + adm.getCountyCode() + "\t" + country + "\t" + province + "\t" + adm.getCountyName() + "\t"
+            + "(U\\.S\\.[ $]|U\\.S\\.A\\.[ $]|United States|the US[ $]|a us[ $])" + "\t" + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
         writer.write(line);
         ///  System.out.println(line);
 

@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.opennlp</groupId>
         <artifactId>opennlp</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.6.0</version>
         <relativePath>../opennlp/pom.xml</relativePath>
     </parent>
 
@@ -62,31 +62,33 @@
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
-            <version>4.8.0</version>
-        </dependency>
+      
             
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>4.8.0</version>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>4.8.0</version>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>4.8.0</version>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.opennlp</groupId>
             <artifactId>opennlp-tools</artifactId>
             <version>1.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.spatial4j</groupId>
+            <artifactId>spatial4j</artifactId>
+            <version>0.4.1</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 </project>

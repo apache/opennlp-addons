@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.BaseLink;
@@ -43,10 +44,12 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
 
   private Map<String, Set<String>> nameCodesMap;
   String dominantCode = "";
+  private Map<String, String> regexMap = new HashMap<>();
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     if (!additionalContext.getProvHits().isEmpty()) {
+      regexMap = additionalContext.getProvinceRegexMap();
       score(linkedSpans, additionalContext.getProvMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
     } else {
       for (LinkedSpan<BaseLink> span : linkedSpans) {
@@ -167,11 +170,11 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
 
         score = scoreMap.get(spanCountryCode);
         ///does the name extracted match a province name?
-        if (nameCodesMap.containsKey(entry.getItemName().toLowerCase())) {
+        if (nameCodesMap.containsKey(link.getItemName().toLowerCase()) || regexMatch(link.getItemName(), link.getItemParentID())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(entry.getItemName().toLowerCase()).contains(entry.getProvinceCode())) {
             //boost the score becuase it is likely that this is the location in the text, so add 50% to the score or set to 1
-            //TODO: make this smarter, and utilize province/state info in the future to be even more specific
+            //TODO: make this smarter
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 
             if (entry.getProvinceCode().equals(dominantCode)) {
@@ -183,6 +186,16 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
       link.getScoreMap().put("provincecontext", score);
     }
     return span;
+  }
+
+  private boolean regexMatch(String placeName, String countryCode) {
+    if (regexMap.containsKey(countryCode)) {
+      String regexForCountry = regexMap.get(countryCode);
+
+      Pattern p = Pattern.compile(regexForCountry, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+      return p.matcher(placeName.trim()).matches();
+    }
+    return false;
   }
 
   /**

@@ -30,23 +30,22 @@ public class AdminBoundary {
   private final String countryName;
   private final String countyName;
   private final String countyCode;
+  private final String countryRegex;
+  private final String provinceRegex;
+  private final String countyRegex;
 
-  public AdminBoundary(String cc, String ac, String pname, String countryName) {
-    this.countryCode = cc;
-    this.provinceCode = ac;
-    this.provinceName = pname;
-    this.countryName = countryName;
-    this.countyCode = NO_DATA_FOUND_VALUE;
-    this.countyName = NO_DATA_FOUND_VALUE;
-  }
 
-  public AdminBoundary(String countryCode, String countryName, String provinceCode, String provinceName, String countyCode, String countyName) {
+  public AdminBoundary(String countryCode, String countryName, String provinceCode, String provinceName, String countyCode, String countyName,
+      String countryRegex, String provinceRegex, String countyRegex) {
     this.countryCode = countryCode;
     this.provinceCode = provinceCode;
     this.provinceName = provinceName;
     this.countryName = countryName;
     this.countyName = countyName.equals("") ? NO_DATA_FOUND_VALUE : countyName;
     this.countyCode = countyCode.equals("") ? NO_DATA_FOUND_VALUE : countyCode;
+    this.countryRegex = countryRegex;
+    this.provinceRegex = provinceRegex;
+    this.countyRegex = countyRegex;
   }
 
   public String getCountryCode() {
@@ -118,6 +117,22 @@ public class AdminBoundary {
       return false;
     }
     return true;
+  }
+
+  public String getProvinceCode() {
+    return provinceCode;
+  }
+
+  public String getCountryRegex() {
+    return countryRegex;
+  }
+
+  public String getProvinceRegex() {
+    return provinceRegex;
+  }
+
+  public String getCountyRegex() {
+    return countyRegex;
   }
 
 }

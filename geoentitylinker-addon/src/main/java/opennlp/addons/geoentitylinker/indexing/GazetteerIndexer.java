@@ -17,6 +17,8 @@ package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +32,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.util.Version;
 
 /**
  * Creates two lucene indexes, geonames and usgs for use in GeoEntityLinker.
@@ -47,15 +48,15 @@ public class GazetteerIndexer {
       return;
     }
 
-    File geonamesData = new File(args[0]); 
-    File geoNamesCountryInfo = new File(args[1]); 
+    File geonamesData = new File(args[0]);
+    File geoNamesCountryInfo = new File(args[1]);
     File geonamesAdmin1CodesASCII = new File(args[2]);
-    File usgsDataFile = new File(args[3]); 
-    File usgsGovUnitsFile = new File(args[4]); 
-    File outputIndexDir = new File(args[5]); 
-    File outputCountryContextFile = new File(args[6]); 
+    File usgsDataFile = new File(args[3]);
+    File usgsGovUnitsFile = new File(args[4]);
+    File outputIndexDir = new File(args[5]);
+    File outputCountryContextFile = new File(args[6]);
     File regionsFile = new File(args[7]);
-    
+
     try {
       GazetteerIndexer i = new GazetteerIndexer();
       i.index(geonamesData,
@@ -83,27 +84,27 @@ public class GazetteerIndexer {
   public enum GazType implements Separable {
 
     GEONAMES {
-              @Override
-              public String toString() {
-                return "/opennlp_geoentitylinker_geonames_idx";
-              }
+          @Override
+          public String toString() {
+            return "/opennlp_geoentitylinker_geonames_idx";
+          }
 
-              @Override
-              public String getSeparator() {
-                return "\t";
-              }
-            },
+          @Override
+          public String getSeparator() {
+            return "\t";
+          }
+        },
     USGS {
-              @Override
-              public String toString() {
-                return "/opennlp_geoentitylinker_usgsgaz_idx";
-              }
+          @Override
+          public String toString() {
+            return "/opennlp_geoentitylinker_usgsgaz_idx";
+          }
 
-              @Override
-              public String getSeparator() {
-                return "\\|";
-              }
-            }
+          @Override
+          public String getSeparator() {
+            return "\\|";
+          }
+        }
   }
 
   /**
@@ -113,7 +114,8 @@ public class GazetteerIndexer {
    * 'allCountries.zip'
    * @param geoNamesCountryInfo the countryinfo lookup table that can be
    * downloaded from here
-   * http://download.geonames.org/export/dump/countryinfo.txt
+   * http://download.geonames.org/export/dump/countryInfo.txt You'll need to
+   * copy the page into a file or scrape it
    * @param geonamesAdmin1CodesASCII The lookup data for the province names for
    * each place found here:
    * http://download.geonames.org/export/dump/admin1CodesASCII.txt highlight the
@@ -138,7 +140,7 @@ public class GazetteerIndexer {
    * @throws Exception
    */
   public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII,
-          File usgsDataFile, File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile) throws Exception {
+      File usgsDataFile, File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile) throws Exception {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
     }
@@ -166,8 +168,8 @@ public class GazetteerIndexer {
     }
 
     String indexloc = outputIndexDir.getPath() + "/opennlp_geoentitylinker_gazetteer";
-    Directory index = new MMapDirectory(new File(indexloc));
-    Analyzer a = new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+    Directory index = new MMapDirectory(Paths.get(indexloc));
+    Analyzer a = new StandardAnalyzer(new CharArraySet(new ArrayList(), true));
     Map<String, Analyzer> analyMap = new HashMap<>();
 
     analyMap.put("countrycode", new KeywordAnalyzer());
@@ -175,13 +177,22 @@ public class GazetteerIndexer {
     analyMap.put("loctype", new KeywordAnalyzer());
     analyMap.put("countycode", new KeywordAnalyzer());
     analyMap.put("gazsource", new KeywordAnalyzer());
-    
-    PerFieldAnalyzerWrapper aWrapper
-            = new PerFieldAnalyzerWrapper(a, analyMap);
 
-    IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, aWrapper);
+    PerFieldAnalyzerWrapper aWrapper
+        = new PerFieldAnalyzerWrapper(a, analyMap);
+
+    IndexWriterConfig config = new IndexWriterConfig(aWrapper);
 
     IndexWriter w = new IndexWriter(index, config);
+    
+    //write the column headers for the countryContextFile 
+    FileWriter countryContextFileWriter = new FileWriter(outputCountryContextFile, false);
+    String colNamesForCountryContextFile = "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname\tcountryregex\tprovregex\tcountyregex\n";
+    countryContextFileWriter.write(colNamesForCountryContextFile);
+    countryContextFileWriter.flush();
+    countryContextFileWriter.close();
+    
+    
     USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
 
     GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData, outputCountryContextFile, w);

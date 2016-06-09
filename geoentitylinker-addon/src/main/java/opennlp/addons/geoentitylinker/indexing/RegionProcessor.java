@@ -89,7 +89,8 @@ public class RegionProcessor {
         //countrycontext file format
         // US	KY	131	United States	Kentucky	Leslie
 
-        ccfileentries.add(id + "\t" + id + "\t" + id + "\t" + placeName + "\t" + "NO_DATA_FOUND_VALUE" + "\t" + "NO_DATA_FOUND_VALUE\n");
+        ccfileentries.add(id + "\t" + id + "\t" + id + "\t" + placeName + "\t" + "NO_DATA_FOUND" + "\t" + "NO_DATA_FOUND" + "\t" + "("
+            + placeName + ")" + "\t" + "NO_DATA_FOUND" + "\t" + "NO_DATA_FOUND" + "\n");
         if (w != null) {
           w.addDocument(doc);
         }

@@ -29,20 +29,24 @@ public class AdminBoundaryContext {
   private final Set<String> provHits;
   private final Set<String> countyHits;
   private final Map<String, String> countryRefMap;
+  private final Map<String, String> countryRegexMap;
+  private final Map<String, String> countyRegexMap;
+  private final Map<String, String> provinceRegexMap;
   private final Map<String, Map<String, String>> provRefMap;
   private final Map<String, Map<String, String>> countyRefMap;
   private final Set<String> whereClauses;
   private final Map<String, Set<String>> nameCodesMap;
 
   public AdminBoundaryContext(Map<String, Set<Integer>> countryMentions,
-          Map<String, Set<Integer>> provMentions,
-          Map<String, Set<Integer>> countyMentions,
-          Set<String> countryHits,
-          Set<String> provHits,
-          Set<String> countyHits,
-          Map<String, String> countryRefMap,
-          Map<String, Map<String, String>> provRefMap,
-          Map<String, Map<String, String>> countyRefMap, Map<String, Set<String>> nameCodesMap) {
+      Map<String, Set<Integer>> provMentions,
+      Map<String, Set<Integer>> countyMentions,
+      Set<String> countryHits,
+      Set<String> provHits,
+      Set<String> countyHits,
+      Map<String, String> countryRefMap,
+      Map<String, Map<String, String>> provRefMap,
+      Map<String, Map<String, String>> countyRefMap, Map<String, Set<String>> nameCodesMap, Map<String, String> countryRegexMap, Map<String, String> provinceRegexMap,
+      Map<String, String> countyRegexMap) {
     this.countryMentions = countryMentions;
     this.provMentions = provMentions;
     this.countyMentions = countyMentions;
@@ -54,6 +58,9 @@ public class AdminBoundaryContext {
     this.countyRefMap = countyRefMap;
     this.whereClauses = setWhereClauses();
     this.nameCodesMap = nameCodesMap;
+    this.countryRegexMap = countryRegexMap;
+    this.provinceRegexMap = provinceRegexMap;
+    this.countyRegexMap = countyRegexMap;
   }
 
   public Map<String, Set<String>> getNameCodesMap() {
@@ -129,6 +136,18 @@ public class AdminBoundaryContext {
       }
     }
     return clauses;
+  }
+
+  public Map<String, String> getCountryRegexMap() {
+    return countryRegexMap;
+  }
+
+  public Map<String, String> getCountyRegexMap() {
+    return countyRegexMap;
+  }
+
+  public Map<String, String> getProvinceRegexMap() {
+    return provinceRegexMap;
   }
 
 }

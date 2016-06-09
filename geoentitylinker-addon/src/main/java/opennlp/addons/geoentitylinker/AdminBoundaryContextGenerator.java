@@ -43,9 +43,14 @@ public class AdminBoundaryContextGenerator {
   private List<CountryContextEntry> countrydata;
   private Map<String, Set<String>> nameCodesMap = new HashMap<>();
   private Map<String, Set<Integer>> countryMentions = new HashMap<>();
+
+  Map<String, String> countryRegexMap = new HashMap<>();
+  Map<String, String> provinceRegexMap = new HashMap<>();
+  Map<String, String> countyRegexMap = new HashMap<>();
+
   private Set<CountryContextEntry> countryHits = new HashSet<>();
   private EntityLinkerProperties properties;
-  private List<AdminBoundary> adminBoundaryData;
+  private List<AdminBoundary> adminBoundaryData= new ArrayList<>();
   private Set<AdminBoundary> adminBoundaryHits = new HashSet<>();
   private AdminBoundaryContext context;
 
@@ -70,9 +75,8 @@ public class AdminBoundaryContextGenerator {
 
   public static void main(String[] args) {
     try {
-      AdminBoundaryContextGenerator countryContext = new AdminBoundaryContextGenerator(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties")));
-      GeoEntityLinker linker = new GeoEntityLinker();
-      linker.init(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties")));
+      AdminBoundaryContextGenerator countryContext
+          = new AdminBoundaryContextGenerator(new EntityLinkerProperties(new File("C:\\Temp\\gaz_data\\newCountryContextfile.txt")));
 
       AdminBoundaryContext c = countryContext.process("This artcle is about fairfax county virginia in the north of florida in the united states. It is also about Moscow and atlanta. Hillsborough county florida is a nice place. Eastern Africa people are cool.");
       System.out.println(c);
@@ -93,7 +97,7 @@ public class AdminBoundaryContextGenerator {
         throw new IOException("missing country context file");
       }
       //countrydata = getCountryContextFromFile(countryContextFile);
-      adminBoundaryData = getContextFromFile(countryContextFile);
+      getContextFromFile(countryContextFile);
       if (adminBoundaryData.isEmpty()) {
         throw new IOException("missing country context data");
       }
@@ -150,17 +154,17 @@ public class AdminBoundaryContextGenerator {
     try {
 
       reset();
-      Map<String, Set<Integer>> countryhitMap = regexfind(text, countryMap, countryHitSet);
+      Map<String, Set<Integer>> countryhitMap = regexfind(text, countryMap, countryHitSet, "country");
       if (!countryhitMap.isEmpty()) {
         for (String cc : countryhitMap.keySet()) {
           Map<String, String> provsForCc = provMap.get(cc);
           if (provsForCc != null) {
-            provMentions.putAll(regexfind(text, provsForCc, provHits));
+            provMentions.putAll(regexfind(text, provsForCc, provHits, "province"));
             if (provMentions != null) {
               for (String prov : provMentions.keySet()) {
                 Map<String, String> get = countyMap.get(prov);
                 if (get != null) {
-                  countyMentions.putAll(regexfind(text, get, countyHits));
+                  countyMentions.putAll(regexfind(text, get, countyHits, "province"));
                 }
               }
             }
@@ -169,7 +173,7 @@ public class AdminBoundaryContextGenerator {
       } else {
         for (Map<String, String> provsForCc : provMap.values()) {
           if (provsForCc != null) {
-            provMentions = regexfind(text, provsForCc, provHits);
+            provMentions = regexfind(text, provsForCc, provHits, "province");
             if (provMentions != null) {
               for (String prov : provMentions.keySet()) {
                 //fake a country hit based on a province hit... this gets fuzzy
@@ -182,7 +186,7 @@ public class AdminBoundaryContextGenerator {
                 }
                 Map<String, String> get = countyMap.get(prov);
                 if (get != null) {
-                  countyMentions = regexfind(text, get, countyHits);
+                  countyMentions = regexfind(text, get, countyHits, "oounty");
                 }
               }
             }
@@ -199,7 +203,9 @@ public class AdminBoundaryContextGenerator {
         }
       }
 
-      AdminBoundaryContext context = new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet, provHits, countyHits, countryRefMap, provMap, countyMap, nameCodesMap);
+      AdminBoundaryContext context
+          = new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet, provHits, countyHits,
+              countryRefMap, provMap, countyMap, nameCodesMap, countryRegexMap, provinceRegexMap, countyRegexMap);
 
       return context;
     } catch (Exception e) {
@@ -207,7 +213,6 @@ public class AdminBoundaryContextGenerator {
     }
     return null;
   }
-
 
   /**
    * discovers indicators of admin boundary data using regex.
@@ -218,7 +223,7 @@ public class AdminBoundaryContextGenerator {
    * @param hitsRef a reference to a set that stores the hits by id
    * @return
    */
-  private Map<String, Set<Integer>> regexfind(String docText, Map<String, String> lookupMap, Set<String> hitsRef) {
+  private Map<String, Set<Integer>> regexfind(String docText, Map<String, String> lookupMap, Set<String> hitsRef, String locationType) {
     Map<String, Set<Integer>> mentions = new HashMap<>();
     if (lookupMap == null) {
       return mentions;
@@ -226,9 +231,28 @@ public class AdminBoundaryContextGenerator {
     try {
 
       for (String entry : lookupMap.keySet()) {
+
         String name = lookupMap.get(entry).toLowerCase();
         if (name == null) {
           continue;
+        }
+        switch (locationType) {
+          case "country":
+            if (this.countryRegexMap.containsKey(entry)) {
+              name = countryRegexMap.get(entry);
+            }
+            break;
+
+          case "province":
+            if (this.provinceRegexMap.containsKey(entry)) {
+              name = provinceRegexMap.get(entry);
+            }
+            break;
+          case "county":
+            if (this.countyRegexMap.containsKey(entry)) {
+              name = countyRegexMap.get(entry);
+            }
+            break;
         }
         name = "(^|[^\\p{L}\\p{Nd}])" + name.replace(", the", "") + "([^\\p{L}\\p{Nd}]|$)";
         Pattern regex = Pattern.compile(name, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -274,39 +298,37 @@ public class AdminBoundaryContextGenerator {
     return mentions;
   }
 
-  private List<AdminBoundary> getContextFromFile(File countryContextFile) {
+  private void getContextFromFile(File countryContextFile) {
     if (this.adminBoundaryData != null && !this.adminBoundaryData.isEmpty()) {
-      return adminBoundaryData;
+      return;
     }
-    List<AdminBoundary> entries = new ArrayList<>();
+
     BufferedReader reader;
     try {
       reader = new BufferedReader(new FileReader(countryContextFile));
       String line = "";
+      int lineNum = 0;
       while ((line = reader.readLine()) != null) {
         String[] values = line.split("\t");
-        int len = values.length;
-        if (len < 5 || len > 6) {
-          throw new IllegalArgumentException("Improperly formatted file");
+        if (lineNum == 0) {
+          lineNum++;
+          continue;
+          //skip column name headers
         }
-        if (values.length == 6) {
+        if (values.length == 9) {
           AdminBoundary entry = new AdminBoundary(
-                  values[0].toLowerCase().trim().replace("ï»¿", ""),
-                  values[3].toLowerCase().trim(),
-                  values[1].toLowerCase().trim(),
-                  values[4].toLowerCase().trim(),
-                  values[2].toLowerCase().trim(),
-                  values[5].toLowerCase().trim());
-          entries.add(entry);
+              values[0].toLowerCase().trim().replace("ï»¿", ""),
+              values[3].toLowerCase().trim(),
+              values[1].toLowerCase().trim(),
+              values[4].toLowerCase().trim(),
+              values[2].toLowerCase().trim(),
+              values[5].toLowerCase().trim(),
+              values[6].toLowerCase().trim(),
+              values[7].toLowerCase().trim(),
+              values[8].toLowerCase().trim());
+          this.adminBoundaryData.add(entry);
         } else {
-          AdminBoundary entry = new AdminBoundary(
-                values[0].toLowerCase().trim().replace("ï»¿", ""),
-                  values[3].toLowerCase().trim(),
-                  values[1].toLowerCase().trim(),
-                  values[4].toLowerCase().trim(),
-                  values[2].toLowerCase().trim(),
-                  "");
-          entries.add(entry);
+          throw new IllegalArgumentException("Improperly formatted file");
         }
 
       }
@@ -314,8 +336,8 @@ public class AdminBoundaryContextGenerator {
     } catch (IOException ex) {
       LOGGER.error(ex);
     }
-    loadMaps(entries);
-    return entries;
+
+    loadMaps(this.adminBoundaryData);
 
   }
 
@@ -323,6 +345,15 @@ public class AdminBoundaryContextGenerator {
     for (AdminBoundary adm : boundaries) {
       if (!adm.getCountryCode().equals("null")) {
         countryMap.put(adm.getCountryCode(), adm.getCountryName());
+        if (countryRegexMap.containsKey(adm.getCountryCode())) {
+          String currentRegex = countryRegexMap.get(adm.getCountryCode());
+          if (currentRegex.length() > adm.getCountryRegex().length()) {
+            // the longest one wins if they are not all the same for each entry in the file
+            countryRegexMap.put(adm.getCountryCode(), currentRegex);
+          }//else do nothing
+        } else {
+          countryRegexMap.put(adm.getCountryCode(), adm.getCountryRegex());
+        }
 
         if (!adm.getProvCode().equals("null")) {
           Map<String, String> provs = provMap.get(adm.getCountryCode());
@@ -349,6 +380,43 @@ public class AdminBoundaryContextGenerator {
         }
       }
     }
+    fillProvRegexMap();
+    fillCountyRegexMap();
+  }
+
+  private void fillProvRegexMap() {
+    this.provinceRegexMap = new HashMap<>();
+    // this.adminBoundaryData
+    for (AdminBoundary adm : adminBoundaryData) {
+
+      if (provinceRegexMap.containsKey(adm.getProvCode())) {
+        String currentRegex = provinceRegexMap.get(adm.getProvCode());
+        if (currentRegex.length() > adm.getProvinceRegex().length()) {
+          // the longest one wins if they are not all the same for each entry in the file
+          provinceRegexMap.put(adm.getProvCode(), currentRegex);
+        }//else do nothing
+      } else {
+        provinceRegexMap.put(adm.getProvCode(), adm.getProvinceRegex());
+      }
+    }
+  }
+
+  private void fillCountyRegexMap() {
+    this.countyRegexMap = new HashMap<>();
+    // this.adminBoundaryData
+    for (AdminBoundary adm : adminBoundaryData) {
+
+      if (countyRegexMap.containsKey(adm.getCountyCode())) {
+        String currentRegex = countyRegexMap.get(adm.getCountyCode());
+        if (currentRegex.length() > adm.getCountyRegex().length()) {
+          // the longest one wins if they are not all the same for each entry in the file
+          countyRegexMap.put(adm.getCountyCode(), currentRegex);
+        }//else do nothing
+      } else {
+        countyRegexMap.put(adm.getCountyCode(), adm.getCountyRegex());
+      }
+    }
+
   }
 
 }

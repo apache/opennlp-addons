@@ -92,7 +92,7 @@ public class GeonamesProcessor {
         if (cname == null) {
           nullcodes.add(ccode);
         }
-        AdminBoundary data = new AdminBoundary(ccode, pcode, pname, cname);
+        AdminBoundary data = new AdminBoundary(ccode, cname, pcode, pname, "NO_DATA_FOUND", "NO_DATA_FOUND", cname, pname, "NO_DATA_FOUND");
         //  System.out.println(data);
         outmap.put(ccode + "." + pcode, data);
 
@@ -155,7 +155,8 @@ public class GeonamesProcessor {
         String province = adm.getProvinceName();
         String country = adm.getCountryName();
 
-        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + "" + "\t" + country + "\t" + province + "\t" + "" + "\n";
+        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + "" + "\t" + country + "\t" + province + "\t" + "" + "\t" + "(" + country + ")" + "\t"
+            + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
         writer.write(line);
         // System.out.println(line);
 

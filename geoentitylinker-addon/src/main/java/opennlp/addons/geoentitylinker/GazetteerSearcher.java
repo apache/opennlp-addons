@@ -17,6 +17,7 @@ package opennlp.addons.geoentitylinker;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,10 +102,10 @@ public class GazetteerSearcher {
        * build the search string Sometimes no country context is found. In this
        * case the code variables will be empty strings
        */
-      String placeNameQueryString = "placename:(" + searchString.toLowerCase() + ")" + "AND " + whereClause;
+      String placeNameQueryString = "placename:(" + searchString.toLowerCase() + ") " + "AND " + whereClause;
       if (searchString.trim().contains(" ") && useHierarchyField) {
         placeNameQueryString = "(placename:(" + searchString.toLowerCase() + ") AND hierarchy:(" + formatForHierarchy(searchString) + "))"
-                + " AND " + whereClause;
+            + " AND " + whereClause;
       }
 
       /**
@@ -118,7 +119,7 @@ public class GazetteerSearcher {
       /**
        * search the placename
        */
-      QueryParser parser = new QueryParser(Version.LUCENE_48, placeNameQueryString, opennlpAnalyzer);
+      QueryParser parser = new QueryParser(placeNameQueryString, opennlpAnalyzer);
       Query q = parser.parse(placeNameQueryString);
       //Filter filter = new QueryWrapperFilter(new QueryParser(Version.LUCENE_48, whereClause, opennlpAnalyzer).parse(whereClause));      
 
@@ -160,7 +161,7 @@ public class GazetteerSearcher {
         for (int idx = 0; idx < fields.size(); idx++) {
           entry.getIndexData().put(fields.get(idx).name(), d.get(fields.get(idx).name()));
         }
-       
+
         /**
          * only want hits above the levenstein thresh. This should be a low
          * thresh due to the use of the hierarchy field in the index
@@ -178,15 +179,13 @@ public class GazetteerSearcher {
         }
         //}
       }
-      
+
     } catch (IOException | ParseException ex) {
       LOGGER.error(ex);
     }
 
     return linkedData;
   }
-
- 
 
   /**
    * Replaces any noise chars with a space, and depending on configuration adds
@@ -215,12 +214,12 @@ public class GazetteerSearcher {
 
       }
 
-      opennlpIndex = new MMapDirectory(new File(indexloc));
+      opennlpIndex = new MMapDirectory(Paths.get(indexloc));
       opennlpReader = DirectoryReader.open(opennlpIndex);
       opennlpSearcher = new IndexSearcher(opennlpReader);
       opennlpAnalyzer
-              = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-              new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+          = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+          new StandardAnalyzer(new CharArraySet(new ArrayList(), true));
       Map<String, Analyzer> analyMap = new HashMap<>();
 
       analyMap.put("countrycode", new KeywordAnalyzer());
@@ -230,7 +229,7 @@ public class GazetteerSearcher {
       analyMap.put("gazsource", new KeywordAnalyzer());
 
       opennlpAnalyzer
-              = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
+          = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
 
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));

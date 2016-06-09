@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
@@ -41,10 +42,12 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
 
   private Map<String, Set<String>> nameCodesMap;
   String dominantCode = "";
+  private Map<String, String> regexMap = new HashMap<>();
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
 
+    regexMap = additionalContext.getCountryRegexMap();
     score(linkedSpans, additionalContext.getCountryMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
 
   }
@@ -54,20 +57,19 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
    * matches. Currently the scoring indicates the probability that the toponym
    * is correct based on the country context in the document
    *
-   * @param linkedData     the linked spans, holds the Namefinder results, and
-   *                       the list of BaseLink for each
-   * @param countryHits    all the country mentions in the document
-   * @param nameCodesMap   maps a country indicator name to a country code. Used
-   *                       to determine if the namefinder found the same exact
-   *                       toponym the country context did. If so the score is
-   *                       boosted due to the high probability that the
-   *                       NameFinder actually "rediscovered" a country
-   * @param docText        the full text of the document...not used in this
-   *                       default implementation
-   * @param sentences      the sentences that correspond to the doc text.
+   * @param linkedData the linked spans, holds the Namefinder results, and the
+   * list of BaseLink for each
+   * @param countryHits all the country mentions in the document
+   * @param nameCodesMap maps a country indicator name to a country code. Used
+   * to determine if the namefinder found the same exact toponym the country
+   * context did. If so the score is boosted due to the high probability that
+   * the NameFinder actually "rediscovered" a country
+   * @param docText the full text of the document...not used in this default
+   * implementation
+   * @param sentences the sentences that correspond to the doc text.
    * @param maxAllowedDist a constant that is used to determine which country
-   *                       mentions, based on proximity within the text, should
-   *                       be used to score the Named Entity.
+   * mentions, based on proximity within the text, should be used to score the
+   * Named Entity.
    * @return
    */
   public List<LinkedSpan> score(List<LinkedSpan> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
@@ -155,11 +157,10 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
 
         score = scoreMap.get(spanCountryCode);
         ///does the name extracted match a country name?
-        if (nameCodesMap.containsKey(link.getItemName().toLowerCase())) {
+        if (nameCodesMap.containsKey(link.getItemName().toLowerCase()) || regexMatch(link.getItemName(), link.getItemParentID())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(link.getItemName().toLowerCase()).contains(link.getItemParentID())) {
             //boost the score becuase it is likely that this is the location in the text, so add 50% to the score or set to 1
-            //TODO: make this smarter, and utilize province/state info in the future to be even more specific
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 
             if (link.getItemParentID().equals(dominantCode)) {
@@ -168,17 +169,17 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
           }
         }
       }
-      
+
       link.getScoreMap().put("countrycontext", score);
     }
     return span;
   }
 
   /**
-   * takes a map of distances from the toponym to each country mention and generates
-   * a map of scores for each country code. The map is then correlated to the
-   * code of the BaseLink parentid for retrieval. Then the
-   * score is added to the overall list.
+   * takes a map of distances from the toponym to each country mention and
+   * generates a map of scores for each country code. The map is then correlated
+   * to the code of the BaseLink parentid for retrieval. Then the score is added
+   * to the overall list.
    *
    * @param distanceMap
    * @param sentences
@@ -213,11 +214,20 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
         normalizedDistances.add(reverse);
       }
 
-
       List<Double> doubles = new ArrayList<Double>(normalizedDistances);
       scoreMap.put(key, slidingDistanceAverage(doubles));
     }
     return scoreMap;
+  }
+
+  private boolean regexMatch(String placeName, String countryCode) {
+    if (regexMap.containsKey(countryCode)) {
+      String regexForCountry = regexMap.get(countryCode);
+
+      Pattern p = Pattern.compile(regexForCountry,Pattern.DOTALL|Pattern.CASE_INSENSITIVE);
+      return p.matcher(placeName.trim()).matches();
+    }
+    return false;
   }
 
   /**
@@ -259,8 +269,8 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
    * range. Used to normalize distances in this class.
    *
    * @param valueToNormalize the value to place within the new range
-   * @param minimum          the min of the set to be transposed
-   * @param maximum          the max of the set to be transposed
+   * @param minimum the min of the set to be transposed
+   * @param maximum the max of the set to be transposed
    * @return
    */
   private Double normalize(int valueToNormalize, int minimum, int maximum) {
