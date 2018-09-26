@@ -1,0 +1,56 @@
+<!--
+	Licensed to the Apache Software Foundation (ASF) under one
+	or more contributor license agreements.  See the NOTICE file
+	distributed with this work for additional information
+	regarding copyright ownership.  The ASF licenses this file
+	to you under the Apache License, Version 2.0 (the
+	"License"); you may not use this file except in compliance
+	with the License.  You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing,
+	software distributed under the License is distributed on an
+	"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+	KIND, either express or implied.  See the License for the
+	specific language governing permissions and limitations
+	under the License.
+-->
+<project name="japanese-addon"
+         default="jar" basedir=".">
+
+    <property name="src.dir" value="src"/>
+    <property name="cls.dir" value="classes"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="product.jar" value="opennlp-japanese-addon-1.0-SNAPSHOT.jar"/>
+
+    <target name="compile" description="compile source and test code">
+        <mkdir dir="${cls.dir}"/>
+        <javac srcdir="${src.dir}/main/java" destdir="${cls.dir}" debug="on" includes="**/*.java">
+            <classpath path="${cls.dir}"/>
+            <classpath>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </javac>
+<!--
+        <javac srcdir="${src.dir}/test/java" destdir="${cls.dir}" debug="on" includes="**/*Test.java">
+            <classpath path="${cls.dir}"/>
+            <classpath>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </javac>
+-->
+    </target>
+
+    <target name="jar" depends="compile" description="create a jar file">
+        <jar destfile="${product.jar}" basedir="${cls.dir}"/>
+    </target>
+
+    <target name="clean" description="clean all">
+        <delete dir="${cls.dir}"/>
+        <delete>
+            <fileset dir="." includes="*.jar"/>
+        </delete>
+    </target>
+    
+</project>
