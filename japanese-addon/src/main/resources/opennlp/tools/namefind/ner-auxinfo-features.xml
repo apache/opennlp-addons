@@ -23,7 +23,7 @@
     <generator class="opennlp.tools.util.featuregen.WindowFeatureGeneratorFactory">
       <int name="prevLength">2</int>
       <int name="nextLength">2</int>
-      <generator class="opennlp.tools.util.featuregen.TokenClassFeatureGeneratorFactory"/>
+      <generator class="opennlp.tools.util.featuregen.lang.jpn.TokenClassFeatureGeneratorFactory"/>
     </generator>
   </generator>
   <generator class="opennlp.tools.util.featuregen.AuxiliaryInfoAwareDelegateFeatureGeneratorFactory">
@@ -48,7 +48,7 @@
     <generator class="opennlp.tools.util.featuregen.PreviousMapFeatureGeneratorFactory"/>
   </generator>
   <generator class="opennlp.tools.util.featuregen.AuxiliaryInfoAwareDelegateFeatureGeneratorFactory">
-    <generator class="opennlp.tools.util.featuregen.BigramNameFeatureGeneratorFactory"/>
+    <generator class="opennlp.tools.util.featuregen.lang.jpn.BigramNameFeatureGeneratorFactory"/>
   </generator>
   <generator class="opennlp.tools.util.featuregen.AuxiliaryInfoAwareDelegateFeatureGeneratorFactory">
     <generator class="opennlp.tools.util.featuregen.SentenceFeatureGeneratorFactory">
