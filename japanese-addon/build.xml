@@ -22,6 +22,7 @@
     <property name="src.dir" value="src"/>
     <property name="cls.dir" value="classes"/>
     <property name="lib.dir" value="lib"/>
+    <property name="test.result.dir" value="test-result"/>
     <property name="product.jar" value="opennlp-japanese-addon-1.0-SNAPSHOT.jar"/>
 
     <target name="compile" description="compile source and test code">
@@ -32,14 +33,35 @@
                 <fileset dir="${lib.dir}" includes="**/*.jar"/>
             </classpath>
         </javac>
-<!--
         <javac srcdir="${src.dir}/test/java" destdir="${cls.dir}" debug="on" includes="**/*Test.java">
             <classpath path="${cls.dir}"/>
             <classpath>
                 <fileset dir="${lib.dir}" includes="**/*.jar"/>
             </classpath>
         </javac>
--->
+    </target>
+
+    <target name="test" depends="compile" description="run all tests">
+        <mkdir dir="${test.result.dir}"/>
+        <junit printsummary="on"
+               haltonfailure="no"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed"
+               dir="${src.dir}/test/resources">
+            <classpath path="${cls.dir}"/>
+            <classpath>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+            <jvmarg value="-ea"/>
+            <formatter type="plain"/>
+            <batchtest fork="yes" todir="${test.result.dir}" unless="testcase">
+                <fileset dir="${src.dir}/test/java" includes="**/*Test.java"/>
+            </batchtest>
+            <batchtest fork="yes" todir="${test.result.dir}" if="testcase">
+                <fileset dir="${src.dir}/test/java" includes="**/${testcase}.java"/>
+            </batchtest>
+        </junit>
+        <fail if="tests.failed">***** Tests failed! *****</fail>
     </target>
 
     <target name="jar" depends="compile" description="create a jar file">
@@ -48,6 +70,7 @@
 
     <target name="clean" description="clean all">
         <delete dir="${cls.dir}"/>
+        <delete dir="${test.result.dir}"/>
         <delete>
             <fileset dir="." includes="*.jar"/>
         </delete>
