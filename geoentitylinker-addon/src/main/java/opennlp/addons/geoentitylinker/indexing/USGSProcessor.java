@@ -16,6 +16,7 @@
 package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -225,6 +226,7 @@ public class USGSProcessor {
   public static void writeCountryContextFile(File outfile, Map<String, AdminBoundary> adms) {
     // FileWriter writer = null;
     try (FileWriter writer = new FileWriter(outfile, true)) {
+      BufferedWriter bw = new BufferedWriter(writer);
 
       for (String admkey : adms.keySet()) {
         AdminBoundary adm = adms.get(admkey);
@@ -239,7 +241,7 @@ public class USGSProcessor {
          */
         String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + adm.getCountyCode() + "\t" + country + "\t" + province + "\t" + adm.getCountyName() + "\t"
             + "(U\\.S\\.[ $]|U\\.S\\.A\\.[ $]|United States|the US[ $]|a us[ $])" + "\t" + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
-        writer.write(line);
+        bw.write(line);i
         ///  System.out.println(line);
 
       }
