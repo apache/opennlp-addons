@@ -19,6 +19,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -61,11 +62,12 @@ public class GenericModelableImpl implements Modelable {
     try {
 
       FileWriter writer = new FileWriter(params.getAnnotatedTrainingDataFile(), false);
+      BufferedWriter bw = new BufferedWriter(writer);
 
       for (String s : annotatedSentences) {
-        writer.write(s.replace("\n", " ").trim() + "\n");
+        bw.write(s.replace("\n", " ").trim() + "\n");
       }
-      writer.close();
+      bw.close();
     } catch (IOException ex) {
       ex.printStackTrace();
     }

@@ -16,6 +16,7 @@
 package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -146,6 +147,7 @@ public class GeonamesProcessor {
   public static void writeCountryContextFile(File outfile, Map<String, AdminBoundary> adms) {
     // FileWriter writer = null;
     try (FileWriter writer = new FileWriter(outfile, true)) {
+      BufferedWriter bw = new BufferedWriter(writer);
 
       for (String admKey : adms.keySet()) {
         AdminBoundary adm = adms.get(admKey);
@@ -157,7 +159,7 @@ public class GeonamesProcessor {
 
         String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + "" + "\t" + country + "\t" + province + "\t" + "" + "\t" + "(" + country + ")" + "\t"
             + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
-        writer.write(line);
+        bw.write(line);
         // System.out.println(line);
 
       }

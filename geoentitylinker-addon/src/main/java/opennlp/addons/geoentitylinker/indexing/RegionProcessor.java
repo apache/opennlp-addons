@@ -16,6 +16,7 @@
 package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -102,11 +103,12 @@ public class RegionProcessor {
       w.commit();
     }
     FileWriter writer = new FileWriter(outputCountryContextfile, true);
+    BufferedWriter bw = new BufferedWriter(writer);
     for (String string : ccfileentries) {
-      writer.write(string);
+      bw.write(string);
     }
     System.out.println("successfully wrote Region entries to country oontext file");
-    writer.close();
+    bw.close();
     System.out.println("Completed indexing regions!");
   }
 
