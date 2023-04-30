@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,8 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Finds instances of country mentions in a String, typically a document text.
@@ -39,19 +41,19 @@ import org.apache.log4j.Logger;
  */
 public class AdminBoundaryContextGenerator {
 
-  private static final Logger LOGGER = Logger.getLogger(AdminBoundaryContextGenerator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private List<CountryContextEntry> countrydata;
   private Map<String, Set<String>> nameCodesMap = new HashMap<>();
-  private Map<String, Set<Integer>> countryMentions = new HashMap<>();
+  private final Map<String, Set<Integer>> countryMentions = new HashMap<>();
 
   Map<String, String> countryRegexMap = new HashMap<>();
   Map<String, String> provinceRegexMap = new HashMap<>();
   Map<String, String> countyRegexMap = new HashMap<>();
 
-  private Set<CountryContextEntry> countryHits = new HashSet<>();
-  private EntityLinkerProperties properties;
-  private List<AdminBoundary> adminBoundaryData= new ArrayList<>();
-  private Set<AdminBoundary> adminBoundaryHits = new HashSet<>();
+  private final Set<CountryContextEntry> countryHits = new HashSet<>();
+  private final EntityLinkerProperties properties;
+  private final List<AdminBoundary> adminBoundaryData= new ArrayList<>();
+  private final Set<AdminBoundary> adminBoundaryHits = new HashSet<>();
   private AdminBoundaryContext context;
 
   public AdminBoundaryContext getContext(String text) {
@@ -62,16 +64,16 @@ public class AdminBoundaryContextGenerator {
     return context;
   }
 
-  private Set<String> countryHitSet = new HashSet<>();
-  private Map<String, String> countryMap = new HashMap<>();
-  private Map<String, Map<String, String>> provMap = new HashMap<>();
-  private Map<String, Map<String, String>> countyMap = new HashMap<>();
+  private final Set<String> countryHitSet = new HashSet<>();
+  private final Map<String, String> countryMap = new HashMap<>();
+  private final Map<String, Map<String, String>> provMap = new HashMap<>();
+  private final Map<String, Map<String, String>> countyMap = new HashMap<>();
 
   private Map<String, Set<Integer>> provMentions = new HashMap<>();
   private Map<String, Set<Integer>> countyMentions = new HashMap<>();
 
-  private Set<String> provHits = new HashSet<String>();
-  private Set<String> countyHits = new HashSet<String>();
+  private final Set<String> provHits = new HashSet<>();
+  private final Set<String> countyHits = new HashSet<>();
 
   public static void main(String[] args) {
     try {
@@ -109,18 +111,14 @@ public class AdminBoundaryContextGenerator {
   }
 
   /**
-   * returns the last set of hits after calling regexFind
-   *
-   * @return
+   * @return returns the last set of hits after calling regexFind
    */
   public Set<CountryContextEntry> getCountryHits() {
     return countryHits;
   }
 
   /**
-   * returns the last name to codes map after calling regexFind
-   *
-   * @return
+   * @return returns the last name to codes map after calling regexFind
    */
   public Map<String, Set<String>> getNameCodesMap() {
     return nameCodesMap;
@@ -148,11 +146,9 @@ public class AdminBoundaryContextGenerator {
    * downstream. The full text of a document should be passed in here.
    *
    * @param text the full text of the document (block of text).
-   * @return
    */
   private AdminBoundaryContext process(String text) {
     try {
-
       reset();
       Map<String, Set<Integer>> countryhitMap = regexfind(text, countryMap, countryHitSet, "country");
       if (!countryhitMap.isEmpty()) {
@@ -203,13 +199,10 @@ public class AdminBoundaryContextGenerator {
         }
       }
 
-      AdminBoundaryContext context
-          = new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet, provHits, countyHits,
+      return new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet, provHits, countyHits,
               countryRefMap, provMap, countyMap, nameCodesMap, countryRegexMap, provinceRegexMap, countyRegexMap);
-
-      return context;
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e.getLocalizedMessage(), e);
     }
     return null;
   }
@@ -221,7 +214,6 @@ public class AdminBoundaryContextGenerator {
    * @param lookupMap a map to use to find names. the key=a location code, the
    * value is an actual name.
    * @param hitsRef a reference to a set that stores the hits by id
-   * @return
    */
   private Map<String, Set<Integer>> regexfind(String docText, Map<String, String> lookupMap, Set<String> hitsRef, String locationType) {
     Map<String, Set<Integer>> mentions = new HashMap<>();
@@ -268,7 +260,7 @@ public class AdminBoundaryContextGenerator {
           if (mentions.containsKey(code)) {
             mentions.get(code).add(start);
           } else {
-            Set<Integer> newset = new HashSet<Integer>();
+            Set<Integer> newset = new HashSet<>();
             newset.add(start);
             mentions.put(code, newset);
           }
@@ -276,7 +268,7 @@ public class AdminBoundaryContextGenerator {
             if (this.nameCodesMap.containsKey(hit)) {
               nameCodesMap.get(hit).add(code);
             } else {
-              HashSet<String> newset = new HashSet<String>();
+              HashSet<String> newset = new HashSet<>();
               newset.add(code);
               nameCodesMap.put(hit, newset);
             }
@@ -290,9 +282,7 @@ public class AdminBoundaryContextGenerator {
       }
 
     } catch (Exception ex) {
-      LOGGER.error(ex);
-      ex.printStackTrace();
-
+      LOG.error(ex.getLocalizedMessage(), ex);
     }
 
     return mentions;
@@ -306,7 +296,7 @@ public class AdminBoundaryContextGenerator {
     BufferedReader reader;
     try {
       reader = new BufferedReader(new FileReader(countryContextFile));
-      String line = "";
+      String line;
       int lineNum = 0;
       while ((line = reader.readLine()) != null) {
         String[] values = line.split("\t");
@@ -334,7 +324,7 @@ public class AdminBoundaryContextGenerator {
       }
       reader.close();
     } catch (IOException ex) {
-      LOGGER.error(ex);
+      LOG.error(ex.getLocalizedMessage(), ex);
     }
 
     loadMaps(this.adminBoundaryData);
@@ -365,7 +355,7 @@ public class AdminBoundaryContextGenerator {
           provMap.put(adm.getCountryCode(), provs);
           // }
 
-          if (!adm.getCountyCode().toLowerCase().equals("no_data_found") && !adm.getCountyName().toLowerCase().equals("no_data_found")) {
+          if (!adm.getCountyCode().equalsIgnoreCase("no_data_found") && !adm.getCountyName().equalsIgnoreCase("no_data_found")) {
             Map<String, String> counties = countyMap.get(adm.getCountryCode() + "." + adm.getProvCode());
             if (counties == null) {
               counties = new HashMap<>();

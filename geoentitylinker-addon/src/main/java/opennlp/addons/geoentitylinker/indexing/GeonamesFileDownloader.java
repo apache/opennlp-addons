@@ -16,13 +16,11 @@
 package opennlp.addons.geoentitylinker.indexing;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -48,7 +46,7 @@ public class GeonamesFileDownloader {
 
   }
 
-  public static final void writeFile(InputStream in, OutputStream out)
+  public static void writeFile(InputStream in, OutputStream out)
           throws IOException {
     byte[] buffer = new byte[1024];
     int len;
@@ -61,17 +59,16 @@ public class GeonamesFileDownloader {
     out.close();
   }
 
-  public static void unzipMyZip(String zipFileName,
-          String directoryToExtractTo) {
-    Enumeration entriesEnum;
+  public static void unzipMyZip(String zipFileName, String directoryToExtractTo) {
+    Enumeration<? extends ZipEntry> entriesEnum;
     ZipFile zip;
     try {
       zip = new ZipFile(zipFileName);
       entriesEnum = zip.entries();
       while (entriesEnum.hasMoreElements()) {
-        ZipEntry entry = (ZipEntry) entriesEnum.nextElement();
+        ZipEntry entry = entriesEnum.nextElement();
         InputStream is = zip.getInputStream(entry); // get the input stream
-        OutputStream os = new java.io.FileOutputStream(new File(zipFileName.replace("\\.zip", ".txt")));
+        OutputStream os = new FileOutputStream(zipFileName.replace("\\.zip", ".txt"));
         byte[] buf = new byte[4096];
         int r;
         while ((r = is.read(buf)) != -1) {
@@ -83,40 +80,24 @@ public class GeonamesFileDownloader {
     } catch (IOException ioe) {
       System.err.println("Some Exception Occurred:");
       ioe.printStackTrace();
-      return;
     }
   }
 
-  public static String fileUrl(String fAddress, String localFileName, String destinationDir) {
-    OutputStream outStream = null;
-    URLConnection uCon = null;
-    String filename = destinationDir + "\\" + localFileName;
-    InputStream is = null;
-    try {
-      URL Url;
-      byte[] buf;
-      int ByteRead, ByteWritten = 0;
-      Url = new URL(fAddress);
-      outStream = new BufferedOutputStream(new FileOutputStream(destinationDir + "\\" + localFileName));
+  public static String fileUrl(String fAddress, String localFileName, String destDir) {
+    String filename = destDir + "\\" + localFileName;
+    try (InputStream is = new URL(fAddress).openConnection().getInputStream();
+         OutputStream outStream = new BufferedOutputStream(new FileOutputStream(destDir + "\\" + localFileName))) {
 
-      uCon = Url.openConnection();
-      is = uCon.getInputStream();
-      buf = new byte[size];
-      while ((ByteRead = is.read(buf)) != -1) {
-        outStream.write(buf, 0, ByteRead);
-        ByteWritten += ByteRead;
+      byte[] buf = new byte[size];
+      int byteRead, byteWritten = 0;
+      while ((byteRead = is.read(buf)) != -1) {
+        outStream.write(buf, 0, byteRead);
+        byteWritten += byteRead;
       }
       System.out.println("Downloaded Successfully.");
-      System.out.println("File name:\"" + localFileName + "\"\nNo ofbytes :" + ByteWritten);
+      System.out.println("File name:\"" + localFileName + "\"\nNo ofbytes :" + byteWritten);
     } catch (Exception e) {
       e.printStackTrace();
-    } finally {
-      try {
-        is.close();
-        outStream.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
     return filename;
   }

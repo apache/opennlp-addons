@@ -22,12 +22,14 @@ import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import opennlp.addons.modelbuilder.Modelable;
+import opennlp.tools.namefind.TokenNameFinderFactory;
 import opennlp.tools.util.MarkableFileInputStreamFactory;
 
 import opennlp.tools.namefind.NameFinderME;
@@ -37,13 +39,14 @@ import opennlp.tools.namefind.TokenNameFinderModel;
 
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
+import opennlp.tools.util.TrainingParameters;
 
 /**
  * Creates annotations, writes annotations to file, and creates a model and writes to a file
  */
 public class GenericModelableImpl implements Modelable {
 
-  private Set<String> annotatedSentences = new HashSet<String>();
+  private Set<String> annotatedSentences = new HashSet<>();
   BaseModelBuilderParams params;
 
   @Override
@@ -53,21 +56,15 @@ public class GenericModelableImpl implements Modelable {
 
   @Override
   public String annotate(String sentence, String namedEntity, String entityType) {
-    String annotation = sentence.replace(namedEntity, " <START:" + entityType + "> " + namedEntity + " <END> ");
-    return annotation;
+    return sentence.replace(namedEntity, " <START:" + entityType + "> " + namedEntity + " <END> ");
   }
 
   @Override
   public void writeAnnotatedSentences() {
-    try {
-
-      FileWriter writer = new FileWriter(params.getAnnotatedTrainingDataFile(), false);
-      BufferedWriter bw = new BufferedWriter(writer);
-
+    try (Writer bw = new BufferedWriter(new FileWriter(params.getAnnotatedTrainingDataFile(), false))) {
       for (String s : annotatedSentences) {
         bw.write(s.replace("\n", " ").trim() + "\n");
       }
-      bw.close();
     } catch (IOException ex) {
       ex.printStackTrace();
     }
@@ -90,31 +87,24 @@ public class GenericModelableImpl implements Modelable {
 
   @Override
   public void buildModel(String entityType) {
-    try {
+    try (ObjectStream<NameSample> sampleStream = new NameSampleDataStream(new PlainTextByLineStream(
+            new MarkableFileInputStreamFactory(params.getAnnotatedTrainingDataFile()), StandardCharsets.UTF_8));
+         OutputStream modelOut = new BufferedOutputStream(new FileOutputStream(params.getModelFile()))) {
       System.out.println("\tBuilding Model using " + annotatedSentences.size() + " annotations");
       System.out.println("\t\treading training data...");
-      Charset charset = Charset.forName("UTF-8");
-      ObjectStream<String> lineStream =
-              new PlainTextByLineStream(new MarkableFileInputStreamFactory(params.getAnnotatedTrainingDataFile()), charset);
-      ObjectStream<NameSample> sampleStream = new NameSampleDataStream(lineStream);
-
       TokenNameFinderModel model;
-      model = NameFinderME.train("en", entityType, sampleStream, null);
+      model = NameFinderME.train("en", entityType, sampleStream,
+                TrainingParameters.defaultParams(), new TokenNameFinderFactory());
       sampleStream.close();
-      OutputStream modelOut = new BufferedOutputStream(new FileOutputStream(params.getModelFile()));
       model.serialize(modelOut);
-      if (modelOut != null) {
-        modelOut.close();
-      }
       System.out.println("\tmodel generated");
     } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
   @Override
   public TokenNameFinderModel getModel() {
-
-
     TokenNameFinderModel nerModel = null;
     try {
       nerModel = new TokenNameFinderModel(new FileInputStream(params.getModelFile()));
@@ -126,7 +116,6 @@ public class GenericModelableImpl implements Modelable {
 
   @Override
   public String[] tokenizeSentenceToWords(String sentence) {
-    return sentence.split(" ");
-
+    return sentence.split("\\s+");
   }
 }

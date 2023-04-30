@@ -129,7 +129,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
      * create a map of all the span's proximal country mentions in the document
      * Map< countrycode, set of <distances from this NamedEntity>>
      */
-    Map<String, Set<Integer>> distancesFromCodeMap = new HashMap<String, Set<Integer>>();
+    Map<String, Set<Integer>> distancesFromCodeMap = new HashMap<>();
     //map = Map<countrycode, Set <of distances this span is from all the mentions of the code>>
     for (String cCode : countryHits.keySet()) {
 //iterate over all the regex start values and calculate an offset
@@ -141,7 +141,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
         if (distancesFromCodeMap.containsKey(cCode)) {
           distancesFromCodeMap.get(cCode).add(absDist);
         } else {
-          HashSet<Integer> newset = new HashSet<Integer>();
+          HashSet<Integer> newset = new HashSet<>();
           newset.add(absDist);
           distancesFromCodeMap.put(cCode, newset);
         }
@@ -211,24 +211,24 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    */
   private Map<String, Double> analyzeMap(Map<String, Set<Integer>> distanceMap, Span[] sentences, LinkedSpan<BaseLink> span) {
 
-    Map<String, Double> scoreMap = new HashMap<String, Double>();
+    Map<String, Double> scoreMap = new HashMap<>();
     if (distanceMap.isEmpty()) {
       return scoreMap;
     }
-    TreeSet<Integer> all = new TreeSet<Integer>();
+    TreeSet<Integer> all = new TreeSet<>();
     for (String key : distanceMap.keySet()) {
       all.addAll(distanceMap.get(key));
     }
     //get min max for normalization, this could be more efficient
 
-    Integer min = all.first();
-    Integer max = all.last();
+    int min = all.first();
+    int max = all.last();
     if (min == max) {
       min = 0;
     }
     for (String key : distanceMap.keySet()) {
 
-      TreeSet<Double> normalizedDistances = new TreeSet<Double>();
+      TreeSet<Double> normalizedDistances = new TreeSet<>();
       for (Integer i : distanceMap.get(key)) {
         Double norm = normalize(i, min, max);
         //reverse the normed distance so low numbers (closer) are better
@@ -237,7 +237,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
         normalizedDistances.add(reverse);
       }
 
-      List<Double> doubles = new ArrayList<Double>(normalizedDistances);
+      List<Double> doubles = new ArrayList<>(normalizedDistances);
       scoreMap.put(key, slidingDistanceAverage(doubles));
     }
     return scoreMap;
@@ -254,7 +254,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    * @return
    */
   private Double slidingDistanceAverage(List<Double> normDis) {
-    List<Double> windowOfAverages = new ArrayList<Double>();
+    List<Double> windowOfAverages = new ArrayList<>();
 
     if (normDis.size() < 3) {
       windowOfAverages.addAll(normDis);

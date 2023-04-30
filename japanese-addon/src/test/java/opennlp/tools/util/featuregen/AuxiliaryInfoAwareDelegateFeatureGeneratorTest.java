@@ -20,9 +20,10 @@ package opennlp.tools.util.featuregen;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
 
@@ -30,7 +31,7 @@ public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
 
   private List<String> features;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     features = new ArrayList<>();
   }
@@ -41,8 +42,8 @@ public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
         new IdentityFeatureGenerator(), false);
 
     featureGenerator.createFeatures(features, testSentence, 2, null);
-    Assert.assertEquals(1, features.size());
-    Assert.assertEquals("w3", features.get(0));
+    assertEquals(1, features.size());
+    assertEquals("w3", features.get(0));
   }
 
   @Test
@@ -51,8 +52,8 @@ public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
         new IdentityFeatureGenerator(), true);
 
     featureGenerator.createFeatures(features, testSentence, 3, null);
-    Assert.assertEquals(1, features.size());
-    Assert.assertEquals("pos4", features.get(0));
+    assertEquals(1, features.size());
+    assertEquals("pos4", features.get(0));
   }
 
   static class IdentityFeatureGenerator implements AdaptiveFeatureGenerator {

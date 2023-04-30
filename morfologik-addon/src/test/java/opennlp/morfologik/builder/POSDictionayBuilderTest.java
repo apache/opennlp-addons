@@ -22,19 +22,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import junit.framework.TestCase;
 import morfologik.stemming.DictionaryMetadata;
 import opennlp.morfologik.lemmatizer.MorfologikLemmatizer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class POSDictionayBuilderTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public class POSDictionayBuilderTest {
 
   @Test
   public void testBuildDictionary() throws Exception {
     
     Path output = createMorfologikDictionary();
-
     MorfologikLemmatizer ml = new MorfologikLemmatizer(output);
 
     assertNotNull(ml);

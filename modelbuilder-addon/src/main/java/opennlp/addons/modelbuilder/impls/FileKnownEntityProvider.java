@@ -33,7 +33,7 @@ import opennlp.addons.modelbuilder.KnownEntityProvider;
  */
 public class FileKnownEntityProvider implements KnownEntityProvider {
  
-  Set<String> knownEntities = new HashSet<String>();
+  Set<String> knownEntities = new HashSet<>();
   BaseModelBuilderParams params;
   @Override
   public Set<String> getKnownEntities() {
@@ -53,8 +53,6 @@ public class FileKnownEntityProvider implements KnownEntityProvider {
         br.close();
         br = null;
         fis = null;
-      } catch (FileNotFoundException ex) {
-        Logger.getLogger(FileKnownEntityProvider.class.getName()).log(Level.SEVERE, null, ex);
       } catch (IOException ex) {
         Logger.getLogger(FileKnownEntityProvider.class.getName()).log(Level.SEVERE, null, ex);
       }

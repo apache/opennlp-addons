@@ -16,8 +16,7 @@
 package opennlp.addons.geoentitylinker.scoring;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,8 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -36,7 +36,8 @@ import org.apache.log4j.Logger;
  */
 public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext> {
 
-  private static final Logger LOGGER = Logger.getLogger(ModelBasedScorer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  
   DocumentCategorizerME documentCategorizerME;
   DoccatModel doccatModel;
   public static final int RADIUS = 200;
@@ -66,12 +67,8 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
         }
       }
 
-    } catch (FileNotFoundException ex) {
-      LOGGER.error(ex);
-    } catch (IOException ex) {
-      LOGGER.error(ex);
     } catch (Exception ex) {
-      LOGGER.error(ex);
+      LOG.error(ex.getLocalizedMessage(), ex);
     }
   }
 
@@ -89,17 +86,17 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
   public Map<Integer, String> generateProximalFeatures(List<LinkedSpan> linkedSpans, Span[] sentenceSpans, String docText, int radius) {
     Map<Integer, String> featureBags = new HashMap<>();
     Map<Integer, Integer> nameMentionMap = new HashMap<>();
-    /**
+    /*
      * iterator over the map that contains a mapping of every country code to
      * all of its mentions in the document
      */
     for (int i = 0; i < linkedSpans.size(); i++) {
-      LinkedSpan span = linkedSpans.get(i);
+      LinkedSpan<?> span = linkedSpans.get(i);
       if (span.getLinkedEntries().isEmpty()) {
         //don't care about spans that did not get linked to anything at all; nothing to work with
         continue;
       }
-      /**
+      /*
        * get the sentence the name span was found in, the beginning of the
        * sentence will suffice as a centroid for feature generation around the
        * named entity
@@ -107,7 +104,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
       Integer mentionIdx = sentenceSpans[span.getSentenceid()].getStart();
       nameMentionMap.put(i, mentionIdx);
     }
-    /**
+    /*
      * now associate each span to a string that will be used for categorization
      * against the model.
      */
@@ -127,7 +124,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
     if (right <= left) {
       chunk = "";
     } else {
-      /**
+      /*
        * don't want to chop any words in half, so take fron the first space to
        * the last space in the chunk string
        */
@@ -136,7 +133,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
         left = chunk.indexOf(" ");
       }
       right = chunk.lastIndexOf(" ");
-      /**
+      /*
        * now get the substring again with only whole words
        */
       if (left < right) {
@@ -149,7 +146,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
 
   private Map<String, Double> getScore(String text) throws Exception {
     Map<String, Double> scoreMap = new HashMap<>();
-    double[] categorize = documentCategorizerME.categorize(text);
+    double[] categorize = documentCategorizerME.categorize(List.of(text).toArray(new String[0]));
     int catSize = documentCategorizerME.getNumberOfCategories();
     for (int i = 0; i < catSize; i++) {
       String category = documentCategorizerME.getCategory(i);

@@ -20,18 +20,19 @@ package opennlp.tools.util.featuregen.lang.jpn;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TokenClassFeatureGeneratorTest {
 
   private List<String> features;
   static String[] testSentence = new String[] {"This", "is", "an", "Example", "sentence"};
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     features = new ArrayList<>();
   }
@@ -45,9 +46,9 @@ public class TokenClassFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(2, features.size());
-    Assert.assertEquals("wc=alpha", features.get(0));
-    Assert.assertEquals("w&c=example,alpha", features.get(1));
+   assertEquals(2, features.size());
+   assertEquals("wc=alpha", features.get(0));
+   assertEquals("w&c=example,alpha", features.get(1));
   }
 
   @Test
@@ -59,7 +60,7 @@ public class TokenClassFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(1, features.size());
-    Assert.assertEquals("wc=alpha", features.get(0));
+   assertEquals(1, features.size());
+   assertEquals("wc=alpha", features.get(0));
   }
 }

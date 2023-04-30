@@ -62,7 +62,7 @@ public class GeonamesProcessor {
 
       reader = new BufferedReader(new FileReader(adm1CodesLookupFile));
       int i = 0;
-      String line = "";
+      String line;
       while ((line = reader.readLine()) != null) {
 
         // String line = reader.readLine();
@@ -116,7 +116,7 @@ public class GeonamesProcessor {
 
       reader = new BufferedReader(new FileReader(countryContextFile));
       int i = 0;
-      String line = "";
+      String line;
       boolean start = false;
       while ((line = reader.readLine()) != null) {
         if (!line.toLowerCase().startsWith("#iso\t") && !start) {
@@ -157,7 +157,7 @@ public class GeonamesProcessor {
         String province = adm.getProvinceName();
         String country = adm.getCountryName();
 
-        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + "" + "\t" + country + "\t" + province + "\t" + "" + "\t" + "(" + country + ")" + "\t"
+        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + "\t" + country + "\t" + province + "\t" + "\t" + "(" + country + ")" + "\t"
             + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
         bw.write(line);
         // System.out.println(line);
@@ -211,7 +211,7 @@ public class GeonamesProcessor {
     List<String> fields = Arrays.asList(fieldStrings);
     int counter = 0;
     System.out.println("reading gazetteer data from file...........");
-    String line = "";
+    String line;
     while ((line = reader.readLine()) != null) {
       String[] values = line.split(type.getSeparator());
 
@@ -232,8 +232,8 @@ public class GeonamesProcessor {
       String dsg = values[7].toLowerCase();
 
       String id = values[0];
-      String concatIndexEntry = "";
-      String countryname = "";
+      String concatIndexEntry;
+      String countryname;
       if (adm != null) {
         concatIndexEntry = adm.getCountryName() + ", " + adm.getProvinceName() + ", " + placeName;
         countryname = adm.getCountryName();
@@ -259,7 +259,7 @@ public class GeonamesProcessor {
         System.out.println("placename: " + placeName + " RESET TO: " + countryname);
         placeName = countryname;
       }
-      /**
+      /*
        * add standard fields to the index
        */
       doc.add(new TextField("hierarchy", concatIndexEntry, Field.Store.YES));

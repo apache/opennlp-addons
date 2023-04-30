@@ -23,10 +23,10 @@ import opennlp.addons.geoentitylinker.scoring.GeoHashBinningScorer;
 import opennlp.addons.geoentitylinker.scoring.FuzzyStringMatchScorer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
 import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
 import opennlp.addons.geoentitylinker.scoring.ProvinceProximityScorer;
 import opennlp.tools.entitylinker.BaseLink;
@@ -47,11 +47,11 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
   private AdminBoundaryContextGenerator countryContext;
   private EntityLinkerProperties linkerProperties;
   private GazetteerSearcher gazateerSearcher;
-  private List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
+  private final List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
 
   @Override
   public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence, Span[][] namesBySentence) {
-    ArrayList<LinkedSpan> spans = new ArrayList<LinkedSpan>();
+    ArrayList<LinkedSpan> spans = new ArrayList<>();
 
     if (linkerProperties == null) {
       throw new IllegalArgumentException("EntityLinkerProperties cannot be null");
@@ -90,7 +90,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         if (geoNamesEntries.isEmpty()) {
           continue;
         }
-        /**
+        /*
          * Normalize the returned scores for this name... this will assist the
          * sort
          */
@@ -109,7 +109,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
             gazetteerEntry.getScoreMap().put("normlucene", normalize);
           }
         }
-        LinkedSpan newspan = new LinkedSpan(geoNamesEntries, names[i], 0);
+        LinkedSpan<BaseLink> newspan = new LinkedSpan<>(geoNamesEntries, names[i], 0);
         newspan.setSearchTerm(matches[i]);
         newspan.setLinkedEntries(geoNamesEntries);
         newspan.setSentenceid(s);
@@ -123,40 +123,37 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         scorer.score(spans, doctext, sentences, linkerProperties, context);
       }
     }
-    /**
+    /*
      * sort the data with the best score on top based on the sum of the scores
      * below from the score map for each baselink object
      */
     for (LinkedSpan<BaseLink> s : spans) {
       ArrayList<BaseLink> linkedData = s.getLinkedEntries();
-      Collections.sort(linkedData, Collections.reverseOrder(new Comparator<BaseLink>() {
-        @Override
-        public int compare(BaseLink o1, BaseLink o2) {
-          HashMap<String, Double> o1scoreMap = o1.getScoreMap();
-          HashMap<String, Double> o2scoreMap = o2.getScoreMap();
-          if (o1scoreMap.size() != o2scoreMap.size()) {
-            return 0;
-          }
-          double sumo1 = 0d;
-          double sumo2 = 0d;
-          for (String object : o1scoreMap.keySet()) {
-            if (object.equals("typescore")
-                || object.equals("countrycontext")
-                || object.equals("placenamedicecoef")
-                || object.equals("provincecontext")
-                || object.equals("geohashbin")
-                || object.equals("normlucene")) {
-              sumo1 += o1scoreMap.get(object);
-              sumo2 += o2scoreMap.get(object);
-            }
-          }
-
-          return Double.compare(sumo1,
-              sumo2);
+      linkedData.sort(Collections.reverseOrder((o1, o2) -> {
+        Map<String, Double> o1scoreMap = o1.getScoreMap();
+        Map<String, Double> o2scoreMap = o2.getScoreMap();
+        if (o1scoreMap.size() != o2scoreMap.size()) {
+          return 0;
         }
+        double sumo1 = 0d;
+        double sumo2 = 0d;
+        for (String object : o1scoreMap.keySet()) {
+          if (object.equals("typescore")
+                  || object.equals("countrycontext")
+                  || object.equals("placenamedicecoef")
+                  || object.equals("provincecontext")
+                  || object.equals("geohashbin")
+                  || object.equals("normlucene")) {
+            sumo1 += o1scoreMap.get(object);
+            sumo2 += o2scoreMap.get(object);
+          }
+        }
+
+        return Double.compare(sumo1,
+                sumo2);
       }));
       //prune the list to topN
-      Iterator iterator = linkedData.iterator();
+      Iterator<BaseLink> iterator = linkedData.iterator();
       int n = 0;
       while (iterator.hasNext()) {
         if (n >= topN) {
@@ -179,9 +176,9 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
    * @param maximum the max of the set to be transposed
    * @return
    */
-  private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
-    Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
-    d = d == Double.NaN ? 0d : d;
+  private Double normalize(Double valueToNormalize, double minimum, double maximum) {
+    double d = ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
+    d = Double.isNaN(d) ? 0d : d;
     return d;
   }
 
@@ -203,9 +200,9 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
     gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
     String rowsRetStr = this.linkerProperties.getProperty("opennlp.geoentitylinker.gaz.rowsreturned", "2");
-    Integer rws = 2;
+    int rws;
     try {
-      rws = Integer.valueOf(rowsRetStr);
+      rws = Integer.parseInt(rowsRetStr);
     } catch (NumberFormatException e) {
       rws = 2;
     }

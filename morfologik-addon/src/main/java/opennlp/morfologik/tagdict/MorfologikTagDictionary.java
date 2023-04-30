@@ -28,13 +28,12 @@ import morfologik.stemming.WordData;
 import opennlp.tools.postag.TagDictionary;
 
 /**
- * A POS Tagger dictionary implementation based on Morfologik binary
- * dictionaries
+ * A POS Tagger dictionary implementation based on Morfologik binary dictionaries.
  */
 public class MorfologikTagDictionary implements TagDictionary {
 
-  private IStemmer dictLookup;
-  private boolean isCaseSensitive;
+  private final IStemmer dictLookup;
+  private final boolean isCaseSensitive;
 
   /**
    * Creates a case sensitive {@link MorfologikTagDictionary}
@@ -46,8 +45,7 @@ public class MorfologikTagDictionary implements TagDictionary {
    * @throws IOException
    *           could not read dictionary from dictURL
    */
-  public MorfologikTagDictionary(Dictionary dict)
-      throws IllegalArgumentException, IOException {
+  public MorfologikTagDictionary(Dictionary dict) throws IllegalArgumentException {
     this(dict, true);
   }
 
@@ -63,8 +61,7 @@ public class MorfologikTagDictionary implements TagDictionary {
    * @throws IOException
    *           could not read dictionary from dictURL
    */
-  public MorfologikTagDictionary(Dictionary dict, boolean caseSensitive)
-      throws IllegalArgumentException, IOException {
+  public MorfologikTagDictionary(Dictionary dict, boolean caseSensitive) throws IllegalArgumentException {
     this.dictLookup = new DictionaryLookup(dict);
     this.isCaseSensitive = caseSensitive;
   }
@@ -77,14 +74,19 @@ public class MorfologikTagDictionary implements TagDictionary {
 
     List<WordData> data = dictLookup.lookup(word);
     if (data != null && data.size() > 0) {
-      List<String> tags = new ArrayList<String>(data.size());
-      for (int i = 0; i < data.size(); i++) {
-        tags.add(data.get(i).getTag().toString());
+      List<String> tags = new ArrayList<>(data.size());
+      for (WordData datum : data) {
+        tags.add(datum.getTag().toString());
       }
       if (tags.size() > 0)
-        return tags.toArray(new String[tags.size()]);
+        return tags.toArray(new String[0]);
       return null;
     }
     return null;
+  }
+
+  @Override
+  public boolean isCaseSensitive() {
+    return isCaseSensitive;
   }
 }

@@ -38,10 +38,9 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<AdminBoundaryCon
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties,  AdminBoundaryContext additionalContext) {
-     //Map<Double, Double> latLongs = new HashMap<Double, Double>();
     List<GazetteerEntry> allGazEntries = new ArrayList<>();
 
-    /**
+    /*
      * collect all the gaz entry references
      */
     for (LinkedSpan<BaseLink> ls : linkedSpans) {
@@ -51,7 +50,7 @@ public class GeoHashBinningScorer implements LinkedEntityScorer<AdminBoundaryCon
         }
       }
     }
-    /**
+    /*
      * use the point clustering to score each hit
      */
     Map<String, List<GazetteerEntry>> cluster = CLUSTERER.cluster(allGazEntries, PRECISION);

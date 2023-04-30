@@ -57,7 +57,7 @@ public class RegionProcessor {
     List<String> fields = new ArrayList<>();
     int counter = 0;
     System.out.println("reading gazetteer data from Regions file...........");
-    String line = "";
+    String line;
     while ((line = reader.readLine()) != null) {
 
       String[] values = line.split("\t");

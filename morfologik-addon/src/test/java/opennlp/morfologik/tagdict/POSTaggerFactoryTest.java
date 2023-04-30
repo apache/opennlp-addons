@@ -17,13 +17,11 @@
 
 package opennlp.morfologik.tagdict;
 
-import static org.junit.Assert.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import opennlp.morfologik.builder.POSDictionayBuilderTest;
@@ -33,30 +31,21 @@ import opennlp.tools.postag.POSTaggerFactory;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.postag.TagDictionary;
 import opennlp.tools.postag.WordTagSampleStream;
+import opennlp.tools.util.MarkableFileInputStreamFactory;
 import opennlp.tools.util.ObjectStream;
+import opennlp.tools.util.PlainTextByLineStream;
 import opennlp.tools.util.TrainingParameters;
 import opennlp.tools.util.model.ModelType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the {@link POSTaggerFactory} class.
  */
 public class POSTaggerFactoryTest {
-
-  private static ObjectStream<POSSample> createSampleStream()
-      throws IOException {
-    InputStream in = POSTaggerFactoryTest.class.getClassLoader()
-        .getResourceAsStream("AnnotatedSentences.txt");
-
-    return new WordTagSampleStream((new InputStreamReader(in)));
-  }
-
-  static POSModel trainPOSModel(ModelType type, POSTaggerFactory factory)
-      throws IOException {
-    return POSTaggerME.train("en", createSampleStream(),
-        TrainingParameters.defaultParams(), factory);
-  }
 
   @Test
   public void testPOSTaggerWithCustomFactory() throws Exception {
@@ -71,18 +60,28 @@ public class POSTaggerFactoryTest {
     POSTaggerFactory factory = posModel.getFactory();
     assertTrue(factory.getTagDictionary() instanceof MorfologikTagDictionary);
 
-    factory = null;
-    
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    posModel.serialize(out);
-    ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-    POSModel fromSerialized = new POSModel(in);
+      posModel.serialize(out);
+      POSModel fromSerialized = new POSModel(new ByteArrayInputStream(out.toByteArray()));
 
-    factory = fromSerialized.getFactory();
-    assertTrue(factory.getTagDictionary() instanceof MorfologikTagDictionary);
-    
-    assertEquals(2, factory.getTagDictionary().getTags("casa").length);
+      factory = fromSerialized.getFactory();
+      assertTrue(factory.getTagDictionary() instanceof MorfologikTagDictionary);
+
+      assertEquals(2, factory.getTagDictionary().getTags("casa").length);
+    }
+  }
+
+  private static ObjectStream<POSSample> createSampleStream() throws IOException {
+    File data = new File("target/test-classes/AnnotatedSentences.txt");
+    return new WordTagSampleStream(new PlainTextByLineStream(
+            new MarkableFileInputStreamFactory(data), StandardCharsets.UTF_8));
+  }
+
+  static POSModel trainPOSModel(ModelType type, POSTaggerFactory factory)
+      throws IOException {
+    return POSTaggerME.train("en", createSampleStream(),
+        TrainingParameters.defaultParams(), factory);
   }
 
 }

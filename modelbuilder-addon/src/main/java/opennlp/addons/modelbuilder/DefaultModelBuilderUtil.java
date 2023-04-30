@@ -24,17 +24,17 @@ import opennlp.addons.modelbuilder.impls.GenericModelGenerator;
 import opennlp.addons.modelbuilder.impls.GenericModelableImpl;
 
 /**
- *
- * Utilizes the filebased implementations to produce an NER model from user
- * The basic processing is such
- * read in the list of known entities
- * annotate the sentences based on the list of known entities
- * create a model from the annotations
- * perform NER with the model on the sentences
- * add the NER results to the annotations
- * rebuild the model
- * loop
- * defined data
+ * Utilizes the file-based implementations to produce an NER model from user defined data.
+ * <p>
+ * The basic processing is such read in the list of known entities
+ * <ul>
+ *   <li>annotate the sentences based on the list of known entities,</li>
+ *   <li>create a model from the annotations,</li>
+ *   <li>perform NER with the model on the sentences,</li>
+ *   <li>add the NER results to the annotations,</li>
+ *   <li>rebuild the model,</li>
+ *   <li>loop</li>
+ * </ul>
  */
 public class DefaultModelBuilderUtil {
 
@@ -74,20 +74,23 @@ public class DefaultModelBuilderUtil {
     params.setKnownEntitiesFile(knownEntities);
     params.setModelFile(modelOutFile);
     params.setKnownEntityBlacklist(knownEntitiesBlacklist);
-    /**
+
+    /*
      * sentence providers feed this process with user data derived sentences
      * this impl just reads line by line through a file
      */
     SentenceProvider sentenceProvider = new FileSentenceProvider();
     sentenceProvider.setParameters(params);
-    /**
+
+    /*
      * KnownEntityProviders provide a seed list of known entities... such as
      * Barack Obama for person, or Germany for location obviously these would
-     * want to be prolific, non ambiguous names
+     * want to be prolific, non-ambiguous names
      */
     KnownEntityProvider knownEntityProvider = new FileKnownEntityProvider();
     knownEntityProvider.setParameters(params);
-    /**
+
+    /*
      * ModelGenerationValidators try to weed out bad hits by the iterations of
      * the name finder. Since this is a recursive process, with each iteration
      * the namefinder will get more and more greedy if bad entities are allowed
@@ -98,14 +101,15 @@ public class DefaultModelBuilderUtil {
      */
     ModelGenerationValidator validator = new FileModelValidatorImpl();
     validator.setParameters(params);
-    /**
+
+    /*
      * Modelable's write and read the annotated sentences, as well as create and
      * write the NER models
      */
     Modelable modelable = new GenericModelableImpl();
     modelable.setParameters(params);
 
-    /**
+    /*
      * the modelGenerator actually runs the process with a set number of
      * iterations... could be better by actually calculating the diff between
      * runs and stopping based on a thresh, but for extrememly large sentence

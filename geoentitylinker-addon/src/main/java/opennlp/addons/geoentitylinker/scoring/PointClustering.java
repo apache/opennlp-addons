@@ -41,8 +41,7 @@ public class PointClustering {
    */
   public Map<String, List<GazetteerEntry>> cluster(List<GazetteerEntry> entries, int precision) {
     Map<String, List<GazetteerEntry>> map = new HashMap<>();
-    for (int i = 0; i < entries.size(); i++) {
-      GazetteerEntry entry = entries.get(i);
+    for (GazetteerEntry entry : entries) {
       Double latw = entry.getLatitude();
       Double lonw = entry.getLongitude();
 
@@ -64,12 +63,12 @@ public class PointClustering {
     for (String key : clusters.keySet()) {
       int size = clusters.get(key).size();
       if (size > max) {
-        max = Double.valueOf(size);
+        max = (double) size;
       }
     }
     for (String key : clusters.keySet()) {
       int size = clusters.get(key).size();
-      Double score = normalize(Double.valueOf(size), min, max);
+      Double score = normalize((double) size, min, max);
       for (GazetteerEntry entry : clusters.get(key)) {
         entry.getScoreMap().put("geohashbin", score);
       }
@@ -116,8 +115,7 @@ public class PointClustering {
   }
 
 
-  private Double normalize(Double valueToNormalize, Double minimum, Double maximum) {
-    Double d = (double) ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
-    return d;
+  private Double normalize(Double valueToNormalize, double minimum, double maximum) {
+    return ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
   }
 }

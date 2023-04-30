@@ -31,7 +31,7 @@ import opennlp.tools.util.Span;
  */
 public class GenericModelGenerator implements SemiSupervisedModelGenerator {
 
-  private Map<String, String> params = new HashMap<String, String>();
+  private Map<String, String> params = new HashMap<>();
 
   @Override
   public void setParameters(BaseModelBuilderParams params) {
