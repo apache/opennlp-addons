@@ -18,10 +18,10 @@
 package opennlp.jwnl.lemmatizer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import opennlp.tools.lemmatizer.DictionaryLemmatizer;
 
 import net.didion.jwnl.JWNLException;
 import net.didion.jwnl.data.Adjective;
@@ -42,8 +42,9 @@ import net.didion.jwnl.dictionary.morph.Operation;
 import net.didion.jwnl.dictionary.morph.TokenizerOperation;
 import net.didion.jwnl.princeton.data.PrincetonWN17FileDictionaryElementFactory;
 import net.didion.jwnl.princeton.file.PrincetonRandomAccessDictionaryFile;
+import opennlp.tools.lemmatizer.Lemmatizer;
 
-public class JWNLLemmatizer implements DictionaryLemmatizer {
+public class JWNLLemmatizer implements Lemmatizer {
 
   private net.didion.jwnl.dictionary.Dictionary dict;
   private MorphologicalProcessor morphy;
@@ -52,18 +53,18 @@ public class JWNLLemmatizer implements DictionaryLemmatizer {
    * Creates JWNL dictionary and morphological processor objects in
    * JWNLemmatizer constructor. It also loads the JWNL configuration into the
    * constructor. 
-   * 
+   * <p>
    * Constructor code based on Apache OpenNLP JWNLDictionary class. 
    * 
    * @param wnDirectory
    * @throws IOException
-   * @throws JWNLException
    */
-  public JWNLLemmatizer(String wnDirectory) throws IOException, JWNLException {
+  public JWNLLemmatizer(String wnDirectory) throws IOException {
+    super();
     PointerType.initialize();
     Adjective.initialize();
     VerbFrame.initialize();
-    Map<POS, String[][]> suffixMap = new HashMap<POS, String[][]>();
+    Map<POS, String[][]> suffixMap = new HashMap<>();
     suffixMap.put(POS.NOUN, new String[][] { { "s", "" }, { "ses", "s" },
         { "xes", "x" }, { "zes", "z" }, { "ches", "ch" }, { "shes", "sh" },
         { "men", "man" }, { "ies", "y" } });
@@ -91,8 +92,7 @@ public class JWNLLemmatizer implements DictionaryLemmatizer {
     dict = net.didion.jwnl.dictionary.Dictionary.getInstance();
     morphy = dict.getMorphologicalProcessor();
   }
-  
-  
+
   /**
    * It takes a word and a POS tag and obtains a word's lemma from WordNet.
    * 
@@ -103,7 +103,7 @@ public class JWNLLemmatizer implements DictionaryLemmatizer {
   public String lemmatize(String word, String postag) {
     String constantTag = "NNP";
     IndexWord baseForm;
-    String lemma = null;
+    String lemma;
     try {
       POS pos;
       if (postag.startsWith("N") || postag.startsWith("n")) {
@@ -121,7 +121,7 @@ public class JWNLLemmatizer implements DictionaryLemmatizer {
       if (baseForm != null) {
         lemma = baseForm.getLemma().toString();
       }
-      else if (baseForm == null && postag.startsWith(String.valueOf(constantTag))) {
+      else if (baseForm == null && postag.startsWith(constantTag)) {
           lemma = word;
         }
         else {
@@ -134,5 +134,18 @@ public class JWNLLemmatizer implements DictionaryLemmatizer {
     return lemma;
   }
 
+  @Override
+  public String[] lemmatize(final String[] tokens, final String[] postags) {
+    List<String> lemmas = new ArrayList<>();
+    for (int i = 0; i < tokens.length; i++) {
+      lemmas.add(this.lemmatize(tokens[i], postags[i]));
+    }
+    return lemmas.toArray(new String[0]);
+  }
+
+  @Override
+  public List<List<String>> lemmatize(final List<String> tokens, final List<String> posTags) {
+    throw new UnsupportedOperationException("Method not implemented here!");
+  }
 }
 

@@ -34,6 +34,7 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
 
   @Override
   public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+
     for (LinkedSpan<BaseLink> linkedSpan : linkedSpans) {
       for (BaseLink link : linkedSpan.getLinkedEntries()) {
         if (link instanceof GazetteerEntry) {
@@ -87,7 +88,7 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
       s2Grams.add(token);
     }
 
-    Set<String> overlap = new HashSet<String>(s1Grams);
+    Set<String> overlap = new HashSet<>(s1Grams);
     overlap.retainAll(s2Grams);
     double totcombigrams = overlap.size();
 

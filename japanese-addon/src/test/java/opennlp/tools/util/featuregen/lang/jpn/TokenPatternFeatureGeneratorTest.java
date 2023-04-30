@@ -20,17 +20,18 @@ package opennlp.tools.util.featuregen.lang.jpn;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TokenPatternFeatureGeneratorTest {
 
   private List<String> features;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     features = new ArrayList<>();
   }
@@ -44,8 +45,8 @@ public class TokenPatternFeatureGeneratorTest {
     AdaptiveFeatureGenerator generator = new TokenPatternFeatureGenerator();
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
-    Assert.assertEquals(1, features.size());
-    Assert.assertEquals("st=example", features.get(0));
+    assertEquals(1, features.size());
+    assertEquals("st=example", features.get(0));
   }
 
   @Test
@@ -57,20 +58,20 @@ public class TokenPatternFeatureGeneratorTest {
     AdaptiveFeatureGenerator generator = new TokenPatternFeatureGenerator();
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
-    Assert.assertEquals(14, features.size());
-    Assert.assertEquals("stn=5", features.get(0));
-    Assert.assertEquals("pt2=alphaalpha", features.get(1));
-    Assert.assertEquals("pt3=alphaalphaalpha", features.get(2));
-    Assert.assertEquals("st=this", features.get(3));
-    Assert.assertEquals("pt2=alphaalpha", features.get(4));
-    Assert.assertEquals("pt3=alphaalphaalpha", features.get(5));
-    Assert.assertEquals("st=is", features.get(6));
-    Assert.assertEquals("pt2=alphaalpha", features.get(7));
-    Assert.assertEquals("pt3=alphaalphaalpha", features.get(8));
-    Assert.assertEquals("st=an", features.get(9));
-    Assert.assertEquals("pt2=alphaalpha", features.get(10));
-    Assert.assertEquals("st=example", features.get(11));
-    Assert.assertEquals("st=sentence", features.get(12));
-    Assert.assertEquals("pta=alphaalphaalphaalphaalpha", features.get(13));
+    assertEquals(14, features.size());
+    assertEquals("stn=5", features.get(0));
+    assertEquals("pt2=alphaalpha", features.get(1));
+    assertEquals("pt3=alphaalphaalpha", features.get(2));
+    assertEquals("st=this", features.get(3));
+    assertEquals("pt2=alphaalpha", features.get(4));
+    assertEquals("pt3=alphaalphaalpha", features.get(5));
+    assertEquals("st=is", features.get(6));
+    assertEquals("pt2=alphaalpha", features.get(7));
+    assertEquals("pt3=alphaalphaalpha", features.get(8));
+    assertEquals("st=an", features.get(9));
+    assertEquals("pt2=alphaalpha", features.get(10));
+    assertEquals("st=example", features.get(11));
+    assertEquals("st=sentence", features.get(12));
+    assertEquals("pta=alphaalphaalphaalphaalpha", features.get(13));
   }
 }

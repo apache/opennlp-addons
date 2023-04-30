@@ -67,10 +67,10 @@ public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext>
           boosetedTypes.put(type.toLowerCase(), .5d);
         } else if (type.startsWith("ADM")) {
           boosetedTypes.put(type.toLowerCase(), .75d);
-        }else if (type.toLowerCase().equals("civil")){
+        }else if (type.equalsIgnoreCase("civil")){
           boosetedTypes.put(type.toLowerCase(), .9d);
         }
-        if(type.toLowerCase().equals("populated_place")){
+        if(type.equalsIgnoreCase("populated_place")){
            boosetedTypes.put("Populated Place", .75d);
         }
 

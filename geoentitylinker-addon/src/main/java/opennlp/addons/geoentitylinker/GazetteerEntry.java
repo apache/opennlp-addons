@@ -21,8 +21,7 @@ import java.util.Objects;
 import opennlp.tools.entitylinker.BaseLink;
 
 /**
- *
- * Stores a minimal amount of information from a geographic placenames gazateer
+ * Stores a minimal amount of information from a geographic placenames gazetteer.
  */
 public class GazetteerEntry extends BaseLink {
 
@@ -35,43 +34,39 @@ public class GazetteerEntry extends BaseLink {
   private String provinceCode;
   private String hierarchy;
 
+  public GazetteerEntry(String parentID, String itemID, String itemName, String itemType) {
+    super(parentID, itemID, itemName, itemType);
+  }
+
   /**
-   * returns the id from the lucene document
-   *
-   * @return
+   * @return returns the id from the lucene document
    */
   public String getIndexID() {
     return indexID;
   }
-  /*
+  /**
    * sets the id from the lucene document
    */
-
   public void setIndexID(String indexID) {
     this.indexID = indexID;
   }
 
   /**
-   * returns the latitude from the gazateer
-   *
-   * @return
+   * @return Retrieves the latitude from the gazetteer
    */
   public Double getLatitude() {
     return latitude;
   }
 
   /**
-   * sets the latitude from the gazateer
-   *
+   * sets the latitude from the gazetteer
    */
   public void setLatitude(Double latitude) {
     this.latitude = latitude;
   }
 
   /**
-   * returns the longitude from the gaz
-   *
-   * @return
+   * @return Retrieves the longitude from the gaz
    */
   public Double getLongitude() {
     return longitude;
@@ -87,16 +82,14 @@ public class GazetteerEntry extends BaseLink {
   }
 
   /**
-   * returns the source of the gazateer data
-   *
-   * @return
+   * @return Retrieves the source of the gazetteer data
    */
   public String getSource() {
     return source;
   }
 
   /**
-   * sets the source (the source of the gazateer data)
+   * sets the source (the source of the gazetteer data)
    *
    * @param source
    */
@@ -105,16 +98,14 @@ public class GazetteerEntry extends BaseLink {
   }
 
   /**
-   * Returns all the other fields in the gazateer in the form of a map
-   *
-   * @return
+   * @return Retrieves all the other fields in the gazetteer in the form of a map
    */
   public Map<String, String> getIndexData() {
     return indexData;
   }
 
   /**
-   * sets the other fields in the gazeteer in the form of a map
+   * sets the other fields in the gazetteer in the form of a map
    *
    * @param indexData stores all fields in the index as fieldname:value
    */

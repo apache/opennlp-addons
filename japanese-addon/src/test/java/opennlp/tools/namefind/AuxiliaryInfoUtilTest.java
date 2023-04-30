@@ -17,56 +17,59 @@
 
 package opennlp.tools.namefind;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AuxiliaryInfoUtilTest {
 
   @Test
   public void testGetSeparatorIndex() throws Exception {
-    Assert.assertEquals(0, AuxiliaryInfoUtil.getSeparatorIndex("/POStag"));
-    Assert.assertEquals(1, AuxiliaryInfoUtil.getSeparatorIndex("1/POStag"));
-    Assert.assertEquals(10, AuxiliaryInfoUtil.getSeparatorIndex("word/stuff/POStag"));
+    assertEquals(0, AuxiliaryInfoUtil.getSeparatorIndex("/POStag"));
+    assertEquals(1, AuxiliaryInfoUtil.getSeparatorIndex("1/POStag"));
+    assertEquals(10, AuxiliaryInfoUtil.getSeparatorIndex("word/stuff/POStag"));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testGetSeparatorIndexNoPos() throws Exception {
-    AuxiliaryInfoUtil.getSeparatorIndex("NOPOStags");
+    Assertions.assertThrows(RuntimeException.class, () ->
+            AuxiliaryInfoUtil.getSeparatorIndex("NOPOStags"));
   }
 
   @Test
   public void testGetWordPart() throws Exception {
-    Assert.assertEquals(" ", AuxiliaryInfoUtil.getWordPart("/POStag"));
-    Assert.assertEquals("1", AuxiliaryInfoUtil.getWordPart("1/POStag"));
-    Assert.assertEquals("word", AuxiliaryInfoUtil.getWordPart("word/POStag"));
-    Assert.assertEquals("word/stuff", AuxiliaryInfoUtil.getWordPart("word/stuff/POStag"));
+    assertEquals(" ", AuxiliaryInfoUtil.getWordPart("/POStag"));
+    assertEquals("1", AuxiliaryInfoUtil.getWordPart("1/POStag"));
+    assertEquals("word", AuxiliaryInfoUtil.getWordPart("word/POStag"));
+    assertEquals("word/stuff", AuxiliaryInfoUtil.getWordPart("word/stuff/POStag"));
   }
 
   @Test
   public void testGetWordParts() throws Exception {
     String[] results = AuxiliaryInfoUtil.getWordParts(new String[]{"1/A", "234/B", "3456/C", "/D"});
-    Assert.assertEquals(4, results.length);
-    Assert.assertEquals("1", results[0]);
-    Assert.assertEquals("234", results[1]);
-    Assert.assertEquals("3456", results[2]);
-    Assert.assertEquals(" ", results[3]);
+    assertEquals(4, results.length);
+    assertEquals("1", results[0]);
+    assertEquals("234", results[1]);
+    assertEquals("3456", results[2]);
+    assertEquals(" ", results[3]);
   }
 
   @Test
   public void testGetAuxPart() throws Exception {
-    Assert.assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("/POStag"));
-    Assert.assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("1/POStag"));
-    Assert.assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("word/POStag"));
-    Assert.assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("word/stuff/POStag"));
+    assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("/POStag"));
+    assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("1/POStag"));
+    assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("word/POStag"));
+    assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("word/stuff/POStag"));
   }
 
   @Test
   public void testGetAuxParts() throws Exception {
     String[] results = AuxiliaryInfoUtil.getAuxParts(new String[] {"1/ABC", "234/B", "3456/CD", "/DEFGH"});
-    Assert.assertEquals(4, results.length);
-    Assert.assertEquals("ABC", results[0]);
-    Assert.assertEquals("B", results[1]);
-    Assert.assertEquals("CD", results[2]);
-    Assert.assertEquals("DEFGH", results[3]);
+    assertEquals(4, results.length);
+    assertEquals("ABC", results[0]);
+    assertEquals("B", results[1]);
+    assertEquals("CD", results[2]);
+    assertEquals("DEFGH", results[3]);
   }
 }

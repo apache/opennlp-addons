@@ -17,12 +17,12 @@ package opennlp.addons.geoentitylinker;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -37,12 +37,12 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.util.Version;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
-import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.util.CharArraySet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -53,12 +53,12 @@ import org.apache.lucene.analysis.util.CharArraySet;
 public class GazetteerSearcher {
 
   private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
-  private static final Logger LOGGER = Logger.getLogger(GazetteerSearcher.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private double scoreCutoff = .70;
-  private boolean doubleQuoteAllSearchTerms = false;
+  private final boolean doubleQuoteAllSearchTerms = false;
   private boolean useHierarchyField = false;
 
-  private EntityLinkerProperties properties;
+  private final EntityLinkerProperties properties;
 
   private Directory opennlpIndex;//= new MMapDirectory(new File(indexloc));
   private IndexReader opennlpReader;// = DirectoryReader.open(geonamesIndex);
@@ -67,13 +67,10 @@ public class GazetteerSearcher {
 
   public static void main(String[] args) {
     try {
-      boolean b = Boolean.valueOf("true");
-
+      boolean b = true;
       new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties"))).find("alabama", 5, " countrycode:us AND gazsource:usgs");
     } catch (IOException ex) {
-      java.util.logging.Logger.getLogger(GazetteerSearcher.class.getName()).log(Level.SEVERE, null, ex);
-    } catch (Exception ex) {
-      java.util.logging.Logger.getLogger(GazetteerSearcher.class.getName()).log(Level.SEVERE, null, ex);
+      LOG.error(ex.getLocalizedMessage(), ex);
     }
   }
 
@@ -98,7 +95,7 @@ public class GazetteerSearcher {
       return linkedData;
     }
     try {
-      /**
+      /*
        * build the search string Sometimes no country context is found. In this
        * case the code variables will be empty strings
        */
@@ -108,7 +105,7 @@ public class GazetteerSearcher {
             + " AND " + whereClause;
       }
 
-      /**
+      /*
        * check the cache and go no further if the records already exist
        */
       ArrayList<GazetteerEntry> get = GazetteerSearchCache.get(placeNameQueryString);
@@ -116,7 +113,7 @@ public class GazetteerSearcher {
 
         return get;
       }
-      /**
+      /*
        * search the placename
        */
       QueryParser parser = new QueryParser(placeNameQueryString, opennlpAnalyzer);
@@ -126,17 +123,12 @@ public class GazetteerSearcher {
       TopDocs bestDocs = opennlpSearcher.search(q, rowsReturned);
       Double maxscore = 0d;
       for (int i = 0; i < bestDocs.scoreDocs.length; ++i) {
-        GazetteerEntry entry = new GazetteerEntry();
         int docId = bestDocs.scoreDocs[i].doc;
         double sc = bestDocs.scoreDocs[i].score;
         if (maxscore.compareTo(sc) < 0) {
           maxscore = sc;
         }
-        entry.getScoreMap().put("lucene", sc);
-        entry.setIndexID(docId + "");
-
         Document d = opennlpSearcher.doc(docId);
-
         List<IndexableField> fields = d.getFields();
 
         String lat = d.get("latitude");
@@ -147,41 +139,39 @@ public class GazetteerSearcher {
         String itemtype = d.get("loctype");
         String source = d.get("gazsource");
         String hier = d.get("hierarchy");
-        entry.setSource(source);
 
-        entry.setItemID(docId + "");
-        entry.setLatitude(Double.valueOf(lat));
-        entry.setLongitude(Double.valueOf(lon));
-        entry.setItemType(itemtype);
-        entry.setItemParentID(parentid);
-        entry.setProvinceCode(provid);
-        entry.setCountryCode(parentid);
-        entry.setItemName(placename);
-        entry.setHierarchy(hier);
-        for (int idx = 0; idx < fields.size(); idx++) {
-          entry.getIndexData().put(fields.get(idx).name(), d.get(fields.get(idx).name()));
+        GazetteerEntry ge = new GazetteerEntry(parentid, String.valueOf(docId), placename, itemtype);
+        ge.getScoreMap().put("lucene", sc);
+        ge.setIndexID(String.valueOf(docId));
+        ge.setSource(source);
+        ge.setLatitude(Double.valueOf(lat));
+        ge.setLongitude(Double.valueOf(lon));
+        ge.setProvinceCode(provid);
+        ge.setCountryCode(parentid);
+        ge.setHierarchy(hier);
+        for (IndexableField field : fields) {
+          ge.getIndexData().put(field.name(), d.get(field.name()));
         }
 
-        /**
-         * only want hits above the levenstein thresh. This should be a low
+        /*
+         * only want hits above the levenshtein thresh. This should be a low
          * thresh due to the use of the hierarchy field in the index
          */
         // if (normLev > scoreCutoff) {
-        if (entry.getItemParentID().toLowerCase().equals(parentid.toLowerCase()) || parentid.toLowerCase().equals("")) {
+        if (ge.getItemParentID().equalsIgnoreCase(parentid) || parentid.equalsIgnoreCase("")) {
           //make sure we don't produce a duplicate
-          if (!linkedData.contains(entry)) {
-            linkedData.add(entry);
-            /**
+          if (!linkedData.contains(ge)) {
+            linkedData.add(ge);
+            /*
              * add the records to the cache for this query
              */
             GazetteerSearchCache.put(placeNameQueryString, linkedData);
           }
         }
-        //}
       }
 
     } catch (IOException | ParseException ex) {
-      LOGGER.error(ex);
+      LOG.error(ex.getLocalizedMessage(), ex);
     }
 
     return linkedData;
@@ -210,8 +200,7 @@ public class GazetteerSearcher {
     if (opennlpIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz", "");
       if (indexloc.equals("")) {
-        LOGGER.error(new Exception("Opennlp combined Gaz directory location not found"));
-
+        LOG.error("Opennlp combined Gaz directory location not found!");
       }
 
       opennlpIndex = new MMapDirectory(Paths.get(indexloc));
@@ -219,7 +208,7 @@ public class GazetteerSearcher {
       opennlpSearcher = new IndexSearcher(opennlpReader);
       opennlpAnalyzer
           = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
-          new StandardAnalyzer(new CharArraySet(new ArrayList(), true));
+          new StandardAnalyzer(new CharArraySet(new ArrayList<>(), true));
       Map<String, Analyzer> analyMap = new HashMap<>();
 
       analyMap.put("countrycode", new KeywordAnalyzer());
@@ -234,10 +223,10 @@ public class GazetteerSearcher {
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
       String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));
       if (cutoff != null && !cutoff.isEmpty()) {
-        scoreCutoff = Double.valueOf(cutoff);
+        scoreCutoff = Double.parseDouble(cutoff);
       }
       if (usehierarchy != null && !usehierarchy.isEmpty()) {
-        useHierarchyField = Boolean.valueOf(usehierarchy);
+        useHierarchyField = Boolean.parseBoolean(usehierarchy);
       }
       //  opennlp.geoentitylinker.gaz.doublequote=false
       //opennlp.geoentitylinker.gaz.hierarchyfield=false

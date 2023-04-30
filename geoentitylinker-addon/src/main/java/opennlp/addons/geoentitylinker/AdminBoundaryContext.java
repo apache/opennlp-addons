@@ -110,7 +110,7 @@ public class AdminBoundaryContext {
   private Set<String> setWhereClauses() {
     Set<String> clauses = new HashSet<>();
     for (String countryCode : this.getCountryHits()) {
-      String gazType = countryCode.toLowerCase().equals("us") ? " AND gazsource:usgs" : " AND gazsource:geonames";
+      String gazType = countryCode.equalsIgnoreCase("us") ? " AND gazsource:usgs" : " AND gazsource:geonames";
       if (countryCode.toLowerCase().matches(".*rg[0-9].*")) {
         gazType = " AND gazsource:region";
       }

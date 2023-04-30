@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import opennlp.tools.ml.AbstractEventTrainer;
-import opennlp.tools.ml.model.DataIndexer;
-import opennlp.tools.ml.model.MaxentModel;
 import de.bwaldvogel.liblinear.Feature;
 import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.Linear;
@@ -34,26 +31,25 @@ import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
 
+import opennlp.tools.ml.AbstractEventTrainer;
+import opennlp.tools.ml.model.DataIndexer;
+import opennlp.tools.ml.model.MaxentModel;
+import opennlp.tools.util.TrainingParameters;
+
 public class LiblinearTrainer extends AbstractEventTrainer {
 
-  private SolverType solverType;
-  private Double c;
-  private Double eps;
-  private Double p;
+  private final SolverType solverType;
+  private final double c;
+  private final double eps;
+  private final double p;
+  private final int bias;
   
-  private int bias;
-  
-  public LiblinearTrainer() {
-  }
-
-  @Override
-  public void init(Map<String, String> trainParams,
-      Map<String, String> reportMap) {
-    String solverTypeName = trainParams.get("solverType");
+  public LiblinearTrainer(TrainingParameters trainParams) {
+    String solverTypeName = trainParams.getStringParameter("solverType", "");
     
     if (solverTypeName != null) {
       try {
-        solverType = SolverType.valueOf(trainParams.get("solverType"));
+        solverType = SolverType.valueOf(trainParams.getStringParameter("solverType", ""));
       }
       catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("solverType [" + solverTypeName + "] is not available!");
@@ -63,42 +59,10 @@ public class LiblinearTrainer extends AbstractEventTrainer {
       throw new IllegalArgumentException("solverType needs to be specified!");
     }
     
-    String cValueString = trainParams.get("c");
-    
-    if (cValueString != null) {
-      c = Double.valueOf(cValueString);
-    }
-    else {
-      throw new IllegalArgumentException("c must be specified");
-    }
-    
-    // eps
-    String epsValueString = trainParams.get("eps");
-
-    if (epsValueString != null) {
-      eps = Double.valueOf(epsValueString);
-    }
-    else {
-      throw new IllegalArgumentException("eps must be specified");
-    }
-
-    String pValueString = trainParams.get("p");
-
-    if (pValueString != null) {
-      p = Double.valueOf(pValueString);
-    }
-    else {
-      throw new IllegalArgumentException("p must be specified");
-    }
-    
-    String biasValueString = trainParams.get("bias");
-    
-    if (biasValueString != null) {
-      bias = Integer.valueOf(biasValueString);
-    }
-    else {
-      throw new IllegalArgumentException("eps must be specified");
-    }    
+    c = trainParams.getDoubleParameter("c", 0);
+    eps = trainParams.getDoubleParameter("eps", 0);
+    p = trainParams.getDoubleParameter("p", 0);
+    bias = trainParams.getIntParameter("bias", 0);
   }
   
   private static Problem constructProblem(List<Double> vy, List<Feature[]> vx, int maxIndex, double bias) {
@@ -126,7 +90,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     problem.y = new double[problem.l];
 
     for (int i = 0; i < problem.l; i++) {
-      problem.y[i] = vy.get(i).doubleValue();
+      problem.y[i] = vy.get(i);
     }
     
     return problem;
@@ -135,8 +99,8 @@ public class LiblinearTrainer extends AbstractEventTrainer {
   @Override
   public MaxentModel doTrain(DataIndexer indexer) throws IOException {
 
-    List<Double> vy = new ArrayList<Double>();
-    List<Feature[]> vx = new ArrayList<Feature[]>();
+    List<Double> vy = new ArrayList<>();
+    List<Feature[]> vx = new ArrayList<>();
 
     // outcomes
     int outcomes[] = indexer.getOutcomeList();
@@ -147,9 +111,9 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     for (int i = 0; i < indexer.getContexts().length; i++) {
 
       int outcome = outcomes[i];
-      vy.add(Double.valueOf(outcome));
+      vy.add((double) outcome);
 
-      int features[] = indexer.getContexts()[i];
+      int[] features = indexer.getContexts()[i];
 
       Feature[] x;
       if (bias >= 0) {
@@ -160,7 +124,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
 
       // for each feature ...
       for (int fi = 0; fi < features.length; fi++) {
-        // TODO: SHOUDL BE indexer.getNumTimesEventsSeen()[i] and not fi !!!
+        // TODO: SHOULD BE indexer.getNumTimesEventsSeen()[i] and not fi !!!
         x[fi] = new FeatureNode(features[fi] + 1, indexer.getNumTimesEventsSeen()[i]);
       } 
 
@@ -176,9 +140,9 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     
     Model liblinearModel = Linear.train(problem, parameter);
 
-    Map<String, Integer> predMap = new HashMap<String, Integer>();
+    Map<String, Integer> predMap = new HashMap<>();
     
-    String predLabels[] = indexer.getPredLabels();
+    String[] predLabels = indexer.getPredLabels();
     for (int i = 0; i < predLabels.length; i++) {
       predMap.put(predLabels[i], i);
     }

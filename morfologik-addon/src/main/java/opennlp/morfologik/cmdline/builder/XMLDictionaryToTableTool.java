@@ -59,7 +59,7 @@ public class XMLDictionaryToTableTool extends BasicCmdLineTool {
     CmdLineUtil.checkInputFile("dictionary input file", dictInFile);
     CmdLineUtil.checkOutputFile("dictionary output file", dictOutFile);
 
-    POSDictionary tagDictionary = null;
+    POSDictionary tagDictionary;
     try {
       tagDictionary = POSDictionary.create(new FileInputStream(dictInFile));
     } catch (IOException e) {
@@ -117,7 +117,7 @@ public class XMLDictionaryToTableTool extends BasicCmdLineTool {
 
   private String createEntry(String word, String tag) {
     
-    String entry = "" + SEPARATOR +// base
+    String entry = SEPARATOR +// base
         word + SEPARATOR +
         tag;
         

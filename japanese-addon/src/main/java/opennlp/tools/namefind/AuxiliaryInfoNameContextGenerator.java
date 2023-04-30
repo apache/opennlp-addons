@@ -76,6 +76,6 @@ public class AuxiliaryInfoNameContextGenerator extends DefaultNameContextGenerat
       features.add("ppo=" + ppo);
     }
 
-    return features.toArray(new String[features.size()]);
+    return features.toArray(new String[0]);
   }
 }

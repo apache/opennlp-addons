@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,21 +42,21 @@ import de.bwaldvogel.liblinear.Model;
 
 // TODO: The features need to be serialized with the model
 // the liblinear model only contains the ints and weights,
-// but the string lables get lost ... basically that are two maps.
+// but the string labels get lost ... basically that are two maps.
 
 // One for outcomes, one for the features ...
 
 public class LiblinearModel implements MaxentModel, SerializableArtifact {
 
-  private static final Charset LIBLINEAR_MODEL_ENCODING = Charset.forName("UTF-8");
+  private static final Charset LIBLINEAR_MODEL_ENCODING = StandardCharsets.UTF_8;
   
-  private Model model;
+  private final Model model;
   
-  // Lets read them from disk, when model is loaded ... 
-  private String outcomeLabels[];
-  private Map<String, Integer> predMap;
+  // Let's read them from disk, when model is loaded ...
+  private final String[] outcomeLabels;
+  private final Map<String, Integer> predMap;
   
-  public LiblinearModel(Model model, String outcomes[], Map<String, Integer> predMap) {
+  public LiblinearModel(Model model, String[] outcomes, Map<String, Integer> predMap) {
     this.model = model;
     this.outcomeLabels = outcomes;
     this.predMap = predMap;
@@ -63,43 +64,41 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
 
   public LiblinearModel(InputStream in) throws IOException {
     
-    DataInputStream di = new DataInputStream(in);
-    
-    int modelByteLength = di.readInt();
-    
-    // TODO: We should have a fixed memory limit here ...
-    
-    byte modelBytes[] = new byte[modelByteLength];
-    di.read(modelBytes);
-    
-    int outcomeLabelLength = di.readInt();
-    
-    outcomeLabels = new String[outcomeLabelLength];
-    for (int i = 0; i < outcomeLabelLength; i++) {
-      outcomeLabels[i] = di.readUTF();
+    try (DataInputStream di = new DataInputStream(in)) {
+      int modelByteLength = di.readInt();
+
+      // TODO: We should have a fixed memory limit here ...
+
+      byte[] modelBytes = new byte[modelByteLength];
+      di.read(modelBytes);
+
+      int outcomeLabelLength = di.readInt();
+
+      outcomeLabels = new String[outcomeLabelLength];
+      for (int i = 0; i < outcomeLabelLength; i++) {
+        outcomeLabels[i] = di.readUTF();
+      }
+
+      predMap = new HashMap<>();
+
+      int predMapSize = di.readInt();
+      for (int i = 0; i < predMapSize; i++) {
+        String key = di.readUTF();
+        int value = di.readInt();
+        predMap.put(key, value);
+      }
+
+      model = Linear.loadModel(new InputStreamReader(new ByteArrayInputStream(modelBytes), LIBLINEAR_MODEL_ENCODING));
     }
-    
-    predMap = new HashMap<String, Integer>();
-    
-    int predMapSize = di.readInt();
-    for (int i = 0; i < predMapSize; i++) {
-      String key = di.readUTF();
-      int value = di.readInt();
-      predMap.put(key, value);
-    }
-    
-    model = Linear.loadModel(new InputStreamReader(new ByteArrayInputStream(modelBytes), LIBLINEAR_MODEL_ENCODING));
   }
 
+  @Override
   public double[] eval(String[] features) {
-    
     // Note: If a feature can't be mapped, it will be ignored!
-    
-    List<Integer> context = new ArrayList<Integer>(features.length);
-    
-    for (int i = 0; i < features.length; i++) {
-      Integer feature = predMap.get(features[i]);
-      
+    List<Integer> context = new ArrayList<>(features.length);
+    for (String s : features) {
+      Integer feature = predMap.get(s);
+
       if (feature != null) {
         context.add(feature);
       }
@@ -108,19 +107,21 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
     return eval(context);
   }
 
+  @Override
   public double[] eval(String[] context, double[] probs) {
     return eval(context);
   }
 
+  @Override
   public double[] eval(String[] context, float[] values) {
     return eval(context);
   }
 
   private double[] eval(List<Integer> context) {
     
-    double outcomes[] = new double[outcomeLabels.length];
+    double[] outcomes = new double[outcomeLabels.length];
     
-    Feature vx[] = new Feature[context.size()];
+    Feature[] vx = new Feature[context.size()];
     
     for (int i = 0; i < context.size(); i++) {
       vx[i] = new FeatureNode(context.get(i) + 1, 1d);
@@ -130,12 +131,14 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
     
     return outcomes;
   }
-  
+
+  @Override
   public String getAllOutcomes(double[] outcomes) {
     // TODO: Return prev outcomes ..
     return null;
   }
 
+  @Override
   public String getBestOutcome(double[] ocs) {
     int best = 0;
     for (int i = 1; i < ocs.length; i++)
@@ -143,11 +146,7 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
     return outcomeLabels[best];
   }
 
-  // TODO: This method needs to go away from the interface ... !!!
-  public Object[] getDataStructures() {
-    return null;
-  }
-
+  @Override
   public int getIndex(String outcome) {
     for (int i = 0; i < outcomeLabels.length; i++) {
       if (outcomeLabels[i].equals(outcome)) {
@@ -158,38 +157,40 @@ public class LiblinearModel implements MaxentModel, SerializableArtifact {
     return -1;
   }
 
+  @Override
   public int getNumOutcomes() {
     return outcomeLabels.length;
   }
 
+  @Override
   public String getOutcome(int i) {
     return outcomeLabels[i];
   }
 
   public void serialize(OutputStream out) throws IOException {
     
-    DataOutputStream ds = new DataOutputStream(out);
-    
-    ByteArrayOutputStream modelBytes = new ByteArrayOutputStream();
-    Linear.saveModel(new OutputStreamWriter(modelBytes, LIBLINEAR_MODEL_ENCODING), model);
+    try (DataOutputStream ds = new DataOutputStream(out);
+         ByteArrayOutputStream modelBytes = new ByteArrayOutputStream()) {
 
-    ds.writeInt(modelBytes.size());
-    ds.write(modelBytes.toByteArray());
-    
-    // write string array
-    // write label count
-    ds.writeInt(outcomeLabels.length);
-    
-    // write each label
-    for (String outcomeLabel : outcomeLabels) {
-      ds.writeUTF(outcomeLabel);
-    }
+      Linear.saveModel(new OutputStreamWriter(modelBytes, LIBLINEAR_MODEL_ENCODING), model);
+      ds.writeInt(modelBytes.size());
+      ds.write(modelBytes.toByteArray());
 
-    // write entry count
-    ds.writeInt(predMap.size());
-    for (Map.Entry<String, Integer> entry : predMap.entrySet()) {
-      ds.writeUTF(entry.getKey());
-      ds.writeInt(entry.getValue());
+      // write string array
+      // write label count
+      ds.writeInt(outcomeLabels.length);
+
+      // write each label
+      for (String outcomeLabel : outcomeLabels) {
+        ds.writeUTF(outcomeLabel);
+      }
+
+      // write entry count
+      ds.writeInt(predMap.size());
+      for (Map.Entry<String, Integer> entry : predMap.entrySet()) {
+        ds.writeUTF(entry.getKey());
+        ds.writeInt(entry.getValue());
+      }
     }
   }
 

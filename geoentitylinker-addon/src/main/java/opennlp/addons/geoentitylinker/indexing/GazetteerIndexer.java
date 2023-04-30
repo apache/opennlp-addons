@@ -18,6 +18,7 @@ package opennlp.addons.geoentitylinker.indexing;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,7 +77,7 @@ public class GazetteerIndexer {
 
   }
 
-  public static interface Separable {
+  public interface Separable {
 
     String getSeparator();
   }
@@ -110,37 +111,44 @@ public class GazetteerIndexer {
   /**
    *
    * @param geonamesData the actual Geonames gazetteer data downloaded from
-   * here: http://download.geonames.org/export/dump/ then click on this link
+   * <a href="https://download.geonames.org/export/dump/">here</a>, then click on this link
    * 'allCountries.zip'
+   *
    * @param geoNamesCountryInfo the countryinfo lookup table that can be
-   * downloaded from here
-   * http://download.geonames.org/export/dump/countryInfo.txt You'll need to
+   * downloaded from
+   * <a href="https://download.geonames.org/export/dump/countryInfo.txt">here</a>. You'll need to
    * copy the page into a file or scrape it
+   *
    * @param geonamesAdmin1CodesASCII The lookup data for the province names for
-   * each place found here:
-   * http://download.geonames.org/export/dump/admin1CodesASCII.txt highlight the
-   * table view, and copy results into a text file. Make sure the tab delimitted
+   * each place found
+   * <a href="https://download.geonames.org/export/dump/admin1CodesASCII.txt">here</a>, highlight the
+   * table view, and copy results into a text file. Make sure the tab delimited
    * format is maintained.
-   * @param usgsDataFile the actual USGS gazetteer downloaded from here:
-   * http://geonames.usgs.gov/domestic/download_data.htm click on the
+   *
+   * @param usgsDataFile the actual USGS gazetteer downloaded from
+   * <a href="https://geonames.usgs.gov/domestic/download_data.htm">here</a> click on the
    * national_file####.zip link to get all the most recent features
    *
-   * @param usgsGovUnitsFile go to here:
-   * http://geonames.usgs.gov/domestic/download_data.htm in the section titled
-   * "Topical Gazetteers -- File Format" click on the drop down list and select
+   * @param usgsGovUnitsFile go to
+   * <a href="https://geonames.usgs.gov/domestic/download_data.htm">here</a> in the section titled
+   * "Topical Gazetteers -- File Format" click on the dropdown list and select
    * "Government Units". The downloaded file is what you need for this param.
-   * @param outputIndexDir where you want the final index. Must be a directory,
-   * not an actual file.
-   * @param outputCountryContextFile The output countrycontext file. THis is a
+   *
+   * @param outputIndexDir where you want the final index. Must be a directory, not an actual file.
+   *
+   * @param outputCountryContextFile The output countrycontext file. This is a
    * very important file used inside the GeoEntityLinker to assist in toponym
    * resolution.
+   *
    * @param regionsFile this file contains a list of regions in the following
-   * format: tab delimitted text with index 0 as the name of the region, index 1
+   * format: tab delimited text with index 0 as the name of the region, index 1
    * as the longitude, and index 2 as the latitude
+   *
    * @throws Exception
    */
-  public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII,
-      File usgsDataFile, File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile) throws Exception {
+  public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII, File usgsDataFile,
+                    File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile)
+          throws Exception {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
     }
@@ -169,7 +177,7 @@ public class GazetteerIndexer {
 
     String indexloc = outputIndexDir.getPath() + "/opennlp_geoentitylinker_gazetteer";
     Directory index = new MMapDirectory(Paths.get(indexloc));
-    Analyzer a = new StandardAnalyzer(new CharArraySet(new ArrayList(), true));
+    Analyzer a = new StandardAnalyzer(new CharArraySet(new ArrayList<>(), true));
     Map<String, Analyzer> analyMap = new HashMap<>();
 
     analyMap.put("countrycode", new KeywordAnalyzer());
@@ -178,29 +186,25 @@ public class GazetteerIndexer {
     analyMap.put("countycode", new KeywordAnalyzer());
     analyMap.put("gazsource", new KeywordAnalyzer());
 
-    PerFieldAnalyzerWrapper aWrapper
-        = new PerFieldAnalyzerWrapper(a, analyMap);
-
+    PerFieldAnalyzerWrapper aWrapper = new PerFieldAnalyzerWrapper(a, analyMap);
     IndexWriterConfig config = new IndexWriterConfig(aWrapper);
+    try (IndexWriter w = new IndexWriter(index, config)) {
+      //write the column headers for the countryContextFile
+      try (FileWriter countryContextFileWriter = new FileWriter(outputCountryContextFile, false)) {
+        String colNamesForCountryContextFile = "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname\tcountryregex\tprovregex\tcountyregex\n";
+        countryContextFileWriter.write(colNamesForCountryContextFile);
+        countryContextFileWriter.flush();
+      }
 
-    IndexWriter w = new IndexWriter(index, config);
-    
-    //write the column headers for the countryContextFile 
-    FileWriter countryContextFileWriter = new FileWriter(outputCountryContextFile, false);
-    String colNamesForCountryContextFile = "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname\tcountryregex\tprovregex\tcountyregex\n";
-    countryContextFileWriter.write(colNamesForCountryContextFile);
-    countryContextFileWriter.flush();
-    countryContextFileWriter.close();
-    
-    
-    USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
+      USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
+      GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData, outputCountryContextFile, w);
 
-    GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData, outputCountryContextFile, w);
+      RegionProcessor.process(regionsFile, outputCountryContextFile, w);
+      w.commit();
+    }
 
-    RegionProcessor.process(regionsFile, outputCountryContextFile, w);
-    w.commit();
-    w.close();
-    System.out.println("\nIndexing complete. Be sure to add '" + indexloc + "' and context file '" + outputCountryContextFile.getPath() + "' to entitylinker.properties file");
+    System.out.println("\nIndexing complete. Be sure to add '" + indexloc + "' and context file '" +
+            outputCountryContextFile.getPath() + "' to entitylinker.properties file");
   }
 
 }

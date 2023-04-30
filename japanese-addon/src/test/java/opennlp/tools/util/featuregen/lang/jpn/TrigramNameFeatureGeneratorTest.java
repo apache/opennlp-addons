@@ -20,18 +20,19 @@ package opennlp.tools.util.featuregen.lang.jpn;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TrigramNameFeatureGeneratorTest {
 
   private List<String> features;
   static String[] testSentence = new String[] {"This", "is", "an", "example", "sentence"};
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     features = new ArrayList<>();
   }
@@ -45,9 +46,9 @@ public class TrigramNameFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(2, features.size());
-    Assert.assertEquals("w,nw,nnw=This,is,an", features.get(0));
-    Assert.assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(1));
+    assertEquals(2, features.size());
+    assertEquals("w,nw,nnw=This,is,an", features.get(0));
+    assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(1));
   }
 
   @Test
@@ -59,9 +60,9 @@ public class TrigramNameFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(2, features.size());
-    Assert.assertEquals("w,nw,nnw=is,an,example", features.get(0));
-    Assert.assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(1));
+    assertEquals(2, features.size());
+    assertEquals("w,nw,nnw=is,an,example", features.get(0));
+    assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(1));
   }
 
   @Test
@@ -73,11 +74,11 @@ public class TrigramNameFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(4, features.size());
-    Assert.assertEquals("ppw,pw,w=This,is,an", features.get(0));
-    Assert.assertEquals("ppwc,pwc,wc=alpha,alpha,alpha", features.get(1));
-    Assert.assertEquals("w,nw,nnw=an,example,sentence", features.get(2));
-    Assert.assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(3));
+    assertEquals(4, features.size());
+    assertEquals("ppw,pw,w=This,is,an", features.get(0));
+    assertEquals("ppwc,pwc,wc=alpha,alpha,alpha", features.get(1));
+    assertEquals("w,nw,nnw=an,example,sentence", features.get(2));
+    assertEquals("wc,nwc,nnwc=alpha,alpha,alpha", features.get(3));
   }
 
   @Test
@@ -89,9 +90,9 @@ public class TrigramNameFeatureGeneratorTest {
 
     generator.createFeatures(features, testSentence, testTokenIndex, null);
 
-    Assert.assertEquals(2, features.size());
-    Assert.assertEquals("ppw,pw,w=an,example,sentence", features.get(0));
-    Assert.assertEquals("ppwc,pwc,wc=alpha,alpha,alpha", features.get(1));
+    assertEquals(2, features.size());
+    assertEquals("ppw,pw,w=an,example,sentence", features.get(0));
+    assertEquals("ppwc,pwc,wc=alpha,alpha,alpha", features.get(1));
   }
 
   @Test
@@ -105,6 +106,6 @@ public class TrigramNameFeatureGeneratorTest {
 
     generator.createFeatures(features, shortSentence, testTokenIndex, null);
 
-    Assert.assertEquals(0, features.size());
+    assertEquals(0, features.size());
   }
 }
