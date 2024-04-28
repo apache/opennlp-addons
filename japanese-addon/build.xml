@@ -23,7 +23,7 @@
     <property name="cls.dir" value="classes"/>
     <property name="lib.dir" value="lib"/>
     <property name="test.result.dir" value="test-result"/>
-    <property name="product.jar" value="opennlp-japanese-addon-2.3.3-SNAPSHOT.jar"/>
+    <property name="product.jar" value="opennlp-japanese-addon-2.3.4-SNAPSHOT.jar"/>
 
     <target name="compile" description="compile source and test code">
         <mkdir dir="${cls.dir}"/>
