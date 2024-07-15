@@ -38,10 +38,8 @@ public class MorfologikPOSTaggerFactory extends POSTaggerFactory {
   private static final String MORFOLOGIK_POSDICT_SUF = "morfologik_dict";
   private static final String MORFOLOGIK_DICT_INFO_SUF = "morfologik_info";
 
-  private static final String MORFOLOGIK_POSDICT = "tagdict."
-      + MORFOLOGIK_POSDICT_SUF;
-  private static final String MORFOLOGIK_DICT_INFO = "tagdict."
-      + MORFOLOGIK_DICT_INFO_SUF;
+  private static final String MORFOLOGIK_POSDICT = "tagdict." + MORFOLOGIK_POSDICT_SUF;
+  private static final String MORFOLOGIK_DICT_INFO = "tagdict." + MORFOLOGIK_DICT_INFO_SUF;
 
   private TagDictionary dict;
 
@@ -115,9 +113,8 @@ public class MorfologikPOSTaggerFactory extends POSTaggerFactory {
   }
 
   @Override
-  @SuppressWarnings("rawtypes")
-  public Map<String, ArtifactSerializer> createArtifactSerializersMap() {
-    Map<String, ArtifactSerializer> serializers = super.createArtifactSerializersMap();
+  public Map<String, ArtifactSerializer<?>> createArtifactSerializersMap() {
+    Map<String, ArtifactSerializer<?>> serializers = super.createArtifactSerializersMap();
 
     serializers.put(MORFOLOGIK_POSDICT_SUF, new ByteArraySerializer());
     serializers.put(MORFOLOGIK_DICT_INFO_SUF, new ByteArraySerializer());

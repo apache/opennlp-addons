@@ -108,7 +108,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <opennlp.tools.version>2.3.3</opennlp.tools.version>
+        <opennlp.tools.version>2.3.4-SNAPSHOT</opennlp.tools.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
         <slf4j.version>1.7.36</slf4j.version>
