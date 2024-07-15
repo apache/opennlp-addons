@@ -25,10 +25,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: [ 17, 19 ]
+        java: [ 17, 21 ]
         experimental: [false]
 #        include:
-#          - java: 18-ea
+#          - java: 22-ea
 #            os: ubuntu-latest
 #            experimental: true
 
