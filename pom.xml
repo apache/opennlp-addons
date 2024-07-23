@@ -111,7 +111,7 @@
         <opennlp.tools.version>2.3.4-SNAPSHOT</opennlp.tools.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.13</slf4j.version>
         <log4j2.version>2.20.0</log4j2.version>
 
         <junit.version>5.10.3</junit.version>
@@ -196,7 +196,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
                 <version>${log4j2.version}</version>
                 <scope>test</scope>
             </dependency>
