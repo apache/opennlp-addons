@@ -120,7 +120,7 @@
 
         <coveralls.maven.plugin>4.3.0</coveralls.maven.plugin>
         <jacoco.maven.plugin>0.8.12</jacoco.maven.plugin>
-        <maven.failsafe.plugin>3.5.0</maven.failsafe.plugin>
+        <maven.failsafe.plugin>3.5.2</maven.failsafe.plugin>
     </properties>
 
     <dependencyManagement>
