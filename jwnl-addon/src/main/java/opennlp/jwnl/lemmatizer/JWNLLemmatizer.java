@@ -17,92 +17,51 @@
 
 package opennlp.jwnl.lemmatizer;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import net.didion.jwnl.JWNLException;
-import net.didion.jwnl.data.Adjective;
-import net.didion.jwnl.data.FileDictionaryElementFactory;
-import net.didion.jwnl.data.IndexWord;
-import net.didion.jwnl.data.POS;
-import net.didion.jwnl.data.PointerType;
-import net.didion.jwnl.data.VerbFrame;
-import net.didion.jwnl.dictionary.FileBackedDictionary;
-import net.didion.jwnl.dictionary.MorphologicalProcessor;
-import net.didion.jwnl.dictionary.file_manager.FileManager;
-import net.didion.jwnl.dictionary.file_manager.FileManagerImpl;
-import net.didion.jwnl.dictionary.morph.DefaultMorphologicalProcessor;
-import net.didion.jwnl.dictionary.morph.DetachSuffixesOperation;
-import net.didion.jwnl.dictionary.morph.LookupExceptionsOperation;
-import net.didion.jwnl.dictionary.morph.LookupIndexWordOperation;
-import net.didion.jwnl.dictionary.morph.Operation;
-import net.didion.jwnl.dictionary.morph.TokenizerOperation;
-import net.didion.jwnl.princeton.data.PrincetonWN17FileDictionaryElementFactory;
-import net.didion.jwnl.princeton.file.PrincetonRandomAccessDictionaryFile;
+import net.sf.extjwnl.JWNLException;
+import net.sf.extjwnl.data.IndexWord;
+import net.sf.extjwnl.data.POS;
+import net.sf.extjwnl.dictionary.Dictionary;
+import net.sf.extjwnl.dictionary.MorphologicalProcessor;
+
 import opennlp.tools.lemmatizer.Lemmatizer;
 
+/**
+ * A {@link Lemmatizer} implementation based on extJWNL
+ * and underlying WordNet resources.
+ *
+ * @see Dictionary
+ * @see MorphologicalProcessor
+ * @see POS
+ */
 public class JWNLLemmatizer implements Lemmatizer {
 
-  private net.didion.jwnl.dictionary.Dictionary dict;
-  private MorphologicalProcessor morphy;
+  private final MorphologicalProcessor morphy;
 
   /**
-   * Creates JWNL dictionary and morphological processor objects in
-   * JWNLemmatizer constructor. It also loads the JWNL configuration into the
-   * constructor. 
-   * <p>
-   * Constructor code based on Apache OpenNLP JWNLDictionary class. 
+   * Initializes a {@link JWNLLemmatizer} instance.
+   * Loads {@link Dictionary JWNL dictionary} and {@link MorphologicalProcessor} objects.
+   * It also loads the JWNL configuration.
    * 
-   * @param wnDirectory
-   * @throws IOException
+   * @throws JWNLException Thrown if errors occurred ramping up the WordNet resources.
    */
-  public JWNLLemmatizer(String wnDirectory) throws IOException {
+  public JWNLLemmatizer() throws JWNLException {
     super();
-    PointerType.initialize();
-    Adjective.initialize();
-    VerbFrame.initialize();
-    Map<POS, String[][]> suffixMap = new HashMap<>();
-    suffixMap.put(POS.NOUN, new String[][] { { "s", "" }, { "ses", "s" },
-        { "xes", "x" }, { "zes", "z" }, { "ches", "ch" }, { "shes", "sh" },
-        { "men", "man" }, { "ies", "y" } });
-    suffixMap.put(POS.VERB, new String[][] { { "s", "" }, { "ies", "y" },
-        { "es", "e" }, { "es", "" }, { "ed", "e" }, { "ed", "" },
-        { "ing", "e" }, { "ing", "" } });
-    suffixMap.put(POS.ADJECTIVE, new String[][] { { "er", "" }, { "est", "" },
-        { "er", "e" }, { "est", "e" } });
-    DetachSuffixesOperation tokDso = new DetachSuffixesOperation(suffixMap);
-    tokDso.addDelegate(DetachSuffixesOperation.OPERATIONS, new Operation[] {
-        new LookupIndexWordOperation(), new LookupExceptionsOperation() });
-    TokenizerOperation tokOp = new TokenizerOperation(new String[] { " ", "-" });
-    tokOp.addDelegate(TokenizerOperation.TOKEN_OPERATIONS,
-        new Operation[] { new LookupIndexWordOperation(),
-            new LookupExceptionsOperation(), tokDso });
-    DetachSuffixesOperation morphDso = new DetachSuffixesOperation(suffixMap);
-    morphDso.addDelegate(DetachSuffixesOperation.OPERATIONS, new Operation[] {
-        new LookupIndexWordOperation(), new LookupExceptionsOperation() });
-    Operation[] operations = { new LookupExceptionsOperation(), morphDso, tokOp };
-    morphy = new DefaultMorphologicalProcessor(operations);
-    FileManager manager = new FileManagerImpl(wnDirectory,
-        PrincetonRandomAccessDictionaryFile.class);
-    FileDictionaryElementFactory factory = new PrincetonWN17FileDictionaryElementFactory();
-    FileBackedDictionary.install(manager, morphy, factory, true);
-    dict = net.didion.jwnl.dictionary.Dictionary.getInstance();
+    Dictionary dict = Dictionary.getDefaultResourceInstance();
     morphy = dict.getMorphologicalProcessor();
   }
 
   /**
-   * It takes a word and a POS tag and obtains a word's lemma from WordNet.
+   * Takes a word and a POS tag and obtains a word's lemma from WordNet.
    * 
-   * @param word
-   * @param postag
-   * @return lemma
+   * @param word The word to find the corresponding lemma for.
+   * @param postag The POS tag associated with the {@code word}.
+   * @return lemma The lemma as provided by WordNet, or {@code null} if not found.
    */
   public String lemmatize(String word, String postag) {
     String constantTag = "NNP";
-    IndexWord baseForm;
     String lemma;
     try {
       POS pos;
@@ -117,18 +76,15 @@ public class JWNLLemmatizer implements Lemmatizer {
       } else {
         pos = POS.ADVERB;
       }
-      baseForm = morphy.lookupBaseForm(pos, word);
+      IndexWord baseForm = morphy.lookupBaseForm(pos, word);
       if (baseForm != null) {
-        lemma = baseForm.getLemma().toString();
+        lemma = baseForm.getLemma();
+      } else if (postag.startsWith(constantTag)) {
+        lemma = word;
+      } else {
+        lemma= word.toLowerCase();
       }
-      else if (baseForm == null && postag.startsWith(constantTag)) {
-          lemma = word;
-        }
-        else {
-          lemma= word.toLowerCase();
-        }
     } catch (JWNLException e) {
-      e.printStackTrace();
       return null;
     }
     return lemma;
