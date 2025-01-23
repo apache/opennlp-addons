@@ -22,6 +22,7 @@ import java.util.Set;
 
 public class AdminBoundaryContext {
 
+  private static final String REGEX = ".*rg[0-9].*";
   private final Map<String, Set<Integer>> countryMentions;
   private final Map<String, Set<Integer>> provMentions;
   private final Map<String, Set<Integer>> countyMentions;
@@ -103,6 +104,18 @@ public class AdminBoundaryContext {
     return countyRefMap;
   }
 
+  public Map<String, String> getCountryRegexMap() {
+    return countryRegexMap;
+  }
+
+  public Map<String, String> getCountyRegexMap() {
+    return countyRegexMap;
+  }
+
+  public Map<String, String> getProvinceRegexMap() {
+    return provinceRegexMap;
+  }
+
   public Set<String> getWhereClauses() {
     return whereClauses;
   }
@@ -111,7 +124,7 @@ public class AdminBoundaryContext {
     Set<String> clauses = new HashSet<>();
     for (String countryCode : this.getCountryHits()) {
       String gazType = countryCode.equalsIgnoreCase("us") ? " AND gazsource:usgs" : " AND gazsource:geonames";
-      if (countryCode.toLowerCase().matches(".*rg[0-9].*")) {
+      if (countryCode.toLowerCase().matches(REGEX)) {
         gazType = " AND gazsource:region";
       }
       Map<String, String> provsForCountry = this.getProvRefMap().get(countryCode);
@@ -136,18 +149,6 @@ public class AdminBoundaryContext {
       }
     }
     return clauses;
-  }
-
-  public Map<String, String> getCountryRegexMap() {
-    return countryRegexMap;
-  }
-
-  public Map<String, String> getCountyRegexMap() {
-    return countyRegexMap;
-  }
-
-  public Map<String, String> getProvinceRegexMap() {
-    return provinceRegexMap;
   }
 
 }

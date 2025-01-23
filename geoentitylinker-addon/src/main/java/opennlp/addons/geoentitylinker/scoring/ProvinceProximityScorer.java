@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.BaseLink;
@@ -37,17 +38,15 @@ import opennlp.tools.util.Span;
  * indicator of Connecticut, it is more likely to be Berlin Connecticut than
  * Berlin Germany (if Germany did not exist in, or is mentioned further away in
  * the article).
- *
- *
  */
-public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundaryContext> {
+public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, AdminBoundaryContext> {
 
   private Map<String, Set<String>> nameCodesMap;
   String dominantCode = "";
   private Map<String, String> regexMap = new HashMap<>();
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     if (!additionalContext.getProvHits().isEmpty()) {
       regexMap = additionalContext.getProvinceRegexMap();
       score(linkedSpans, additionalContext.getProvMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
@@ -81,11 +80,10 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    * Named Entity.
    * @return
    */
-  public List<LinkedSpan> score(List<LinkedSpan> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
+  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
     this.nameCodesMap = nameCodesMap;
     setDominantCode(countryHits);
     for (LinkedSpan<BaseLink> linkedspan : linkedData) {
-
       linkedspan = simpleProximityAnalysis(sentences, countryHits, linkedspan, maxAllowedDist);
     }
     return linkedData;
@@ -116,7 +114,8 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    * @param span
    * @return
    */
-  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences, Map<String, Set<Integer>> countryHits, LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
+  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences, Map<String, Set<Integer>> countryHits,
+                                                       LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
     Double score = 0.0;
     /*
      * get the index of the actual span, begining of sentence //should generate
@@ -125,14 +124,14 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
      */
     int sentenceIdx = span.getSentenceid();
     int sentIndexInDoc = sentences[sentenceIdx].getStart();
-    /**
+    /*
      * create a map of all the span's proximal country mentions in the document
      * Map< countrycode, set of <distances from this NamedEntity>>
      */
     Map<String, Set<Integer>> distancesFromCodeMap = new HashMap<>();
     //map = Map<countrycode, Set <of distances this span is from all the mentions of the code>>
     for (String cCode : countryHits.keySet()) {
-//iterate over all the regex start values and calculate an offset
+      //iterate over all the regex start values and calculate an offset
       for (Integer cHit : countryHits.get(cCode)) {
         Integer absDist = Math.abs(sentIndexInDoc - cHit);
         //only include near mentions based on a heuristic
@@ -151,7 +150,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
     }
     //we now know how far this named entity is from every country mention in the document
 
-    /**
+    /*
      * the gaz matches that have a country code that have mentions in the doc
      * that are closest to the Named Entity should return the best score.
      * Analyzemap generates a likelihood score that the toponym from the gaz is
@@ -209,7 +208,8 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
    * @param span
    * @return
    */
-  private Map<String, Double> analyzeMap(Map<String, Set<Integer>> distanceMap, Span[] sentences, LinkedSpan<BaseLink> span) {
+  private Map<String, Double> analyzeMap(Map<String, Set<Integer>> distanceMap,
+                                         Span[] sentences, LinkedSpan<BaseLink> span) {
 
     Map<String, Double> scoreMap = new HashMap<>();
     if (distanceMap.isEmpty()) {
@@ -232,7 +232,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
       for (Integer i : distanceMap.get(key)) {
         Double norm = normalize(i, min, max);
         //reverse the normed distance so low numbers (closer) are better
-        //this could be improved with a "decaying " function using an imcreaseing negative exponent
+        //this could be improved with a "decaying " function using an increasing negative exponent
         Double reverse = Math.abs(norm - 1);
         normalizedDistances.add(reverse);
       }
@@ -271,10 +271,9 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<AdminBoundary
     for (double d : windowOfAverages) {
       sum += d;
     }
-    double result = sum / windowOfAverages.size();
     //TODO: ++ prob when large amounts of mentions for a code
     //System.out.println("avg of window:" + result);
-    return result;
+    return sum / windowOfAverages.size();
   }
 
   /**

@@ -16,17 +16,17 @@
 package opennlp.addons.geoentitylinker;
 
 import java.io.IOException;
-import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
-import opennlp.addons.geoentitylinker.scoring.LinkedEntityScorer;
-import opennlp.addons.geoentitylinker.scoring.CountryProximityScorer;
-import opennlp.addons.geoentitylinker.scoring.GeoHashBinningScorer;
-import opennlp.addons.geoentitylinker.scoring.FuzzyStringMatchScorer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import opennlp.addons.geoentitylinker.scoring.CountryProximityScorer;
+import opennlp.addons.geoentitylinker.scoring.FuzzyStringMatchScorer;
+import opennlp.addons.geoentitylinker.scoring.GeoHashBinningScorer;
+import opennlp.addons.geoentitylinker.scoring.LinkedEntityScorer;
+import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
 import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
 import opennlp.addons.geoentitylinker.scoring.ProvinceProximityScorer;
 import opennlp.tools.entitylinker.BaseLink;
@@ -41,29 +41,24 @@ import opennlp.tools.entitylinker.EntityLinker;
  * indexes. The indexes can be built using the GeoEntityLinkerSetupUtils class
  * in this same package.
  */
-public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
+public class GeoEntityLinker implements EntityLinker<LinkedSpan<BaseLink>> {
 
   private static Integer topN = 2;
   private AdminBoundaryContextGenerator countryContext;
   private EntityLinkerProperties linkerProperties;
-  private GazetteerSearcher gazateerSearcher;
-  private final List<LinkedEntityScorer<AdminBoundaryContext>> scorers = new ArrayList<>();
+  private GazetteerSearcher gazetteerSearcher;
+  private final List<LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext>> scorers = new ArrayList<>();
 
   @Override
-  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence, Span[][] namesBySentence) {
-    ArrayList<LinkedSpan> spans = new ArrayList<>();
-
-    if (linkerProperties == null) {
-      throw new IllegalArgumentException("EntityLinkerProperties cannot be null");
-    }
+  public List<LinkedSpan<BaseLink>> find(String doctext, Span[] sentences,
+                                         Span[][] tokensBySentence, Span[][] namesBySentence) {
+    List<LinkedSpan<BaseLink>> spans = new ArrayList<>();
     //countryMentions = countryContext.regexfind(doctext);
     AdminBoundaryContext context = countryContext.getContext(doctext);
     for (int s = 0; s < sentences.length; s++) {
       Span[] names = namesBySentence[s];
-
       Span[] tokenSpans = tokensBySentence[s];
       String[] tokens = Span.spansToStrings(tokenSpans, sentences[s].getCoveredText(doctext));
-
       String[] matches = Span.spansToStrings(names, tokens);
 
       for (int i = 0; i < matches.length; i++) {
@@ -71,16 +66,15 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         ArrayList<BaseLink> geoNamesEntries = new ArrayList<>();
         if (!context.getWhereClauses().isEmpty()) {
           for (String whereclause : context.getWhereClauses()) {
-            ArrayList<GazetteerEntry> find = gazateerSearcher.find(matches[i], topN, whereclause);
+            List<GazetteerEntry> find = gazetteerSearcher.find(matches[i], topN, whereclause);
             for (GazetteerEntry gazetteerEntry : find) {
               if (!geoNamesEntries.contains(gazetteerEntry)) {
                 geoNamesEntries.add(gazetteerEntry);
               }
             }
-
           }
-        } else {//this means there were no where clauses generated so the where clause will default to look at the entire index
-          ArrayList<GazetteerEntry> find = gazateerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions ");
+        } else { //this means there were no where clauses generated so the where clause will default to look at the entire index
+          List<GazetteerEntry> find = gazetteerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions ");
           for (GazetteerEntry gazetteerEntry : find) {
             if (!geoNamesEntries.contains(gazetteerEntry)) {
               geoNamesEntries.add(gazetteerEntry);
@@ -96,7 +90,7 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
          */
         if (!spans.isEmpty()) {
 
-          Double maxscore = 0d;
+          double maxscore = 0d;
           for (BaseLink gazetteerEntry : geoNamesEntries) {
             Double deNormScore = gazetteerEntry.getScoreMap().get("lucene");
             if (deNormScore.compareTo(maxscore) > 0) {
@@ -115,20 +109,22 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
         newspan.setSentenceid(s);
         spans.add(newspan);
       }
-
     }
 
     if (!scorers.isEmpty()) {
-      for (LinkedEntityScorer scorer : scorers) {
-        scorer.score(spans, doctext, sentences, linkerProperties, context);
+      for (LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext> scorer : scorers) {
+        @SuppressWarnings("rawtypes")
+        LinkedEntityScorer<BaseLink, AdminBoundaryContext> s = (LinkedEntityScorer) scorer;
+        s.score(spans, doctext, sentences, linkerProperties, context);
       }
     }
+    
     /*
      * sort the data with the best score on top based on the sum of the scores
-     * below from the score map for each baselink object
+     * below from the score map for each BaseLink object
      */
-    for (LinkedSpan<BaseLink> s : spans) {
-      ArrayList<BaseLink> linkedData = s.getLinkedEntries();
+    for (LinkedSpan<? extends BaseLink> s : spans) {
+      ArrayList<? extends BaseLink> linkedData = s.getLinkedEntries();
       linkedData.sort(Collections.reverseOrder((o1, o2) -> {
         Map<String, Double> o1scoreMap = o1.getScoreMap();
         Map<String, Double> o2scoreMap = o2.getScoreMap();
@@ -149,11 +145,10 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
           }
         }
 
-        return Double.compare(sumo1,
-                sumo2);
+        return Double.compare(sumo1, sumo2);
       }));
       //prune the list to topN
-      Iterator<BaseLink> iterator = linkedData.iterator();
+      Iterator<? extends BaseLink> iterator = linkedData.iterator();
       int n = 0;
       while (iterator.hasNext()) {
         if (n >= topN) {
@@ -174,12 +169,11 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
    * @param valueToNormalize the value to place within the new range
    * @param minimum the min of the set to be transposed
    * @param maximum the max of the set to be transposed
-   * @return
+   * @return The value of the normalized distance.
    */
   private Double normalize(Double valueToNormalize, double minimum, double maximum) {
     double d = ((1 - 0) * (valueToNormalize - minimum)) / (maximum - minimum) + 0;
-    d = Double.isNaN(d) ? 0d : d;
-    return d;
+    return Double.isNaN(d) ? 0d : d;
   }
 
   private void loadScorers() {
@@ -195,10 +189,12 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
 
   @Override
   public void init(EntityLinkerProperties properties) throws IOException {
-
+    if (properties == null) {
+      throw new IllegalArgumentException("EntityLinkerProperties cannot be null");
+    }
     this.linkerProperties = properties;
     countryContext = new AdminBoundaryContextGenerator(this.linkerProperties);
-    gazateerSearcher = new GazetteerSearcher(this.linkerProperties);
+    gazetteerSearcher = new GazetteerSearcher(this.linkerProperties);
     String rowsRetStr = this.linkerProperties.getProperty("opennlp.geoentitylinker.gaz.rowsreturned", "2");
     int rws;
     try {
@@ -208,12 +204,11 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan> {
     }
     topN = rws;
     loadScorers();
-
   }
 
   @Override
-  public List<LinkedSpan> find(String doctext, Span[] sentences, Span[][] tokensBySentence,
-      Span[][] namesBySentence, int sentenceIndex) {
+  public List<LinkedSpan<BaseLink>> find(String doctext, Span[] sentences, Span[][] tokensBySentence,
+                                         Span[][] namesBySentence, int sentenceIndex) {
     throw new UnsupportedOperationException("The GeoEntityLinker requires the entire document "
         + "for proper scoring. This method is unsupported");
   }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
@@ -30,15 +31,14 @@ import opennlp.tools.util.Span;
  *
  * Generates scores based on string comparisons levenstein and dice
  */
-public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryContext> {
+public class FuzzyStringMatchScorer implements LinkedEntityScorer<GazetteerEntry, AdminBoundaryContext> {
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<GazetteerEntry>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
 
-    for (LinkedSpan<BaseLink> linkedSpan : linkedSpans) {
+    for (LinkedSpan<GazetteerEntry> linkedSpan : linkedSpans) {
       for (BaseLink link : linkedSpan.getLinkedEntries()) {
-        if (link instanceof GazetteerEntry) {
-          GazetteerEntry entry = (GazetteerEntry) link;
+        if (link instanceof GazetteerEntry entry) {
           String hierarchy = entry.getHierarchy();
           if (hierarchy != null) {
             Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase(), 2);
@@ -50,12 +50,10 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
            if (placename != null) {
             Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), placename, 2);
             link.getScoreMap().put("placenamedicecoef", dice);
-            
           }
         }
       }
     }
-
   }
 
   /**
@@ -75,14 +73,14 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
     List<String> s2Grams = new ArrayList<>();
     String[] split1 = s1.split("[ ,]");
     for (String token : split1) {
-      if (token.trim().equals("")) {
+      if (token.trim().isEmpty()) {
         continue;
       }
       s1Grams.add(token);
     }
     String[] split2 = s2.split("[ ,]");
     for (String token : split2) {
-      if (token.trim().equals("")) {
+      if (token.trim().isEmpty()) {
         continue;
       }
       s2Grams.add(token);
@@ -99,8 +97,7 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
     return Math.min(Math.min(a, b), c);
   }
 
-  public int getLevenshteinDistance(CharSequence str1,
-          CharSequence str2) {
+  public int getLevenshteinDistance(CharSequence str1, CharSequence str2) {
     int[][] distance = new int[str1.length() + 1][str2.length() + 1];
 
     for (int i = 0; i <= str1.length(); i++) {
@@ -112,9 +109,7 @@ public class FuzzyStringMatchScorer implements LinkedEntityScorer<AdminBoundaryC
 
     for (int i = 1; i <= str1.length(); i++) {
       for (int j = 1; j <= str2.length(); j++) {
-        distance[i][j] = minimum(
-                distance[i - 1][j] + 1,
-                distance[i][j - 1] + 1,
+        distance[i][j] = minimum(distance[i - 1][j] + 1, distance[i][j - 1] + 1,
                 distance[i - 1][j - 1] + ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0 : 1));
       }
     }

@@ -27,15 +27,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import opennlp.addons.geoentitylinker.AdminBoundary;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-
 import org.apache.lucene.index.IndexWriter;
 
+import opennlp.addons.geoentitylinker.AdminBoundary;
+
 public class USGSProcessor {
+
+  private static final String TAB = "\t";
 
   public static void main(String[] args) {
     try {
@@ -46,13 +49,15 @@ public class USGSProcessor {
     }
   }
 
-  public static void process(File lookupData, File usgsGazDataFile, File outputCountryContextfile, IndexWriter w) throws Exception {
+  public static void process(File lookupData, File usgsGazDataFile,
+                             File outputCountryContextfile, IndexWriter w) throws IOException {
     Map<String, AdminBoundary> provData = getProvData(lookupData, GazetteerIndexer.GazType.USGS);
     readFile(usgsGazDataFile, w, GazetteerIndexer.GazType.USGS, provData);
     writeCountryContextFile(outputCountryContextfile, provData);
   }
 
-  public static void readFile(File gazateerInputData, IndexWriter w, GazetteerIndexer.GazType type, Map<String, AdminBoundary> lookupMap) throws Exception {
+  public static void readFile(File gazateerInputData, IndexWriter w, GazetteerIndexer.GazType type,
+                              Map<String, AdminBoundary> lookupMap) throws IOException {
 
     Map<String, StateCentroid> states = new HashMap<>();
     try (BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData))) {
@@ -89,18 +94,18 @@ public class USGSProcessor {
             continue;
 
           }
-          String countyCode = get.getCountyCode();
+          String countyCode = get.countyCode();
 
-          if (!get.getCountyName().equals("NO_DATA_FOUND_VALUE")) {
-            countyname = get.getCountyName();
+          if (!get.countyName().equals("NO_DATA_FOUND_VALUE")) {
+            countyname = get.countyName();
           }
-          if (!get.getCountyCode().equals("NO_DATA_FOUND_VALUE")) {
-            countyCode = get.getCountyCode();
+          if (!get.countyCode().equals("NO_DATA_FOUND_VALUE")) {
+            countyCode = get.countyCode();
           }
-          String hierarchy = get.getCountryName() + ", " + get.getProvinceName() + ", " + countyname + ", " + placeName;
+          String hierarchy = get.countryName() + ", " + get.provinceName() + ", " + countyname + ", " + placeName;
 
-          if (states.containsKey(get.getProvinceName())) {
-            StateCentroid entry = states.get(get.getProvinceName());
+          if (states.containsKey(get.provinceName())) {
+            StateCentroid entry = states.get(get.provinceName());
             entry.count++;
             entry.latSum += Double.parseDouble(lat);
             entry.longSum += Double.parseDouble(lon);
@@ -110,7 +115,7 @@ public class USGSProcessor {
             centroid.count = 1;
             centroid.latSum = Double.parseDouble(lat);
             centroid.longSum = Double.parseDouble(lon);
-            states.put(get.getProvinceName(), centroid);
+            states.put(get.provinceName(), centroid);
           }
 
           doc.add(new TextField("hierarchy", hierarchy, Field.Store.YES));
@@ -118,9 +123,9 @@ public class USGSProcessor {
           doc.add(new TextField("latitude", lat, Field.Store.YES));
           doc.add(new TextField("longitude", lon, Field.Store.YES));
           doc.add(new StringField("loctype", dsg, Field.Store.YES));
-          doc.add(new StringField("admincode", (get.getCountryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
-          doc.add(new StringField("countrycode", get.getCountryCode().toLowerCase(), Field.Store.YES));
-          doc.add(new StringField("countycode", (get.getCountryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(), Field.Store.YES));
+          doc.add(new StringField("admincode", (get.countryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
+          doc.add(new StringField("countrycode", get.countryCode().toLowerCase(), Field.Store.YES));
+          doc.add(new StringField("countycode", (get.countryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(), Field.Store.YES));
 
           doc.add(new StringField("locid", id, Field.Store.YES));
           doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
@@ -231,16 +236,18 @@ public class USGSProcessor {
         if (adm == null) {
           continue;
         }
-        String province = adm.getProvinceName();
-        String country = adm.getCountryName();
+        String province = adm.provinceName();
+        String country = adm.countryName();
         /*
          * this is the standard format of the country context file... Geonames
          * data will have an empty string for the county
          */
-        String line = adm.getCountryCode() + "\t" + adm.getProvCode() + "\t" + adm.getCountyCode() + "\t" + country + "\t" + province + "\t" + adm.getCountyName() + "\t"
-            + "(U\\.S\\.[ $]|U\\.S\\.A\\.[ $]|United States|the US[ $]|a us[ $])" + "\t" + adm.getProvinceName() + "\t" + adm.getCountyName() + "\n";
+        String line = adm.countryCode() + TAB + adm.getProvCode() + TAB + adm.countyCode() +
+                TAB + country + TAB + province + TAB + adm.countyName() + TAB
+                + "(U\\.S\\.[ $]|U\\.S\\.A\\.[ $]|United States|the US[ $]|a us[ $])" +
+                TAB + adm.provinceName() + TAB + adm.countyName() + "\n";
         bw.write(line);
-        ///  System.out.println(line);
+        //  System.out.println(line);
       }
     } catch (IOException ex) {
       Logger.getLogger(GeonamesProcessor.class.getName()).log(Level.SEVERE, null, ex);

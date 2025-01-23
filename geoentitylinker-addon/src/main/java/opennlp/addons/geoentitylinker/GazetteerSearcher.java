@@ -52,8 +52,8 @@ import org.slf4j.LoggerFactory;
  */
 public class GazetteerSearcher {
 
-  private final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String REGEX_CLEAN = "[^\\p{L}\\p{Nd}]";
   private double scoreCutoff = .70;
   private final boolean doubleQuoteAllSearchTerms = false;
   private boolean useHierarchyField = false;
@@ -61,14 +61,13 @@ public class GazetteerSearcher {
   private final EntityLinkerProperties properties;
 
   private Directory opennlpIndex;//= new MMapDirectory(new File(indexloc));
-  private IndexReader opennlpReader;// = DirectoryReader.open(geonamesIndex);
   private IndexSearcher opennlpSearcher;// = new IndexSearcher(geonamesReader);
   private Analyzer opennlpAnalyzer;
 
   public static void main(String[] args) {
     try {
-      boolean b = true;
-      new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties"))).find("alabama", 5, " countrycode:us AND gazsource:usgs");
+      new GazetteerSearcher(new EntityLinkerProperties(new File("c:\\temp\\entitylinker.properties")))
+              .find("alabama", 5, " countrycode:us AND gazsource:usgs");
     } catch (IOException ex) {
       LOG.error(ex.getLocalizedMessage(), ex);
     }
@@ -84,11 +83,11 @@ public class GazetteerSearcher {
    *
    * @param searchString the location name to search for
    * @param rowsReturned how many index entries to return (top N...)
-   * @param whereClause the conditional statement that defines the index type
-   * and the country oode.
+   * @param whereClause the conditional statement that defines the i
+   *                    ndex type and the country code.
    * @return
    */
-  public ArrayList<GazetteerEntry> find(String searchString, int rowsReturned, String whereClause) {
+  public List<GazetteerEntry> find(String searchString, int rowsReturned, String whereClause) {
     ArrayList<GazetteerEntry> linkedData = new ArrayList<>();
     searchString = cleanInput(searchString);
     if (searchString.isEmpty()) {
@@ -199,12 +198,13 @@ public class GazetteerSearcher {
 
     if (opennlpIndex == null) {
       String indexloc = properties.getProperty("opennlp.geoentitylinker.gaz", "");
-      if (indexloc.equals("")) {
+      if (indexloc.isEmpty()) {
         LOG.error("Opennlp combined Gaz directory location not found!");
       }
 
       opennlpIndex = new MMapDirectory(Paths.get(indexloc));
-      opennlpReader = DirectoryReader.open(opennlpIndex);
+      // = DirectoryReader.open(geonamesIndex);
+      IndexReader opennlpReader = DirectoryReader.open(opennlpIndex);
       opennlpSearcher = new IndexSearcher(opennlpReader);
       opennlpAnalyzer
           = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
@@ -221,7 +221,7 @@ public class GazetteerSearcher {
           = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
 
       String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
-      String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", String.valueOf("0"));
+      String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", "0");
       if (cutoff != null && !cutoff.isEmpty()) {
         scoreCutoff = Double.parseDouble(cutoff);
       }

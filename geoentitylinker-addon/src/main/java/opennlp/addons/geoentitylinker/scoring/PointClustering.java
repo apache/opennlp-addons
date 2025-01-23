@@ -58,8 +58,8 @@ public class PointClustering {
   }
 
   public void scoreClusters(Map<String, List<GazetteerEntry>> clusters) {
-    Double min = 0d;
-    Double max = -1d;
+    double min = 0d;
+    double max = -1d;
     for (String key : clusters.keySet()) {
       int size = clusters.get(key).size();
       if (size > max) {
@@ -84,8 +84,7 @@ public class PointClustering {
    * @return
    */
   public String geoHash(Double lat, Double lon) {
-    String encodeLatLon = GeohashUtils.encodeLatLon(lat, lon);
-    return encodeLatLon;
+    return GeohashUtils.encodeLatLon(lat, lon);
   }
 
   /**
@@ -97,8 +96,7 @@ public class PointClustering {
    */
   public double[] geoHashToPoint(String geohash) {
     Point decode = GeohashUtils.decode(geohash, SpatialContext.GEO);
-    double[] coords = new double[]{decode.getX(), decode.getY()};
-    return coords;
+    return new double[]{decode.getX(), decode.getY()};
   }
 
   /**
@@ -110,8 +108,7 @@ public class PointClustering {
    */
   public String geoHashToPointStr(String geohash) {
     Point decode = GeohashUtils.decode(geohash, SpatialContext.GEO);
-    String point = decode.getX() + "," + decode.getY();
-    return point;
+    return decode.getX() + "," + decode.getY();
   }
 
 

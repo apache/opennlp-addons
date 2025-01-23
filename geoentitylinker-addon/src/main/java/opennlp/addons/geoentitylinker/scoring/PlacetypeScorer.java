@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.addons.geoentitylinker.GazetteerEntry;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
@@ -29,17 +30,21 @@ import opennlp.tools.util.Span;
  *
  * @author mgiaconia
  */
-public class PlacetypeScorer implements LinkedEntityScorer<AdminBoundaryContext> {
+public class PlacetypeScorer implements LinkedEntityScorer<GazetteerEntry, AdminBoundaryContext> {
 
-  private static final String[] boosts = "ADM1 ADM1H ADM2 ADM2H ADM3 ADM3H ADM4 ADM4H ADM5 ADMD ADMDH PCLD PCLH PCLI PCLIX TERR PCLIX PPL PPLA PPLA2 PPLA3 PPLA4 PPLC PPLCH PPLF PPLG PPLH PPLL PPLQ PPLR PPLS PPLX STLMT civil Populated_Place".split(" ");
-  private Map<String, Double> boosetedTypes = new HashMap<>();
+  private static final String[] boosts = ("ADM1 ADM1H ADM2 ADM2H ADM3 ADM3H ADM4 ADM4H ADM5 ADMD " +
+          "ADMDH PCLD PCLH PCLI PCLIX TERR PCLIX PPL PPLA PPLA2 PPLA3 PPLA4 PPLC PPLCH PPLF PPLG " +
+          "PPLH PPLL PPLQ PPLR PPLS PPLX STLMT civil Populated_Place").split(" ");
+  
+  private final Map<String, Double> boosetedTypes = new HashMap<>();
 
   public PlacetypeScorer() {
     fillMap();
   }
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<GazetteerEntry>> linkedSpans, String docText, Span[] sentenceSpans,
+                    EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     for (LinkedSpan<GazetteerEntry> geospan : linkedSpans) {
       ArrayList<GazetteerEntry> linkedEntries = geospan.getLinkedEntries();
       for (GazetteerEntry gazetteerEntry : linkedEntries) {
