@@ -18,10 +18,11 @@ package opennlp.addons.geoentitylinker;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
 import opennlp.tools.entitylinker.BaseLink;
 
 /**
- * Stores a minimal amount of information from a geographic placenames gazetteer.
+ * Stores a minimal amount of information from a geographic place names gazetteer.
  */
 public class GazetteerEntry extends BaseLink {
 
@@ -29,10 +30,11 @@ public class GazetteerEntry extends BaseLink {
   private Double longitude;
   private String source;
   private String indexID;
-  private Map<String, String> indexData = new HashMap<>();
   private String countryCode;
   private String provinceCode;
   private String hierarchy;
+  
+  private Map<String, String> indexData = new HashMap<>();
 
   public GazetteerEntry(String parentID, String itemID, String itemName, String itemType) {
     super(parentID, itemID, itemName, itemType);
@@ -44,9 +46,7 @@ public class GazetteerEntry extends BaseLink {
   public String getIndexID() {
     return indexID;
   }
-  /**
-   * sets the id from the lucene document
-   */
+
   public void setIndexID(String indexID) {
     this.indexID = indexID;
   }
@@ -58,9 +58,6 @@ public class GazetteerEntry extends BaseLink {
     return latitude;
   }
 
-  /**
-   * sets the latitude from the gazetteer
-   */
   public void setLatitude(Double latitude) {
     this.latitude = latitude;
   }
@@ -72,11 +69,6 @@ public class GazetteerEntry extends BaseLink {
     return longitude;
   }
 
-  /**
-   * sets the longitude from the gaz
-   *
-   * @param longitude
-   */
   public void setLongitude(Double longitude) {
     this.longitude = longitude;
   }
@@ -88,11 +80,6 @@ public class GazetteerEntry extends BaseLink {
     return source;
   }
 
-  /**
-   * sets the source (the source of the gazetteer data)
-   *
-   * @param source
-   */
   public void setSource(String source) {
     this.source = source;
   }
@@ -113,10 +100,36 @@ public class GazetteerEntry extends BaseLink {
     this.indexData = indexData;
   }
 
+  public String getCountryCode() {
+    return countryCode;
+  }
+
+  public void setCountryCode(String countryCode) {
+    this.countryCode = countryCode;
+  }
+
+  public String getProvinceCode() {
+    return provinceCode;
+  }
+
+  public void setProvinceCode(String provinceCode) {
+    this.provinceCode = provinceCode;
+  }
+
+  public String getHierarchy() {
+    return hierarchy;
+  }
+
+  public void setHierarchy(String hierarchy) {
+    this.hierarchy = hierarchy;
+  }
+
   @Override
   public String toString() {
 
-    return super.toString() + "\n\t\tGazateerEntry\n" + "\t\tlatitude=" + latitude + ", \n\t\tlongitude=" + longitude + ", \n\t\tsource=" + source + ", \n\t\tindexID=" + indexID + ",\n\t\tindexData=" + indexData + "\n";
+    return super.toString() + "\n\t\tGazateerEntry\n" + "\t\tlatitude=" +
+            latitude + ", \n\t\tlongitude=" + longitude + ", \n\t\tsource=" +
+            source + ", \n\t\tindexID=" + indexID + ",\n\t\tindexData=" + indexData + "\n";
   }
 
   @Override
@@ -144,30 +157,4 @@ public class GazetteerEntry extends BaseLink {
     }
     return true;
   }
-
- 
-  public String getCountryCode() {
-    return countryCode;
-  }
-
-  public void setCountryCode(String countryCode) {
-    this.countryCode = countryCode;
-  }
-
-  public String getProvinceCode() {
-    return provinceCode;
-  }
-
-  public void setProvinceCode(String provinceCode) {
-    this.provinceCode = provinceCode;
-  }
-
-  public String getHierarchy() {
-    return hierarchy;
-  }
-
-  public void setHierarchy(String hierarchy) {
-    this.hierarchy = hierarchy;
-  }
-
 }

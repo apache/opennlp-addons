@@ -20,30 +20,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * Caches gazateer query results statically. Clears itself if more than 10000 results are cached.
+ * Caches {@link GazetteerEntry gazetteer} query results statically.
+ * Clears itself if more than 10000 results are cached.
  */
 public class GazetteerSearchCache {
 
-  private static Map<String, ArrayList<GazetteerEntry>> gazCache = new HashMap<>();
+  private static final Map<String, ArrayList<GazetteerEntry>> CACHE = new HashMap<>();
 
-/**
- * returns the cached entries. Returns null if the query does not exist in the cache
- * @param searchString
- * @return
- */
+  /**
+   * @param searchString The search string to check for matching entries.
+   * @return Retrieves cached entries. Returns {@code null} if the query does not exist in the cache.
+   */
   public static synchronized ArrayList<GazetteerEntry> get(String searchString) {
-    return gazCache.get(searchString);
+    return CACHE.get(searchString);
   }
 
   public static synchronized void put(String searchString, ArrayList<GazetteerEntry> hits) {
-    if (gazCache.size() > 10000) {
-      gazCache.clear();
+    if (CACHE.size() > 10000) {
+      CACHE.clear();
     }
-    if (!gazCache.containsKey(searchString)) {
-      gazCache.put(searchString, hits);
+    if (!CACHE.containsKey(searchString)) {
+      CACHE.put(searchString, hits);
     }
   }
-
 
 }

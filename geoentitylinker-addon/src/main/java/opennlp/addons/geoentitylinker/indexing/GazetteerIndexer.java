@@ -39,42 +39,7 @@ import org.apache.lucene.store.MMapDirectory;
  */
 public class GazetteerIndexer {
 
-  public static void main(String[] args) {
-
-    if (args.length != 8) {
-      System.out.println("Usage: GazetteerIndexer geonamesData geoNamesCountryInfo geonamesAdmin1CodesASCII "
-          + "usgsDataFile usgsGovUnitsFile outputIndexDir outputCountryContextFile regionsFile");
-      System.out.println();
-      System.out.println("The GazetteerIndexer.index methods javadoc explains how to retrieve the data files.");
-      return;
-    }
-
-    File geonamesData = new File(args[0]);
-    File geoNamesCountryInfo = new File(args[1]);
-    File geonamesAdmin1CodesASCII = new File(args[2]);
-    File usgsDataFile = new File(args[3]);
-    File usgsGovUnitsFile = new File(args[4]);
-    File outputIndexDir = new File(args[5]);
-    File outputCountryContextFile = new File(args[6]);
-    File regionsFile = new File(args[7]);
-
-    try {
-      GazetteerIndexer i = new GazetteerIndexer();
-      i.index(geonamesData,
-          geoNamesCountryInfo,
-          geonamesAdmin1CodesASCII,
-          usgsDataFile,
-          usgsGovUnitsFile,
-          outputIndexDir,
-          outputCountryContextFile,
-          regionsFile);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-  }
-
   public GazetteerIndexer() {
-
   }
 
   public interface Separable {
@@ -83,7 +48,6 @@ public class GazetteerIndexer {
   }
 
   public enum GazType implements Separable {
-
     GEONAMES {
           @Override
           public String toString() {
@@ -144,11 +108,13 @@ public class GazetteerIndexer {
    * format: tab delimited text with index 0 as the name of the region, index 1
    * as the longitude, and index 2 as the latitude
    *
-   * @throws Exception
+   * @throws IOException Thrown if IO errors occurred.
+   * @throws FileNotFoundException Thrown if required resources do not exist.
+   * @throws IllegalArgumentException Thrown if parameters are invalid.
    */
   public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII, File usgsDataFile,
                     File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile)
-          throws Exception {
+          throws IOException {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
     }
@@ -161,7 +127,6 @@ public class GazetteerIndexer {
     if (!geonamesAdmin1CodesASCII.exists()) {
       throw new FileNotFoundException("geonamesAdmin1CodesASCII data file does not exist");
     }
-
     if (!usgsDataFile.exists()) {
       throw new FileNotFoundException("usgsDataFile data file does not exist");
     }
@@ -190,15 +155,13 @@ public class GazetteerIndexer {
     IndexWriterConfig config = new IndexWriterConfig(aWrapper);
     try (IndexWriter w = new IndexWriter(index, config)) {
       //write the column headers for the countryContextFile
-      try (FileWriter countryContextFileWriter = new FileWriter(outputCountryContextFile, false)) {
+      try (FileWriter writer = new FileWriter(outputCountryContextFile, false)) {
         String colNamesForCountryContextFile = "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname\tcountryregex\tprovregex\tcountyregex\n";
-        countryContextFileWriter.write(colNamesForCountryContextFile);
-        countryContextFileWriter.flush();
+        writer.write(colNamesForCountryContextFile);
+        writer.flush();
       }
-
       USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
       GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData, outputCountryContextFile, w);
-
       RegionProcessor.process(regionsFile, outputCountryContextFile, w);
       w.commit();
     }
@@ -207,4 +170,38 @@ public class GazetteerIndexer {
             outputCountryContextFile.getPath() + "' to entitylinker.properties file");
   }
 
+
+  public static void main(String[] args) {
+
+    if (args.length != 8) {
+      System.out.println("Usage: GazetteerIndexer geonamesData geoNamesCountryInfo geonamesAdmin1CodesASCII "
+              + "usgsDataFile usgsGovUnitsFile outputIndexDir outputCountryContextFile regionsFile");
+      System.out.println();
+      System.out.println("The GazetteerIndexer.index methods javadoc explains how to retrieve the data files.");
+      return;
+    }
+
+    File geonamesData = new File(args[0]);
+    File geoNamesCountryInfo = new File(args[1]);
+    File geonamesAdmin1CodesASCII = new File(args[2]);
+    File usgsDataFile = new File(args[3]);
+    File usgsGovUnitsFile = new File(args[4]);
+    File outputIndexDir = new File(args[5]);
+    File outputCountryContextFile = new File(args[6]);
+    File regionsFile = new File(args[7]);
+
+    try {
+      GazetteerIndexer i = new GazetteerIndexer();
+      i.index(geonamesData,
+              geoNamesCountryInfo,
+              geonamesAdmin1CodesASCII,
+              usgsDataFile,
+              usgsGovUnitsFile,
+              outputIndexDir,
+              outputCountryContextFile,
+              regionsFile);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
 }

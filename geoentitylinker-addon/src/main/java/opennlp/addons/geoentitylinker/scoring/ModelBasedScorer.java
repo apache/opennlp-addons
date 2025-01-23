@@ -20,6 +20,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -27,14 +31,11 @@ import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
  * Utilizes a doccat model to score toponyms based on surrounding context
  */
-public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext> {
+public class ModelBasedScorer implements LinkedEntityScorer<BaseLink, AdminBoundaryContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   
@@ -44,11 +45,12 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
   boolean modelexists = false;
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans,
+                    EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     try {
       if (doccatModel == null) {
         String path = properties.getProperty("opennlp.geoentitylinker.modelbasedscorer.modelpath", "");
-        if (path.equals("")) {
+        if (path.isEmpty()) {
           return;
         }
         modelexists = true;
@@ -58,7 +60,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
       Map<Integer, String> proximalFeatures = generateProximalFeatures(linkedSpans, sentenceSpans, docText, RADIUS);
       for (Map.Entry<Integer, String> entry : proximalFeatures.entrySet()) {
         Map<String, Double> scores = this.getScore(entry.getValue());
-        for (BaseLink link : (List<BaseLink>) linkedSpans.get(entry.getKey()).getLinkedEntries()) {
+        for (BaseLink link : linkedSpans.get(entry.getKey()).getLinkedEntries()) {
           double score = 0d;
           if (scores.containsKey(link.getItemParentID())) {
             score = scores.get(link.getItemParentID());
@@ -83,7 +85,8 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
    * @return a map of the index of the linked span to the string of surrounding
    * text: Map&lt;indexofspan,surrounding text&gt;
    */
-  public Map<Integer, String> generateProximalFeatures(List<LinkedSpan> linkedSpans, Span[] sentenceSpans, String docText, int radius) {
+  public Map<Integer, String> generateProximalFeatures(List<LinkedSpan<BaseLink>> linkedSpans,
+                                                       Span[] sentenceSpans, String docText, int radius) {
     Map<Integer, String> featureBags = new HashMap<>();
     Map<Integer, Integer> nameMentionMap = new HashMap<>();
     /*
@@ -144,7 +147,7 @@ public class ModelBasedScorer implements LinkedEntityScorer<AdminBoundaryContext
     return chunk;
   }
 
-  private Map<String, Double> getScore(String text) throws Exception {
+  private Map<String, Double> getScore(String text) {
     Map<String, Double> scoreMap = new HashMap<>();
     double[] categorize = documentCategorizerME.categorize(List.of(text).toArray(new String[0]));
     int catSize = documentCategorizerME.getNumberOfCategories();

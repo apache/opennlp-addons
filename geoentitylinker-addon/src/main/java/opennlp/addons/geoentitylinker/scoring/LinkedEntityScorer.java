@@ -16,6 +16,8 @@
 package opennlp.addons.geoentitylinker.scoring;
 
 import java.util.List;
+
+import opennlp.tools.entitylinker.BaseLink;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
@@ -23,18 +25,21 @@ import opennlp.tools.util.Span;
 /**
  * Structure for scoring linked entities. The Map logically represents a pair :
  * "Score type" to the "actual Score."
- * @param <T> a generic for providing additional context
+ * 
+ * @param <L> A template type for the {@link LinkedSpan} type.
+ * @param <T> A template type for providing additional context.
  */
-public interface LinkedEntityScorer<T> {
+public interface LinkedEntityScorer<L extends BaseLink, T> {
 
-/**
- * Scores a collection of linked entities. Implementations should populate the scoreMap in the list of BaseLink for each linkedSpan
- * this method internally affects the reference to linkedSpans that was passed in
- * @param linkedSpans the spans that have been linked to some external source and have all the data they need to be scored
- * @param docText the full text of the document.
- * @param sentenceSpans the sentence spans the correspond to the document text
- * @param properties the entitylinker properties config file
- * @param additionalContext any additional data required to perform the scoring operation
- */
-  void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, T additionalContext);
+  /**
+   * Scores a collection of linked entities. Implementations should populate the scoreMap in the list of BaseLink for each linkedSpan
+   * this method internally affects the reference to linkedSpans that was passed in
+   * @param linkedSpans the spans that have been linked to some external source and have all the data they need to be scored
+   * @param docText the full text of the document.
+   * @param sentenceSpans the sentence spans that corresponds to the document text
+   * @param properties the entitylinker properties config file
+   * @param additionalContext any additional data required to perform the scoring operation
+   */
+  void score(List<LinkedSpan<L>> linkedSpans, String docText, Span[] sentenceSpans,
+             EntityLinkerProperties properties, T additionalContext);
 }

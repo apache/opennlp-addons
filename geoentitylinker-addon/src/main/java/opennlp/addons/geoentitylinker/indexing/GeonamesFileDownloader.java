@@ -38,25 +38,11 @@ public class GeonamesFileDownloader {
 
   public static void downloadGeonamesFiles(String outputFileName, String outputDir) {
     String fileDownload = fileDownload(ALL_COUNTRIES, outputDir);
-
     unzipMyZip(fileDownload, outputDir);
 
     fileDownload(COUNTRY_INFO, outputDir);
     fileDownload(ADM1_LOOKUP, outputDir);
 
-  }
-
-  public static void writeFile(InputStream in, OutputStream out)
-          throws IOException {
-    byte[] buffer = new byte[1024];
-    int len;
-
-    while ((len = in.read(buffer)) != 0) {
-      out.write(buffer, 0, len);
-    }
-
-    in.close();
-    out.close();
   }
 
   public static void unzipMyZip(String zipFileName, String directoryToExtractTo) {

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
@@ -36,18 +37,16 @@ import opennlp.tools.util.Span;
  * indicator of Germany, it is more likely to be Berlin Germany than Berlin
  * Connecticut (if Connecticut is mentioned further down in the article).
  */
-public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryContext> {
+public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, AdminBoundaryContext> {
 
   private Map<String, Set<String>> nameCodesMap;
   String dominantCode = "";
   private Map<String, String> regexMap = new HashMap<>();
 
   @Override
-  public void score(List<LinkedSpan> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
-
+  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     regexMap = additionalContext.getCountryRegexMap();
     score(linkedSpans, additionalContext.getCountryMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
-
   }
 
   /**
@@ -70,7 +69,7 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
    * Named Entity.
    * @return
    */
-  public List<LinkedSpan> score(List<LinkedSpan> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
+  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
     this.nameCodesMap = nameCodesMap;
     setDominantCode(countryHits);
     for (LinkedSpan<BaseLink> linkedspan : linkedData) {
@@ -254,10 +253,9 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
     for (double d : windowOfAverages) {
       sum += d;
     }
-    double result = sum / windowOfAverages.size();
     //TODO: ++ prob when large amounts of mentions for a code
     //System.out.println("avg of window:" + result);
-    return result;
+    return sum / windowOfAverages.size();
   }
 
   /**
@@ -274,4 +272,5 @@ public class CountryProximityScorer implements LinkedEntityScorer<AdminBoundaryC
     d = d == null ? 0d : d;
     return d;
   }
+
 }

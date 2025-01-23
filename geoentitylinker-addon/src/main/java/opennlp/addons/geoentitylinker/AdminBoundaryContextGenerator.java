@@ -27,17 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import opennlp.tools.entitylinker.EntityLinkerProperties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import opennlp.tools.entitylinker.EntityLinkerProperties;
 
 /**
  * Finds instances of country mentions in a String, typically a document text.
  * Used to boost or degrade scoring of linked geo entities
- *
  */
 public class AdminBoundaryContextGenerator {
 
@@ -46,23 +46,13 @@ public class AdminBoundaryContextGenerator {
   private Map<String, Set<String>> nameCodesMap = new HashMap<>();
   private final Map<String, Set<Integer>> countryMentions = new HashMap<>();
 
-  Map<String, String> countryRegexMap = new HashMap<>();
-  Map<String, String> provinceRegexMap = new HashMap<>();
-  Map<String, String> countyRegexMap = new HashMap<>();
+  private final Map<String, String> countryRegexMap = new HashMap<>();
+  private final Map<String, String> provinceRegexMap = new HashMap<>();
+  private Map<String, String> countyRegexMap = new HashMap<>();
 
   private final Set<CountryContextEntry> countryHits = new HashSet<>();
-  private final EntityLinkerProperties properties;
   private final List<AdminBoundary> adminBoundaryData= new ArrayList<>();
   private final Set<AdminBoundary> adminBoundaryHits = new HashSet<>();
-  private AdminBoundaryContext context;
-
-  public AdminBoundaryContext getContext(String text) {
-    context = null;
-    nameCodesMap.clear();
-    context = process(text);
-
-    return context;
-  }
 
   private final Set<String> countryHitSet = new HashSet<>();
   private final Map<String, String> countryMap = new HashMap<>();
@@ -77,22 +67,31 @@ public class AdminBoundaryContextGenerator {
 
   public static void main(String[] args) {
     try {
-      AdminBoundaryContextGenerator countryContext
-          = new AdminBoundaryContextGenerator(new EntityLinkerProperties(new File("C:\\Temp\\gaz_data\\newCountryContextfile.txt")));
+      AdminBoundaryContextGenerator countryContext = new AdminBoundaryContextGenerator(
+              new EntityLinkerProperties(new File("C:\\Temp\\gaz_data\\newCountryContextfile.txt")));
 
-      AdminBoundaryContext c = countryContext.process("This artcle is about fairfax county virginia in the north of florida in the united states. It is also about Moscow and atlanta. Hillsborough county florida is a nice place. Eastern Africa people are cool.");
+      AdminBoundaryContext c = countryContext.process(
+              "This article is about fairfax county virginia in the north of florida in the united states. " +
+                      "It is also about Moscow and atlanta. Hillsborough county florida is a nice place. " +
+                      "Eastern Africa people are cool.");
       System.out.println(c);
     } catch (Exception ex) {
       java.util.logging.Logger.getLogger(AdminBoundaryContextGenerator.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
 
+  public AdminBoundaryContext getContext(String text) {
+    nameCodesMap.clear();
+    return process(text);
+  }
+
   public AdminBoundaryContextGenerator(EntityLinkerProperties properties) throws IOException {
-    this.properties = properties;
     if (countrydata == null) {
-      String path = this.properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
+      String path = properties.getProperty("opennlp.geoentitylinker.countrycontext.filepath", "");
       if (path == null || path.trim().isEmpty()) {
-        throw new IOException("missing country context data configuration. Property opennlp.geoentitylinker.countrycontext.filepath must have a valid path value in entitylinker properties file");
+        throw new IOException("missing country context data configuration. " +
+                "Property opennlp.geoentitylinker.countrycontext.filepath " +
+                "must have a valid path value in entitylinker properties file");
       }
       File countryContextFile = new File(path);
       if (countryContextFile == null || !countryContextFile.exists()) {
@@ -264,7 +263,7 @@ public class AdminBoundaryContextGenerator {
             newset.add(start);
             mentions.put(code, newset);
           }
-          if (!hit.equals("")) {
+          if (!hit.isEmpty()) {
             if (this.nameCodesMap.containsKey(hit)) {
               nameCodesMap.get(hit).add(code);
             } else {
@@ -333,40 +332,39 @@ public class AdminBoundaryContextGenerator {
 
   private void loadMaps(List<AdminBoundary> boundaries) {
     for (AdminBoundary adm : boundaries) {
-      if (!adm.getCountryCode().equals("null")) {
-        countryMap.put(adm.getCountryCode(), adm.getCountryName());
-        if (countryRegexMap.containsKey(adm.getCountryCode())) {
-          String currentRegex = countryRegexMap.get(adm.getCountryCode());
-          if (currentRegex.length() > adm.getCountryRegex().length()) {
+      if (!adm.countryCode().equals("null")) {
+        countryMap.put(adm.countryCode(), adm.countryName());
+        if (countryRegexMap.containsKey(adm.countryCode())) {
+          String currentRegex = countryRegexMap.get(adm.countryCode());
+          if (currentRegex.length() > adm.countryRegex().length()) {
             // the longest one wins if they are not all the same for each entry in the file
-            countryRegexMap.put(adm.getCountryCode(), currentRegex);
+            countryRegexMap.put(adm.countryCode(), currentRegex);
           }//else do nothing
         } else {
-          countryRegexMap.put(adm.getCountryCode(), adm.getCountryRegex());
+          countryRegexMap.put(adm.countryCode(), adm.countryRegex());
         }
 
         if (!adm.getProvCode().equals("null")) {
-          Map<String, String> provs = provMap.get(adm.getCountryCode());
+          Map<String, String> provs = provMap.get(adm.countryCode());
           if (provs == null) {
             provs = new HashMap<>();
           }
           //if (!provs.containsKey(adm.getProvCode())) {
-          provs.put(adm.getCountryCode() + "." + adm.getProvCode(), adm.getProvinceName());
-          provMap.put(adm.getCountryCode(), provs);
+          provs.put(adm.countryCode() + "." + adm.getProvCode(), adm.provinceName());
+          provMap.put(adm.countryCode(), provs);
           // }
 
-          if (!adm.getCountyCode().equalsIgnoreCase("no_data_found") && !adm.getCountyName().equalsIgnoreCase("no_data_found")) {
-            Map<String, String> counties = countyMap.get(adm.getCountryCode() + "." + adm.getProvCode());
+          if (!adm.countyCode().equalsIgnoreCase("no_data_found") && !adm.countyName().equalsIgnoreCase("no_data_found")) {
+            Map<String, String> counties = countyMap.get(adm.countryCode() + "." + adm.getProvCode());
             if (counties == null) {
               counties = new HashMap<>();
-            }            // if (!counties.containsKey(adm.getCountyCode())) {
-            String countyid = adm.getCountryCode() + "." + adm.getProvCode() + "." + adm.getCountyCode();
-            counties.put(countyid, adm.getCountyName());
-            countyMap.put(adm.getCountryCode() + "." + adm.getProvCode(), counties);
+            }
+            // if (!counties.containsKey(adm.getCountyCode())) {
+            String countyid = adm.countryCode() + "." + adm.getProvCode() + "." + adm.countyCode();
+            counties.put(countyid, adm.countyName());
+            countyMap.put(adm.countryCode() + "." + adm.getProvCode(), counties);
             // }
-
           }
-
         }
       }
     }
@@ -375,18 +373,17 @@ public class AdminBoundaryContextGenerator {
   }
 
   private void fillProvRegexMap() {
-    this.provinceRegexMap = new HashMap<>();
     // this.adminBoundaryData
     for (AdminBoundary adm : adminBoundaryData) {
 
       if (provinceRegexMap.containsKey(adm.getProvCode())) {
         String currentRegex = provinceRegexMap.get(adm.getProvCode());
-        if (currentRegex.length() > adm.getProvinceRegex().length()) {
+        if (currentRegex.length() > adm.provinceRegex().length()) {
           // the longest one wins if they are not all the same for each entry in the file
           provinceRegexMap.put(adm.getProvCode(), currentRegex);
         }//else do nothing
       } else {
-        provinceRegexMap.put(adm.getProvCode(), adm.getProvinceRegex());
+        provinceRegexMap.put(adm.getProvCode(), adm.provinceRegex());
       }
     }
   }
@@ -396,14 +393,14 @@ public class AdminBoundaryContextGenerator {
     // this.adminBoundaryData
     for (AdminBoundary adm : adminBoundaryData) {
 
-      if (countyRegexMap.containsKey(adm.getCountyCode())) {
-        String currentRegex = countyRegexMap.get(adm.getCountyCode());
-        if (currentRegex.length() > adm.getCountyRegex().length()) {
+      if (countyRegexMap.containsKey(adm.countyCode())) {
+        String currentRegex = countyRegexMap.get(adm.countyCode());
+        if (currentRegex.length() > adm.countyRegex().length()) {
           // the longest one wins if they are not all the same for each entry in the file
-          countyRegexMap.put(adm.getCountyCode(), currentRegex);
+          countyRegexMap.put(adm.countyCode(), currentRegex);
         }//else do nothing
       } else {
-        countyRegexMap.put(adm.getCountyCode(), adm.getCountyRegex());
+        countyRegexMap.put(adm.countyCode(), adm.countyRegex());
       }
     }
 
