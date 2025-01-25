@@ -59,7 +59,7 @@ Currently, the library has different components:
 
 ## Getting Started
 
-You can import the addons components directly via Maven, SBT or Gradle after you have build it locally:
+You can import the addons components directly via Maven, SBT or Gradle after you have built it locally:
 
 #### Maven
 
