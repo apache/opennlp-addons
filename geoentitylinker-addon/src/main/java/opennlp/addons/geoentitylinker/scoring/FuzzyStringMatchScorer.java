@@ -28,8 +28,7 @@ import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
 /**
- *
- * Generates scores based on string comparisons levenstein and dice
+ * Generates scores based on string comparisons Levenshtein and Dice.
  */
 public class FuzzyStringMatchScorer implements LinkedEntityScorer<GazetteerEntry, AdminBoundaryContext> {
 

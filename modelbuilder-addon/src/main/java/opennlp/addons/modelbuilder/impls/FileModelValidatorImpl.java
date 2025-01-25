@@ -34,7 +34,7 @@ import opennlp.addons.modelbuilder.ModelGenerationValidator;
 public class FileModelValidatorImpl implements ModelGenerationValidator {
 
   private final Set<String> badentities = new HashSet<>();
-  BaseModelBuilderParams params;
+  private BaseModelBuilderParams params;
 
   @Override
   public void setParameters(BaseModelBuilderParams params) {
@@ -58,11 +58,7 @@ public class FileModelValidatorImpl implements ModelGenerationValidator {
 //    if (p.matcher(namedEntity).find()) {
 //      return false;
 //    }
-    boolean b = true;
-    if (badentities.contains(namedEntity.toLowerCase())) {
-      b = false;
-    }
-    return b;
+    return !badentities.contains(namedEntity.toLowerCase());
   }
 
   @Override

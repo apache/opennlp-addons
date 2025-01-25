@@ -27,11 +27,13 @@ import opennlp.tools.util.model.ArtifactSerializer;
 public class LiblinearModelSerializer implements
     ArtifactSerializer<LiblinearModel> {
 
+  @Override
   public LiblinearModel create(InputStream in) throws IOException,
       InvalidFormatException {
     return new LiblinearModel(in);
   }
 
+  @Override
   public void serialize(LiblinearModel model, OutputStream out)
       throws IOException {
     model.serialize(out);

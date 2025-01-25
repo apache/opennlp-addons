@@ -103,7 +103,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
     List<Feature[]> vx = new ArrayList<>();
 
     // outcomes
-    int outcomes[] = indexer.getOutcomeList();
+    int[] outcomes = indexer.getOutcomeList();
 
     int max_index = 0;
     

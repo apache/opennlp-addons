@@ -56,11 +56,11 @@ public class USGSProcessor {
     writeCountryContextFile(outputCountryContextfile, provData);
   }
 
-  public static void readFile(File gazateerInputData, IndexWriter w, GazetteerIndexer.GazType type,
+  public static void readFile(File gazetteerInput, IndexWriter w, GazetteerIndexer.GazType type,
                               Map<String, AdminBoundary> lookupMap) throws IOException {
 
     Map<String, StateCentroid> states = new HashMap<>();
-    try (BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData))) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(gazetteerInput))) {
 
       List<String> fields = new ArrayList<>();
       int counter = 0;

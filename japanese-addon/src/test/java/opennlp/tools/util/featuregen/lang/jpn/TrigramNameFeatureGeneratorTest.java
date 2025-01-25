@@ -30,10 +30,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TrigramNameFeatureGeneratorTest {
 
   private List<String> features;
-  static String[] testSentence = new String[] {"This", "is", "an", "example", "sentence"};
+  private static final String[] TEST_SENTENCE = new String[] {"This", "is", "an", "example", "sentence"};
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     features = new ArrayList<>();
   }
 
@@ -44,7 +44,7 @@ public class TrigramNameFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TrigramNameFeatureGenerator();
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
     assertEquals(2, features.size());
     assertEquals("w,nw,nnw=This,is,an", features.get(0));
@@ -58,7 +58,7 @@ public class TrigramNameFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TrigramNameFeatureGenerator();
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
     assertEquals(2, features.size());
     assertEquals("w,nw,nnw=is,an,example", features.get(0));
@@ -72,7 +72,7 @@ public class TrigramNameFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TrigramNameFeatureGenerator();
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
     assertEquals(4, features.size());
     assertEquals("ppw,pw,w=This,is,an", features.get(0));
@@ -88,7 +88,7 @@ public class TrigramNameFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TrigramNameFeatureGenerator();
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
     assertEquals(2, features.size());
     assertEquals("ppw,pw,w=an,example,sentence", features.get(0));

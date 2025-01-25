@@ -25,20 +25,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AuxiliaryInfoUtilTest {
 
   @Test
-  public void testGetSeparatorIndex() throws Exception {
+  public void testGetSeparatorIndex() {
     assertEquals(0, AuxiliaryInfoUtil.getSeparatorIndex("/POStag"));
     assertEquals(1, AuxiliaryInfoUtil.getSeparatorIndex("1/POStag"));
     assertEquals(10, AuxiliaryInfoUtil.getSeparatorIndex("word/stuff/POStag"));
   }
 
   @Test
-  public void testGetSeparatorIndexNoPos() throws Exception {
+  public void testGetSeparatorIndexNoPos() {
     Assertions.assertThrows(RuntimeException.class, () ->
             AuxiliaryInfoUtil.getSeparatorIndex("NOPOStags"));
   }
 
   @Test
-  public void testGetWordPart() throws Exception {
+  public void testGetWordPart() {
     assertEquals(" ", AuxiliaryInfoUtil.getWordPart("/POStag"));
     assertEquals("1", AuxiliaryInfoUtil.getWordPart("1/POStag"));
     assertEquals("word", AuxiliaryInfoUtil.getWordPart("word/POStag"));
@@ -46,7 +46,7 @@ public class AuxiliaryInfoUtilTest {
   }
 
   @Test
-  public void testGetWordParts() throws Exception {
+  public void testGetWordParts() {
     String[] results = AuxiliaryInfoUtil.getWordParts(new String[]{"1/A", "234/B", "3456/C", "/D"});
     assertEquals(4, results.length);
     assertEquals("1", results[0]);
@@ -56,7 +56,7 @@ public class AuxiliaryInfoUtilTest {
   }
 
   @Test
-  public void testGetAuxPart() throws Exception {
+  public void testGetAuxPart() {
     assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("/POStag"));
     assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("1/POStag"));
     assertEquals("POStag", AuxiliaryInfoUtil.getAuxPart("word/POStag"));
@@ -64,7 +64,7 @@ public class AuxiliaryInfoUtilTest {
   }
 
   @Test
-  public void testGetAuxParts() throws Exception {
+  public void testGetAuxParts() {
     String[] results = AuxiliaryInfoUtil.getAuxParts(new String[] {"1/ABC", "234/B", "3456/CD", "/DEFGH"});
     assertEquals(4, results.length);
     assertEquals("ABC", results[0]);

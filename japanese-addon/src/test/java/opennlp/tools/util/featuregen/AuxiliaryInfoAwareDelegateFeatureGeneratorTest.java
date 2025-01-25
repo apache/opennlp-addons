@@ -32,12 +32,12 @@ public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
   private List<String> features;
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     features = new ArrayList<>();
   }
 
   @Test
-  public void testWord() throws Exception {
+  public void testWord() {
     AdaptiveFeatureGenerator featureGenerator = new AuxiliaryInfoAwareDelegateFeatureGenerator(
         new IdentityFeatureGenerator(), false);
 
@@ -47,7 +47,7 @@ public class AuxiliaryInfoAwareDelegateFeatureGeneratorTest {
   }
 
   @Test
-  public void testAuxInfo() throws Exception {
+  public void testAuxInfo() {
     AdaptiveFeatureGenerator featureGenerator = new AuxiliaryInfoAwareDelegateFeatureGenerator(
         new IdentityFeatureGenerator(), true);
 

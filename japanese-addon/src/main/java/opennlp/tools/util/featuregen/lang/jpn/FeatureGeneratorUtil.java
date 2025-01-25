@@ -42,7 +42,7 @@ public class FeatureGeneratorUtil {
 
     Objects.requireNonNull(token, "token must be not null!");
 
-    if (token.length() == 0) return "other";
+    if (token.isEmpty()) return "other";
 
     // scan token only once
     char c = token.charAt(0);

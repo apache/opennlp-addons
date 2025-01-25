@@ -120,10 +120,10 @@ public class ModelBasedScorer implements LinkedEntityScorer<BaseLink, AdminBound
 
   public String getTextChunk(int mentionIdx, String docText, int radius) {
     int docSize = docText.length();
-    int left = 0, right = 0;
+    int left, right;
     left = (mentionIdx - radius < 0) ? 0 : mentionIdx - radius;
     right = (mentionIdx + radius > docSize) ? docSize : mentionIdx + radius;
-    String chunk = "";
+    String chunk;
     if (right <= left) {
       chunk = "";
     } else {

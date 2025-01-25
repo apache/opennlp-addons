@@ -30,10 +30,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TokenClassFeatureGeneratorTest {
 
   private List<String> features;
-  static String[] testSentence = new String[] {"This", "is", "an", "Example", "sentence"};
+  private static final String[] TEST_SENTENCE = new String[] {"This", "is", "an", "Example", "sentence"};
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     features = new ArrayList<>();
   }
 
@@ -44,7 +44,7 @@ public class TokenClassFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TokenClassFeatureGenerator(true);
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
    assertEquals(2, features.size());
    assertEquals("wc=alpha", features.get(0));
@@ -58,7 +58,7 @@ public class TokenClassFeatureGeneratorTest {
 
     AdaptiveFeatureGenerator generator = new TokenClassFeatureGenerator(false);
 
-    generator.createFeatures(features, testSentence, testTokenIndex, null);
+    generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
    assertEquals(1, features.size());
    assertEquals("wc=alpha", features.get(0));

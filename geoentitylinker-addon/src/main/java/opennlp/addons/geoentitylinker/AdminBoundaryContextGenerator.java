@@ -350,19 +350,20 @@ public class AdminBoundaryContextGenerator {
             provs = new HashMap<>();
           }
           //if (!provs.containsKey(adm.getProvCode())) {
-          provs.put(adm.countryCode() + "." + adm.getProvCode(), adm.provinceName());
+          String combined = adm.countryCode() + "." + adm.getProvCode();
+          provs.put(combined, adm.provinceName());
           provMap.put(adm.countryCode(), provs);
           // }
 
           if (!adm.countyCode().equalsIgnoreCase("no_data_found") && !adm.countyName().equalsIgnoreCase("no_data_found")) {
-            Map<String, String> counties = countyMap.get(adm.countryCode() + "." + adm.getProvCode());
+            Map<String, String> counties = countyMap.get(combined);
             if (counties == null) {
               counties = new HashMap<>();
             }
             // if (!counties.containsKey(adm.getCountyCode())) {
-            String countyid = adm.countryCode() + "." + adm.getProvCode() + "." + adm.countyCode();
+            String countyid = combined + "." + adm.countyCode();
             counties.put(countyid, adm.countyName());
-            countyMap.put(adm.countryCode() + "." + adm.getProvCode(), counties);
+            countyMap.put(combined, counties);
             // }
           }
         }

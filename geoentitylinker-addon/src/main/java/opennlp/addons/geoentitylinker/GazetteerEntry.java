@@ -127,7 +127,7 @@ public class GazetteerEntry extends BaseLink {
   @Override
   public String toString() {
 
-    return super.toString() + "\n\t\tGazateerEntry\n" + "\t\tlatitude=" +
+    return super.toString() + "\n\t\tGazetteerEntry\n" + "\t\tlatitude=" +
             latitude + ", \n\t\tlongitude=" + longitude + ", \n\t\tsource=" +
             source + ", \n\t\tindexID=" + indexID + ",\n\t\tindexData=" + indexData + "\n";
   }
@@ -152,9 +152,6 @@ public class GazetteerEntry extends BaseLink {
     if (!Objects.equals(this.source, other.source)) {
       return false;
     }
-    if (!Objects.equals(this.indexID, other.indexID)) {
-      return false;
-    }
-    return true;
+    return Objects.equals(this.indexID, other.indexID);
   }
 }

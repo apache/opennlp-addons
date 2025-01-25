@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import morfologik.stemming.Dictionary;
-import opennlp.morfologik.builder.POSDictionayBuilderTest;
+import opennlp.morfologik.builder.POSDictionaryBuilderTest;
 import opennlp.tools.postag.TagDictionary;
 
 import org.junit.jupiter.api.Test;
@@ -49,9 +49,9 @@ public class MorfologikTagDictionaryTest {
     assertTrue(tags.contains("NOUN"));
     assertTrue(tags.contains("V"));
 
-    // this is the behavior of case insensitive dictionary
-    // if we search it using case insensitive, Casa as a proper noun
-    // should be lower case in the dictionary
+    // this is the behavior of case-insensitive dictionary
+    // if we search it using case-insensitive, Casa as a proper noun
+    // should be lower-cased in the dictionary
     tags = Arrays.asList(dict.getTags("Casa"));
     assertEquals(2, tags.size());
     assertTrue(tags.contains("NOUN"));
@@ -68,9 +68,9 @@ public class MorfologikTagDictionaryTest {
     assertTrue(tags.contains("NOUN"));
     assertTrue(tags.contains("V"));
 
-    // this is the behavior of case insensitive dictionary
-    // if we search it using case insensitive, Casa as a proper noun
-    // should be lower case in the dictionary
+    // this is the behavior of case-insensitive dictionary
+    // if we search it using case-insensitive, Casa as a proper noun
+    // should be lower-cased in the dictionary
     tags = Arrays.asList(dict.getTags("Casa"));
     assertEquals(1, tags.size());
     assertTrue(tags.contains("PROP"));
@@ -84,7 +84,7 @@ public class MorfologikTagDictionaryTest {
 
   private MorfologikTagDictionary createDictionary(boolean caseSensitive, List<String> constant) throws Exception {
 
-    Dictionary dic = Dictionary.read(POSDictionayBuilderTest.createMorfologikDictionary());
+    Dictionary dic = Dictionary.read(POSDictionaryBuilderTest.createMorfologikDictionary());
     return new MorfologikTagDictionary(dic, caseSensitive);
   }
 

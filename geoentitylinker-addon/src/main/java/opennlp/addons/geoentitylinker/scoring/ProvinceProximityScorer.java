@@ -62,7 +62,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
 
   /**
    * Assigns a score to each BaseLink in each linkedSpan's set of N best
-   * matches. Currently the scoring indicates the probability that the toponym
+   * matches. Currently, the scoring indicates the probability that the toponym
    * is correct based on the country context in the document
    *
    * @param linkedData the linked spans, holds the Namefinder results, and the
@@ -118,7 +118,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
                                                        LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
     Double score = 0.0;
     /*
-     * get the index of the actual span, begining of sentence //should generate
+     * get the index of the actual span, beginning of sentence //should generate
      * tokens from sentence and create a char offset... //could have large
      * sentences due to poor sentence detection or wonky doc text
      */
@@ -131,22 +131,18 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
     Map<String, Set<Integer>> distancesFromCodeMap = new HashMap<>();
     //map = Map<countrycode, Set <of distances this span is from all the mentions of the code>>
     for (String cCode : countryHits.keySet()) {
-      //iterate over all the regex start values and calculate an offset
+      // iterate over all the regex start values and calculate an offset
       for (Integer cHit : countryHits.get(cCode)) {
-        Integer absDist = Math.abs(sentIndexInDoc - cHit);
+        int absDist = Math.abs(sentIndexInDoc - cHit);
         //only include near mentions based on a heuristic
         //TODO make this a property
         //  if (absDist < maxAllowedDistance) {
         if (distancesFromCodeMap.containsKey(cCode)) {
           distancesFromCodeMap.get(cCode).add(absDist);
         } else {
-          HashSet<Integer> newset = new HashSet<>();
-          newset.add(absDist);
-          distancesFromCodeMap.put(cCode, newset);
+          distancesFromCodeMap.put(cCode, new HashSet<>(absDist));
         }
       }
-
-      //}
     }
     //we now know how far this named entity is from every country mention in the document
 
@@ -172,7 +168,7 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
         if (nameCodesMap.containsKey(link.getItemName().toLowerCase()) || regexMatch(link.getItemName(), link.getItemParentID())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(entry.getItemName().toLowerCase()).contains(entry.getProvinceCode())) {
-            //boost the score becuase it is likely that this is the location in the text, so add 50% to the score or set to 1
+            //boost the score because it is likely that this is the location in the text, so add 50% to the score or set to 1
             //TODO: make this smarter
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 
@@ -219,15 +215,15 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
     for (String key : distanceMap.keySet()) {
       all.addAll(distanceMap.get(key));
     }
-    //get min max for normalization, this could be more efficient
-
+    
+    // get min max for normalization, this could be more efficient
     int min = all.first();
     int max = all.last();
     if (min == max) {
       min = 0;
     }
-    for (String key : distanceMap.keySet()) {
 
+    for (String key : distanceMap.keySet()) {
       TreeSet<Double> normalizedDistances = new TreeSet<>();
       for (Integer i : distanceMap.get(key)) {
         Double norm = normalize(i, min, max);

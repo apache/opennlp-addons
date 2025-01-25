@@ -93,7 +93,7 @@ public class GazetteerIndexer {
    * <a href="https://geonames.usgs.gov/domestic/download_data.htm">here</a> click on the
    * national_file####.zip link to get all the most recent features
    *
-   * @param usgsGovUnitsFile go to
+   * @param usgsGovUnitsFile go
    * <a href="https://geonames.usgs.gov/domestic/download_data.htm">here</a> in the section titled
    * "Topical Gazetteers -- File Format" click on the dropdown list and select
    * "Government Units". The downloaded file is what you need for this param.

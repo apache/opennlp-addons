@@ -17,8 +17,6 @@
 
 package opennlp.morfologik.builder;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -32,7 +30,7 @@ import morfologik.tools.DictCompile;
  * file. The first column is the word, the second its lemma and the third a POS
  * tag. If there is no lemma information leave the second column empty.
  */
-public class MorfologikDictionayBuilder {
+public class MorfologikDictionaryBuilder {
 
   /**
    * Helper to compile a morphological dictionary automaton.
@@ -90,7 +88,7 @@ public class MorfologikDictionayBuilder {
   }
 
   Properties createProperties(Charset encoding, String separator,
-      EncoderType encoderType) throws FileNotFoundException, IOException {
+      EncoderType encoderType) {
 
     Properties properties = new Properties();
     properties.setProperty("fsa.dict.separator", separator);

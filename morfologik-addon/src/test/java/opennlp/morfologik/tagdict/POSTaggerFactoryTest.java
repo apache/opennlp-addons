@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-import opennlp.morfologik.builder.POSDictionayBuilderTest;
+import opennlp.morfologik.builder.POSDictionaryBuilderTest;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSSample;
 import opennlp.tools.postag.POSTaggerFactory;
@@ -39,6 +39,7 @@ import opennlp.tools.util.model.ModelType;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -50,7 +51,7 @@ public class POSTaggerFactoryTest {
   @Test
   public void testPOSTaggerWithCustomFactory() throws Exception {
 
-    Path dictionary = POSDictionayBuilderTest.createMorfologikDictionary();
+    Path dictionary = POSDictionaryBuilderTest.createMorfologikDictionary();
     POSTaggerFactory inFactory = new MorfologikPOSTaggerFactory();
     TagDictionary inDict = inFactory.createTagDictionary(dictionary.toFile());
     inFactory.setTagDictionary(inDict);
@@ -58,7 +59,7 @@ public class POSTaggerFactoryTest {
     POSModel posModel = trainPOSModel(ModelType.MAXENT, inFactory);
 
     POSTaggerFactory factory = posModel.getFactory();
-    assertTrue(factory.getTagDictionary() instanceof MorfologikTagDictionary);
+    assertInstanceOf(MorfologikTagDictionary.class, factory.getTagDictionary());
 
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
@@ -66,7 +67,7 @@ public class POSTaggerFactoryTest {
       POSModel fromSerialized = new POSModel(new ByteArrayInputStream(out.toByteArray()));
 
       factory = fromSerialized.getFactory();
-      assertTrue(factory.getTagDictionary() instanceof MorfologikTagDictionary);
+      assertInstanceOf(MorfologikTagDictionary.class, factory.getTagDictionary());
 
       assertEquals(2, factory.getTagDictionary().getTags("casa").length);
     }

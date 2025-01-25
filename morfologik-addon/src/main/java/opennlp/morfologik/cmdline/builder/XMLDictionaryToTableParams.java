@@ -34,7 +34,7 @@ interface XMLDictionaryToTableParams extends EncodingParameter {
   @ParameterDescription(valueName = "out", description = "Output for Morfologik (.info will be also created).")
   File getOutputFile();
 
-  @ParameterDescription(valueName = "char", description = "Columm separator (must be a single character)")
+  @ParameterDescription(valueName = "char", description = "Column separator (must be a single character)")
   @OptionalParameter(defaultValue=",")
   String getSeparator();
   

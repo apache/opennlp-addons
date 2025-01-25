@@ -31,7 +31,7 @@ import opennlp.addons.geoentitylinker.GazetteerEntry;
 public class PointClustering {
 
   /**
-   * Clusters a set of points from the gazateers. The idea is that locations
+   * Clusters a set of points from the gazetteers. The idea is that locations
    * that matched a name that are closer to each other, the more likely the
    * toponym is to be accurate
    *
@@ -63,7 +63,7 @@ public class PointClustering {
     for (String key : clusters.keySet()) {
       int size = clusters.get(key).size();
       if (size > max) {
-        max = (double) size;
+        max = size;
       }
     }
     for (String key : clusters.keySet()) {

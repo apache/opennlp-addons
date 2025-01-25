@@ -28,7 +28,7 @@ import opennlp.tools.util.featuregen.TokenFeatureGenerator;
 import opennlp.tools.util.featuregen.WindowFeatureGenerator;
 
 /**
- * If a token contains an auxiliary information, e.g. POS tag, in the training data,
+ * If a token contains auxiliary information, e.g. POS tag, in the training data,
  * you can use this class via -factory command line option.
  *
  * <strong>EXPERIMENTAL</strong>.

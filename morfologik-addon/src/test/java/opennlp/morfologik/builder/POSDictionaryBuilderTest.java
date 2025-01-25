@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class POSDictionayBuilderTest {
+public class POSDictionaryBuilderTest {
 
   @Test
   public void testBuildDictionary() throws Exception {
@@ -42,15 +42,15 @@ public class POSDictionayBuilderTest {
   
   public static Path createMorfologikDictionary() throws Exception {
     Path tabFilePath = File.createTempFile(
-        POSDictionayBuilderTest.class.getName(), ".txt").toPath();
+        POSDictionaryBuilderTest.class.getName(), ".txt").toPath();
     Path infoFilePath = DictionaryMetadata.getExpectedMetadataLocation(tabFilePath);
     
-    Files.copy(POSDictionayBuilderTest.class.getResourceAsStream(
+    Files.copy(POSDictionaryBuilderTest.class.getResourceAsStream(
         "/dictionaryWithLemma.txt"), tabFilePath, StandardCopyOption.REPLACE_EXISTING);
-    Files.copy(POSDictionayBuilderTest.class.getResourceAsStream(
+    Files.copy(POSDictionaryBuilderTest.class.getResourceAsStream(
         "/dictionaryWithLemma.info"), infoFilePath, StandardCopyOption.REPLACE_EXISTING);
     
-    MorfologikDictionayBuilder builder = new MorfologikDictionayBuilder();
+    MorfologikDictionaryBuilder builder = new MorfologikDictionaryBuilder();
     
     return builder.build(tabFilePath);
   }

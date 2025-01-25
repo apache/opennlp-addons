@@ -19,7 +19,7 @@ package opennlp.morfologik.lemmatizer;
 
 import java.nio.file.Path;
 
-import opennlp.morfologik.builder.POSDictionayBuilderTest;
+import opennlp.morfologik.builder.POSDictionaryBuilderTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +38,7 @@ public class MorfologikLemmatizerTest {
   }
 
   private MorfologikLemmatizer createDictionary(boolean caseSensitive) throws Exception {
-    Path output = POSDictionayBuilderTest.createMorfologikDictionary();
+    Path output = POSDictionaryBuilderTest.createMorfologikDictionary();
     return new MorfologikLemmatizer(output);
   }
 

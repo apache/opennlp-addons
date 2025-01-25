@@ -32,8 +32,8 @@ import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
  */
 public class TokenPatternFeatureGenerator implements AdaptiveFeatureGenerator {
 
-  private Pattern noLetters = Pattern.compile("[^a-zA-Z]");
-  private Tokenizer tokenizer;
+  private final Pattern noLetters = Pattern.compile("[^a-zA-Z]");
+  private final Tokenizer tokenizer;
 
   /**
    * Initializes a new instance.

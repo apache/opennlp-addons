@@ -34,7 +34,7 @@ import opennlp.tools.lemmatizer.Lemmatizer;
 
 public class MorfologikLemmatizer implements Lemmatizer {
 
-  private IStemmer dictLookup;
+  private final IStemmer dictLookup;
   public final Set<String> constantTags = new HashSet<>(Arrays.asList("NNP", "NP00000"));
 
   public MorfologikLemmatizer(Path dictionaryPath) throws IllegalArgumentException, IOException {

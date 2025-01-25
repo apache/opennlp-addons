@@ -31,7 +31,7 @@ public class TokenClassFeatureGenerator implements AdaptiveFeatureGenerator {
   private static final String TOKEN_CLASS_PREFIX = "wc";
   private static final String TOKEN_AND_CLASS_PREFIX = "w&c";
 
-  private boolean generateWordAndClassFeature;
+  private final boolean generateWordAndClassFeature;
 
   public TokenClassFeatureGenerator() {
     this(false);

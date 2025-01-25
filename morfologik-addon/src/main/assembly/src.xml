@@ -27,7 +27,7 @@
   <fileSets>
     <fileSet>
       <directory>../</directory>
-      <outputDirectory></outputDirectory>
+      <outputDirectory/>
       <excludes>
         <exclude>**/target/**</exclude>
         <exclude>**/.*/**</exclude>

@@ -204,7 +204,7 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
       for (Integer i : distanceMap.get(key)) {
         Double norm = normalize(i, min, max);
         //reverse the normed distance so low numbers (closer) are better
-        //this could be improved with a "decaying " function using an imcreaseing negative exponent
+        //this could be improved with a "decaying " function using an increasing negative exponent
         Double reverse = Math.abs(norm - 1);
         normalizedDistances.add(reverse);
       }

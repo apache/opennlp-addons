@@ -127,7 +127,7 @@ public class GeonamesProcessor {
         }
         String[] values = line.split(TAB);
 
-        String ccode = values[0].toLowerCase();//this is the 2 digit ISO code
+        String ccode = values[0].toLowerCase(); //this is the 2-digit ISO code
         String cname = values[4].toLowerCase();
         if (!ccode.isEmpty()) {
           ccs.put(ccode, cname);
@@ -245,8 +245,6 @@ public class GeonamesProcessor {
         doc.add(new TextField("hierarchy", concatIndexEntry, Field.Store.YES));
         doc.add(new TextField("placename", placeName, Field.Store.YES));
         // doc.add(new TextField("countryname", countryname, Field.Store.YES));
-        //System.out.println(placeName);
-
         doc.add(new TextField("latitude", lat, Field.Store.YES));
         doc.add(new TextField("longitude", lon, Field.Store.YES));
         doc.add(new StringField("loctype", dsg, Field.Store.YES));

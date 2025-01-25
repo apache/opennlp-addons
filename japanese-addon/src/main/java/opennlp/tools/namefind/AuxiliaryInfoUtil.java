@@ -18,7 +18,7 @@
 package opennlp.tools.namefind;
 
 /**
- * If a token contains an auxiliary information, e.g. POS tag, this class can be used
+ * If a token contains auxiliary information, e.g. POS tag, this class can be used
  * to extract word part or auxiliary information part.<br>
  *
  * ex) token := word '/' POStag

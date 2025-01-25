@@ -28,7 +28,7 @@ import java.util.zip.ZipFile;
 public class GeonamesFileDownloader {
 
   final static int size = 1024;
-  private static final String ALL_COUNTRIES = "http://download.geonames.org/export/dump/ZM.zip";
+  private static final String ALL_COUNTRIES = "https://download.geonames.org/export/dump/ZM.zip";
   private static final String COUNTRY_INFO = "";
   private static final String ADM1_LOOKUP = "";
 
@@ -81,7 +81,7 @@ public class GeonamesFileDownloader {
         byteWritten += byteRead;
       }
       System.out.println("Downloaded Successfully.");
-      System.out.println("File name:\"" + localFileName + "\"\nNo ofbytes :" + byteWritten);
+      System.out.println("File name:\"" + localFileName + "\"\nNo of bytes :" + byteWritten);
     } catch (Exception e) {
       e.printStackTrace();
     }

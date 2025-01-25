@@ -55,7 +55,7 @@ public class MorfologikTagDictionary implements TagDictionary {
    * @param dict
    *          a Morfologik FSA dictionary
    * @param caseSensitive
-   *          if true it performs case sensitive lookup
+   *          if true it performs case-sensitive lookup
    * @throws IllegalArgumentException
    *           if FSA's root node cannot be acquired (dictionary is empty).
    * @throws IOException
@@ -73,12 +73,12 @@ public class MorfologikTagDictionary implements TagDictionary {
     }
 
     List<WordData> data = dictLookup.lookup(word);
-    if (data != null && data.size() > 0) {
+    if (data != null && !data.isEmpty()) {
       List<String> tags = new ArrayList<>(data.size());
       for (WordData datum : data) {
         tags.add(datum.getTag().toString());
       }
-      if (tags.size() > 0)
+      if (!tags.isEmpty())
         return tags.toArray(new String[0]);
       return null;
     }

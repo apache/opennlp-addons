@@ -24,7 +24,7 @@ import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
 import opennlp.tools.util.featuregen.FeatureGeneratorUtil;
 
 /**
- * If a token contains an auxiliary information, e.g. POS tag, this class can be used
+ * If a token contains auxiliary information, e.g. POS tag, this class can be used
  * to extract word part in {@link #getContext(int, String[], String[], Object[])} method.
  *
  * <strong>EXPERIMENTAL</strong>.
@@ -40,11 +40,11 @@ public class AuxiliaryInfoNameContextGenerator extends DefaultNameContextGenerat
    * Return the context for finding names at the specified index.
    * @param index The index of the token in the specified toks array for which the
    *              context should be constructed.
-   * @param tokens The tokens of the sentence.  The <code>toString</code> methods
+   * @param tokens The tokens of the sentence. The <code>toString</code> methods
    *               of these objects should return the token text.
    * @param preds The previous decisions made in the tagging of this sequence.
-   *              Only indices less than i will be examined.
-   * @param additionalContext Addition features which may be based on a context outside of the sentence.
+   *              Only indices less than {@code i} will be examined.
+   * @param additionalContext Addition features which may be based on a context outside the sentence.
    *
    * @return the context for finding names at the specified index.
    */

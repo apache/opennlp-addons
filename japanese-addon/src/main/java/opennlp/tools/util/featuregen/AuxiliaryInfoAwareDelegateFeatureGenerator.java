@@ -23,7 +23,7 @@ import java.util.List;
 import opennlp.tools.namefind.AuxiliaryInfoUtil;
 
 /**
- * If a token contains an auxiliary information, e.g. POS tag, in the training data,
+ * If a token contains auxiliary information, e.g. POS tag, in the training data,
  * you can use this feature generator in order to let the feature generator choose
  * word part or auxiliary information part.<br>
  *

@@ -43,8 +43,8 @@ public class GenericModelGenerator implements SemiSupervisedModelGenerator {
           ModelGenerationValidator validator, Modelable modelable, int iterations) {
     for (int iteration = 0; iteration < iterations; iteration++) {
       System.out.println("ITERATION: " + iteration);
-      System.out.println("\tPerfoming Known Entity Annotation");
-      System.out.println("\t\tknowns: " + knownEntityProvider.getKnownEntities().size());
+      System.out.println("\tPerforming Known Entity Annotation");
+      System.out.println("\t\tknown size: " + knownEntityProvider.getKnownEntities().size());
       System.out.println("\t\treading data....: ");
       for (String sentence : sentenceProvider.getSentences()) {
         for (String knownEntity : knownEntityProvider.getKnownEntities()) {
@@ -95,7 +95,7 @@ public class GenericModelGenerator implements SemiSupervisedModelGenerator {
         }
       }
       System.out.println("\t\tannotated sentences: " + modelable.getAnnotatedSentences().size());
-      System.out.println("\t\tknowns: " + knownEntityProvider.getKnownEntities().size());
+      System.out.println("\t\tknown size: " + knownEntityProvider.getKnownEntities().size());
     }
     modelable.writeAnnotatedSentences();
     modelable.buildModel(knownEntityProvider.getKnownEntitiesType());

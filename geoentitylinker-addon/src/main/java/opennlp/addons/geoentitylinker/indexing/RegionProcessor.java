@@ -55,14 +55,14 @@ public class RegionProcessor {
     }
   }
 
-  public static void readFile(File gazateerInputData, File outputCountryContextfile,
-                              IndexWriter w) throws IOException {
+  public static void readFile(File gazetteerInput, File outputCountryContextfile, IndexWriter w)
+          throws IOException {
     List<String> ccfileentries = new ArrayList<>();
     List<String> fields = new ArrayList<>();
     int counter = 0;
     System.out.println("reading gazetteer data from Regions file...........");
     String line;
-    try (BufferedReader reader = new BufferedReader(new FileReader(gazateerInputData))) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(gazetteerInput))) {
       while ((line = reader.readLine()) != null) {
         String[] values = line.split("\t");
         if (counter == 0) {

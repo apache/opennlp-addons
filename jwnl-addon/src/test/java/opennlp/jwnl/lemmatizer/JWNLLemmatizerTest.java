@@ -60,9 +60,8 @@ public class JWNLLemmatizerTest {
 
   @Test
   public void testLemmatizeList() {
-    assertThrows(UnsupportedOperationException.class, () -> {
-      lemmatizer.lemmatize(List.of("mouse"), List.of("NN"));
-    });
+    assertThrows(UnsupportedOperationException.class, () ->
+            lemmatizer.lemmatize(List.of("mouse"), List.of("NN")));
   }
 
   private static Stream<Arguments> provideData() {

@@ -32,7 +32,7 @@ public class TokenPatternFeatureGeneratorTest {
   private List<String> features;
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     features = new ArrayList<>();
   }
 

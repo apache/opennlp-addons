@@ -28,7 +28,7 @@ Supplies a list of known entities (a list of names or locations)
 public interface KnownEntityProvider extends ModelParameter<BaseModelBuilderParams> {
 
   /**
-   * returns a list of known non ambiguous entities.
+   * returns a list of known non-ambiguous entities.
    * @return a set of entities
    */
   Set<String> getKnownEntities();

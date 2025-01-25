@@ -28,7 +28,7 @@ import opennlp.tools.util.featuregen.BrownTokenClasses;
  */
 public class BrownTokenClassFeatureGenerator implements AdaptiveFeatureGenerator {
 
-  private BrownCluster brownLexicon;
+  private final BrownCluster brownLexicon;
 
   public BrownTokenClassFeatureGenerator(BrownCluster dict) {
     this.brownLexicon = dict;
