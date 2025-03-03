@@ -32,4 +32,4 @@ List of third-party dependencies grouped by their license type.
 
     MIT License
 
-        * SLF4J API Module (org.slf4j:slf4j-api:2.0.16 - http://www.slf4j.org)
+        * SLF4J API Module (org.slf4j:slf4j-api:2.0.17 - http://www.slf4j.org)
