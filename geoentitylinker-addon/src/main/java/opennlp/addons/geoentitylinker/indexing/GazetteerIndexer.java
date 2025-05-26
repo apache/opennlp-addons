@@ -21,21 +21,24 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 
+import opennlp.addons.geoentitylinker.GeoEntityLinker;
+
 /**
- * Creates two lucene indexes, geonames and usgs for use in GeoEntityLinker.
+ * Creates two lucene indexes, geonames and usgs for use in {@link GeoEntityLinker}.
+ *
+ * @see GeoEntityLinker
  */
 public class GazetteerIndexer {
 
@@ -143,16 +146,15 @@ public class GazetteerIndexer {
     String indexloc = outputIndexDir.getPath() + "/opennlp_geoentitylinker_gazetteer";
     Directory index = new MMapDirectory(Paths.get(indexloc));
     Analyzer a = new StandardAnalyzer(new CharArraySet(new ArrayList<>(), true));
-    Map<String, Analyzer> analyMap = new HashMap<>();
+    Map<String, Analyzer> analyMap = Map.of(
+            "countcode", new KeywordAnalyzer(),
+            "admincode", new KeywordAnalyzer(),
+            "loctype", new KeywordAnalyzer(),
+            "countycode", new KeywordAnalyzer(),
+            "gazsource", new KeywordAnalyzer());
 
-    analyMap.put("countrycode", new KeywordAnalyzer());
-    analyMap.put("admincode", new KeywordAnalyzer());
-    analyMap.put("loctype", new KeywordAnalyzer());
-    analyMap.put("countycode", new KeywordAnalyzer());
-    analyMap.put("gazsource", new KeywordAnalyzer());
-
-    PerFieldAnalyzerWrapper aWrapper = new PerFieldAnalyzerWrapper(a, analyMap);
-    IndexWriterConfig config = new IndexWriterConfig(aWrapper);
+    final PerFieldAnalyzerWrapper aWrapper = new PerFieldAnalyzerWrapper(a, analyMap);
+    final IndexWriterConfig config = new IndexWriterConfig(aWrapper);
     try (IndexWriter w = new IndexWriter(index, config)) {
       //write the column headers for the countryContextFile
       try (FileWriter writer = new FileWriter(outputCountryContextFile, false)) {
@@ -192,14 +194,8 @@ public class GazetteerIndexer {
 
     try {
       GazetteerIndexer i = new GazetteerIndexer();
-      i.index(geonamesData,
-              geoNamesCountryInfo,
-              geonamesAdmin1CodesASCII,
-              usgsDataFile,
-              usgsGovUnitsFile,
-              outputIndexDir,
-              outputCountryContextFile,
-              regionsFile);
+      i.index(geonamesData, geoNamesCountryInfo, geonamesAdmin1CodesASCII,
+              usgsDataFile, usgsGovUnitsFile, outputIndexDir, outputCountryContextFile, regionsFile);
     } catch (Exception ex) {
       ex.printStackTrace();
     }

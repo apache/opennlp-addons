@@ -33,6 +33,11 @@
     <packaging>jar</packaging>
     <name>Apache OpenNLP GeoentityLinker Addon</name>
 
+    <properties>
+        <lucene.version>7.7.3</lucene.version>
+        <spatial4j.version>0.5</spatial4j.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.opennlp</groupId>
@@ -42,35 +47,33 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>7.7.3</version>
+            <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>6.0.0</version>
+            <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>6.0.0</version>
+            <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>com.spatial4j</groupId>
             <artifactId>spatial4j</artifactId>
-            <version>0.5</version>
-            <type>jar</type>
+            <version>${spatial4j.version}</version>
         </dependency>
 
+        <!-- TEST scope -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
