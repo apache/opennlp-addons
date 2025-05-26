@@ -13,11 +13,11 @@ List of third-party dependencies grouped by their license type.
         * ConcurrentLinkedHashMap (com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:1.3.2 - http://code.google.com/p/concurrentlinkedhashmap)
         * HPPC Collections (com.carrotsearch:hppc:0.7.2 - http://labs.carrotsearch.com/hppc.html/hppc)
         * jcommander (com.beust:jcommander:1.78 - https://jcommander.org)
-        * Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:7.7.3 - http://lucene.apache.org/lucene-parent/lucene-analyzers-common)
-        * Lucene Core (org.apache.lucene:lucene-core:7.7.3 - http://lucene.apache.org/lucene-parent/lucene-core)
-        * Lucene Queries (org.apache.lucene:lucene-queries:7.7.3 - http://lucene.apache.org/lucene-parent/lucene-queries)
-        * Lucene QueryParsers (org.apache.lucene:lucene-queryparser:7.7.3 - http://lucene.apache.org/lucene-parent/lucene-queryparser)
-        * Lucene Sandbox (org.apache.lucene:lucene-sandbox:7.7.3 - http://lucene.apache.org/lucene-parent/lucene-sandbox)
+        * Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-analyzers-common)
+        * Lucene Core (org.apache.lucene:lucene-core:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-core)
+        * Lucene Queries (org.apache.lucene:lucene-queries:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-queries)
+        * Lucene QueryParsers (org.apache.lucene:lucene-queryparser:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-queryparser)
+        * Lucene Sandbox (org.apache.lucene:lucene-sandbox:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-sandbox)
         * Spatial4J (com.spatial4j:spatial4j:0.5 - http://nexus.sonatype.org/oss-repository-hosting.html/spatial4j)
 
     BSD License
