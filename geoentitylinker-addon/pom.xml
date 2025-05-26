@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>6.0.0</version>
+            <version>7.7.3</version>
         </dependency>
         <dependency>
             <groupId>com.spatial4j</groupId>
