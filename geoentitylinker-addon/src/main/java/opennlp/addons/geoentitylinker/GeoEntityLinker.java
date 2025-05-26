@@ -30,10 +30,10 @@ import opennlp.addons.geoentitylinker.scoring.ModelBasedScorer;
 import opennlp.addons.geoentitylinker.scoring.PlacetypeScorer;
 import opennlp.addons.geoentitylinker.scoring.ProvinceProximityScorer;
 import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.EntityLinker;
+import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
-import opennlp.tools.entitylinker.EntityLinkerProperties;
-import opennlp.tools.entitylinker.EntityLinker;
 
 /**
  * Links location entities to the USGS and GeoNames gazetteers, and uses several
@@ -113,7 +113,6 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan<BaseLink>> {
 
     if (!scorers.isEmpty()) {
       for (LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext> scorer : scorers) {
-        @SuppressWarnings("rawtypes")
         LinkedEntityScorer<BaseLink, AdminBoundaryContext> s = (LinkedEntityScorer) scorer;
         s.score(spans, doctext, sentences, linkerProperties, context);
       }

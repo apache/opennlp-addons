@@ -34,7 +34,7 @@
     <name>Apache OpenNLP GeoentityLinker Addon</name>
 
     <properties>
-        <lucene.version>7.7.3</lucene.version>
+        <lucene.version>8.11.4</lucene.version>
         <spatial4j.version>0.5</spatial4j.version>
     </properties>
 
