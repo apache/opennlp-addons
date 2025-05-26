@@ -28,21 +28,20 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import opennlp.addons.modelbuilder.Modelable;
-import opennlp.tools.namefind.TokenNameFinderFactory;
-import opennlp.tools.util.MarkableFileInputStreamFactory;
 
+import opennlp.addons.modelbuilder.Modelable;
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.NameSample;
 import opennlp.tools.namefind.NameSampleDataStream;
+import opennlp.tools.namefind.TokenNameFinderFactory;
 import opennlp.tools.namefind.TokenNameFinderModel;
-
+import opennlp.tools.util.MarkableFileInputStreamFactory;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
 import opennlp.tools.util.TrainingParameters;
 
 /**
- * Creates annotations, writes annotations to file, and creates a model and writes to a file
+ * Creates annotations, writes annotations to file, and creates a model and writes to a file.
  */
 public class GenericModelableImpl implements Modelable {
 
@@ -95,7 +94,6 @@ public class GenericModelableImpl implements Modelable {
       TokenNameFinderModel model;
       model = NameFinderME.train("en", entityType, sampleStream,
                 TrainingParameters.defaultParams(), new TokenNameFinderFactory());
-      sampleStream.close();
       model.serialize(modelOut);
       System.out.println("\tmodel generated");
     } catch (Exception e) {

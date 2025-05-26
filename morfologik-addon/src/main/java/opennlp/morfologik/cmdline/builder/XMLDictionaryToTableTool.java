@@ -40,14 +40,17 @@ public class XMLDictionaryToTableTool extends BasicCmdLineTool {
 
   private String SEPARATOR;
 
+  @Override
   public String getShortDescription() {
     return "reads an OpenNLP XML tag dictionary and outputs it in a tab separated file";
   }
 
+  @Override
   public String getHelp() {
     return getBasicHelp(Params.class);
   }
 
+  @Override
   public void run(String[] args) {
     Params params = validateAndParseParams(args, Params.class);
 
@@ -80,7 +83,7 @@ public class XMLDictionaryToTableTool extends BasicCmdLineTool {
           }
         }
       }
-      writer.close();
+      writer.flush();
       System.out.println("Created dictionary: " + dictOutFile.toPath());
     } catch (IOException e) {
       throw new TerminateToolException(-1, "Error while writing output: "
@@ -106,21 +109,17 @@ public class XMLDictionaryToTableTool extends BasicCmdLineTool {
 
   private boolean valid(String word, String tag) {
     if(word.contains(SEPARATOR) || tag.contains(SEPARATOR)) {
-      System.out
-          .println("Warn: invalid entry because contains separator - word: "
+      System.out.println("Warn: invalid entry because contains separator - word: "
               + word + " tag: " + tag);
       return false;
     }
-    
     return true;
   }
 
   private String createEntry(String word, String tag) {
     
     String entry = SEPARATOR +// base
-        word + SEPARATOR +
-        tag;
-        
+        word + SEPARATOR + tag;
     return entry;
   }
 
