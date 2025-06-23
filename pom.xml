@@ -122,7 +122,7 @@
         <jacoco.maven.plugin>0.8.13</jacoco.maven.plugin>
         <maven.failsafe.plugin>3.5.3</maven.failsafe.plugin>
 
-        <license-maven-plugin.version>2.5.0</license-maven-plugin.version>
+        <license-maven-plugin.version>2.6.0</license-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
