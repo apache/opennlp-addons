@@ -30,7 +30,7 @@
 
     <groupId>org.apache.opennlp</groupId>
     <artifactId>opennlp-addons</artifactId>
-    <version>2.5.7-SNAPSHOT</version>
+    <version>2.5.8-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache OpenNLP Addons</name>
@@ -110,7 +110,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <opennlp.tools.version>2.5.6</opennlp.tools.version>
+        <opennlp.tools.version>2.5.7</opennlp.tools.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
         <slf4j.version>2.0.17</slf4j.version>
