@@ -116,7 +116,7 @@
         <slf4j.version>2.0.17</slf4j.version>
         <log4j2.version>2.25.3</log4j2.version>
 
-        <junit.version>6.0.1</junit.version>
+        <junit.version>6.0.2</junit.version>
 
         <coveralls.maven.plugin>4.3.0</coveralls.maven.plugin>
         <jacoco.maven.plugin>0.8.14</jacoco.maven.plugin>
