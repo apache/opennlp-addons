@@ -30,7 +30,7 @@
 
     <groupId>org.apache.opennlp</groupId>
     <artifactId>opennlp-addons</artifactId>
-    <version>2.5.8-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache OpenNLP Addons</name>
@@ -104,13 +104,13 @@
 
     <properties>
         <!-- Build Properties -->
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <maven.version>3.3.9</maven.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <opennlp.tools.version>2.5.7</opennlp.tools.version>
+        <opennlp.version>3.0.0-M1</opennlp.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
         <slf4j.version>2.0.17</slf4j.version>
@@ -128,17 +128,26 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <artifactId>opennlp-tools</artifactId>
+                <artifactId>opennlp-api</artifactId>
                 <groupId>${project.groupId}</groupId>
-                <version>${opennlp.tools.version}</version>
+                <version>${opennlp.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>opennlp-runtime</artifactId>
+                <groupId>${project.groupId}</groupId>
+                <version>${opennlp.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>opennlp-formats</artifactId>
+                <groupId>${project.groupId}</groupId>
+                <version>${opennlp.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>opennlp-cli</artifactId>
+                <groupId>${project.groupId}</groupId>
+                <version>${opennlp.version}</version>
             </dependency>
 
-            <dependency>
-                <artifactId>opennlp-tools</artifactId>
-                <groupId>${project.groupId}</groupId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-            </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
