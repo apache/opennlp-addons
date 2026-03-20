@@ -30,13 +30,14 @@ import de.bwaldvogel.liblinear.Model;
 import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
+import de.bwaldvogel.liblinear.Train;
 
 import opennlp.tools.ml.AbstractEventTrainer;
 import opennlp.tools.ml.model.DataIndexer;
 import opennlp.tools.ml.model.MaxentModel;
 import opennlp.tools.util.TrainingParameters;
 
-public class LiblinearTrainer extends AbstractEventTrainer {
+public class LiblinearTrainer extends AbstractEventTrainer<TrainingParameters> {
 
   private final SolverType solverType;
   private final double c;
@@ -97,7 +98,7 @@ public class LiblinearTrainer extends AbstractEventTrainer {
   }
 
   @Override
-  public MaxentModel doTrain(DataIndexer indexer) throws IOException {
+  public MaxentModel doTrain(DataIndexer<TrainingParameters> indexer) throws IOException {
 
     List<Double> vy = new ArrayList<>();
     List<Feature[]> vx = new ArrayList<>();
