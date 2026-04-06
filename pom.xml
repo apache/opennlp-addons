@@ -110,7 +110,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <opennlp.version>3.0.0-M1</opennlp.version>
+        <opennlp.version>3.0.0-M2</opennlp.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
         <slf4j.version>2.0.17</slf4j.version>
