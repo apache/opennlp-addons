@@ -19,8 +19,8 @@ List of third-party dependencies grouped by their license type.
         * Lucene QueryParsers (org.apache.lucene:lucene-queryparser:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-queryparser)
         * Lucene Sandbox (org.apache.lucene:lucene-sandbox:8.11.4 - https://lucene.apache.org/lucene-parent/lucene-sandbox)
         * Spatial4J (com.spatial4j:spatial4j:0.5 - http://nexus.sonatype.org/oss-repository-hosting.html/spatial4j)
-        * zlibsvm-api (de.hs-heilbronn.mi:zlibsvm-api:2.1.2 - https://github.com/rzo1/zlibsvm/zlibsvm-api)
-        * zlibsvm-core (de.hs-heilbronn.mi:zlibsvm-core:2.1.2 - https://github.com/rzo1/zlibsvm/zlibsvm-core)
+        * zlibsvm-api (de.hs-heilbronn.mi:zlibsvm-api:3.0.0 - https://github.com/rzo1/zlibsvm/zlibsvm-api)
+        * zlibsvm-core (de.hs-heilbronn.mi:zlibsvm-core:3.0.0 - https://github.com/rzo1/zlibsvm/zlibsvm-core)
 
     BSD 3-Clause License
 
