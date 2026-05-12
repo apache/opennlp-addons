@@ -148,7 +148,6 @@
                 <version>${opennlp.version}</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -448,7 +447,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <message>Java 17 or higher is required to compile this module</message>
+                                    <message>Java 21 or higher is required to compile this module</message>
                                     <version>[${java.version},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
