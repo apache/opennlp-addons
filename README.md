@@ -43,7 +43,7 @@ Depend on the module artifact, not the parent `opennlp-addons` POM:
 
 ```xml
 <dependency>
-  <groupId>org.apache.opennlp</groupId>
+  <groupId>org.apache.opennlp.addons</groupId>
   <artifactId>jwnl-addon</artifactId>
   <version>${opennlp-addons.version}</version>
 </dependency>

@@ -17,7 +17,7 @@ limitations under the License.
 
 # Module Catalog
 
-All modules use the Maven group `org.apache.opennlp`.
+All modules use the Maven group `org.apache.opennlp.addons`.
 
 | Artifact | Function | Review status |
 | --- | --- | --- |

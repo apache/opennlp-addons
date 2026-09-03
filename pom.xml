@@ -28,7 +28,7 @@
         <relativePath />
     </parent>
 
-    <groupId>org.apache.opennlp</groupId>
+    <groupId>org.apache.opennlp.addons</groupId>
     <artifactId>opennlp-addons</artifactId>
     <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -110,6 +110,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <opennlp.core.groupId>org.apache.opennlp</opennlp.core.groupId>
         <opennlp.version>3.0.0-M5</opennlp.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
@@ -130,22 +131,22 @@
         <dependencies>
             <dependency>
                 <artifactId>opennlp-api</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-runtime</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-formats</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-cli</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
 
