@@ -31,7 +31,7 @@ implemented by this add-on.
 
 ```xml
 <dependency>
-  <groupId>org.apache.opennlp</groupId>
+  <groupId>org.apache.opennlp.addons</groupId>
   <artifactId>subword-addon</artifactId>
   <version>${opennlp-addons.version}</version>
 </dependency>
