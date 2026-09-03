@@ -26,6 +26,7 @@ All modules use the Maven group `org.apache.opennlp.addons`.
 | `jwnl-addon` | Reads WordNet relational dictionaries through extJWNL | [Reconcile with OPENNLP-1880 and OPENNLP-1887](reconciliation.html#jwnl-addon) |
 | `liblinear-addon` | Supplies LIBLINEAR-backed model support | No matching modernization PR found |
 | `modelbuilder-addon` | Provides model-building utilities | No matching modernization PR found |
+| [`subword-addon`](subword.html) | Runs SentencePiece models with original-text offsets | [OPENNLP-1885 split is in progress](reconciliation.html#subword-addon) |
 
 Depend on the artifact for the selected module. The root `opennlp-addons` POM
 coordinates the reactor build and is not a combined add-ons JAR.

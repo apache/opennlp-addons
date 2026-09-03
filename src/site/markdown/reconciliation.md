@@ -78,6 +78,16 @@ used together, but they do not implement the same operation.
 Review the module description and examples after OPENNLP-1894 is resolved. No
 code consolidation is currently required.
 
+## subword-addon
+
+**Status: core and add-on split completed locally; core PR remains open.**
+
+[OPENNLP-1885, PR #1165](https://github.com/apache/opennlp/pull/1165) retains
+the `SubwordTokenizer` contract, offsets, and dependency-free WordPiece support
+in core. SentencePiece model loading and inference are in this add-on. Publish
+the add-on after the core contract is available from an Apache snapshot, then
+remove the module's temporary `opennlp.version` override.
+
 ## liblinear-addon and modelbuilder-addon
 
 **Status: no matching modernization pull request found.**

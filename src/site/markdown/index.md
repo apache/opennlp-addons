@@ -31,6 +31,8 @@ dependencies used by the other modules.
   core and active pull requests.
 - [Build from source](building.html) covers the repository build and this
   manual.
+- [SentencePiece subword add-on](subword.html) documents pure Java
+  SentencePiece inference.
 
 ## Relationship to OpenNLP core
 

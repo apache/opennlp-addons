@@ -99,6 +99,7 @@
         <module>jwnl-addon</module>
         <module>liblinear-addon</module>
         <module>modelbuilder-addon</module>
+        <module>subword-addon</module>
     </modules>
 
     <properties>
@@ -398,6 +399,9 @@
                                 <exclude>**/src/test/resources/**/*.cxt</exclude>
                                 <exclude>**/src/test/resources/**/*.xml</exclude>
                                 <exclude>**/src/test/resources/**/*.info</exclude>
+                                <!-- Project-generated subword test models and fixtures. -->
+                                <exclude>src/test/resources/opennlp/subword/sentencepiece/*.model</exclude>
+                                <exclude>src/test/resources/opennlp/subword/sentencepiece/*.fixtures.tsv</exclude>
                             </excludes>
                         </configuration>
                     </execution>

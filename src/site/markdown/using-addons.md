@@ -39,7 +39,8 @@ Use the same add-ons version for each add-on in one application.
 The repository version is `3.0.0-SNAPSHOT`. Most modules currently compile
 against OpenNLP `3.0.0-M5`, which is set by the root `opennlp.version`
 property. A module that requires an API still under review can override that
-property on its development branch.
+property on its development branch. The SentencePiece subword module currently
+uses `3.0.0-SNAPSHOT` for this reason.
 
 Before a 3.x release is available from Maven Central, install the selected
 add-on from a local checkout:

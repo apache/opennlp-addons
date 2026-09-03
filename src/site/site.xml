@@ -36,6 +36,7 @@
       <item name="Using Add-ons" href="using-addons.html" />
       <item name="Module Catalog" href="modules.html" />
       <item name="Feature Reconciliation" href="reconciliation.html" />
+      <item name="SentencePiece Subword" href="subword.html" />
     </menu>
     <menu name="Contributing">
       <item name="Build from Source" href="building.html" />

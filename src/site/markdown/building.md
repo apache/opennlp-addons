@@ -36,7 +36,7 @@ mvn verify
 Build one module and its reactor dependencies with `-pl` and `-am`:
 
 ```bash
-mvn -pl jwnl-addon -am verify
+mvn -pl subword-addon -am verify
 ```
 
 ## Generate the manual

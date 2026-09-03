@@ -35,6 +35,7 @@ only the integrations they use.
 | `jwnl-addon` | WordNet access through extJWNL |
 | `liblinear-addon` | LIBLINEAR integration |
 | `modelbuilder-addon` | Utilities for building OpenNLP models |
+| `subword-addon` | SentencePiece inference with original-text offsets |
 
 ## Using an add-on
 
