@@ -99,7 +99,6 @@
         <module>jwnl-addon</module>
         <module>liblinear-addon</module>
         <module>modelbuilder-addon</module>
-        <module>morfologik-addon</module>
     </modules>
 
     <properties>
@@ -121,6 +120,7 @@
         <coveralls.maven.plugin>4.3.0</coveralls.maven.plugin>
         <jacoco.maven.plugin>0.8.15</jacoco.maven.plugin>
         <maven.failsafe.plugin>3.5.6</maven.failsafe.plugin>
+        <maven.site.plugin>3.22.0</maven.site.plugin>
 
         <license-maven-plugin.version>2.7.1</license-maven-plugin.version>
     </properties>
@@ -205,6 +205,17 @@
                         <goals>deploy</goals>
                         <arguments>-Papache-release</arguments>
                         <mavenExecutorId>forked-path</mavenExecutorId>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven.site.plugin}</version>
+                    <configuration>
+                        <generateProjectInfo>false</generateProjectInfo>
+                        <generateReports>false</generateReports>
+                        <generateSitemap>true</generateSitemap>
                     </configuration>
                 </plugin>
 
@@ -351,6 +362,12 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <inherited>false</inherited>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>${java.version}</release>
@@ -380,8 +397,6 @@
                                 <exclude>**/src/test/resources/**/*.cxt</exclude>
                                 <exclude>**/src/test/resources/**/*.xml</exclude>
                                 <exclude>**/src/test/resources/**/*.info</exclude>
-                                <!-- These files do not allow a license header -->
-                                <exclude>**/src/main/readme/MORFOLOGIK-LICENSE</exclude>
                             </excludes>
                         </configuration>
                     </execution>
