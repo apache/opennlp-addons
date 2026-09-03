@@ -20,9 +20,7 @@ limitations under the License.
 **Status: Proposed for consensus on dev@opennlp.apache.org.**
 
 This proposal defines how the existing Apache OpenNLP project will develop,
-review, publish, and maintain `apache/opennlp-addons`. It does not create a
-new ASF project or an incubation process. OpenNLP retains its current project
-governance and release votes.
+review, publish, and maintain `apache/opennlp-addons`. 
 
 The work is tracked by
 [OPENNLP-1924](https://issues.apache.org/jira/browse/OPENNLP-1924).
@@ -49,13 +47,16 @@ is not ready for an Apache release.
 If an add-on needs a missing reusable contract, the contract is proposed as a
 small core change. The implementation remains in add-ons. The
 `SubwordTokenizer` contract and its SentencePiece implementation follow this
-split.
+split and will be the first test of this boundary.
 
 ## Publication and compatibility
 
 Each module is published to Maven Central as
 `org.apache.opennlp.addons:<artifactId>`. OpenNLP core dependencies continue
 to use `org.apache.opennlp:<artifactId>`. Java package names do not change.
+
+**Open question:** does all code need "addons" in the package name?  It might 
+cause issues with protected scope boundaries.  But I think it's ok to do
 
 Add-ons release on their own cadence through the normal OpenNLP vote process.
 Each release documents the supported OpenNLP version and verifies every module
@@ -65,6 +66,10 @@ not replace that contract with a competing API.
 Dependencies and bundled resources must have ASF-compatible licenses and
 recorded provenance. Modules that download user-selected resources must
 document the source, license responsibility, and integrity checks.
+
+Dependencies should *always* be at a minimum, if at all.  Additional 
+dependencies in either core or addons would likely have far more scrutiny 
+from a committer than hand coding a solution.
 
 ## Contributions and review
 
