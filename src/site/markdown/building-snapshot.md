@@ -58,14 +58,15 @@ mvn -pl subword-addon -am verify \
 This procedure does not change artifacts in the default Maven cache. Remove
 the isolated directory when the local core build is no longer needed.
 
-## Return to the Apache snapshot
+## Use the published Apache snapshot
 
-After the core PR merges and its snapshot is published, remove the module's
-temporary `opennlp.version` override. Verify with a fresh dependency lookup:
+After the core PR merges and its snapshot is published, verify the module with
+a fresh dependency lookup:
 
 ```bash
 mvn -pl subword-addon -am verify -U
 ```
 
-The add-on PR should compile against the published Apache artifacts before it
-is merged.
+Keep the module's `opennlp.version` override while the add-ons root still
+selects `3.0.0-M5`. Remove the override after the root selects an OpenNLP
+version that contains the subword API.
