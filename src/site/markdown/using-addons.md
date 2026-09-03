@@ -20,13 +20,13 @@ limitations under the License.
 ## Select a module
 
 Each add-on is published as a separate artifact under the
-`org.apache.opennlp` group. Select the artifact from the
+`org.apache.opennlp.addons` group. Select the artifact from the
 [module catalog](modules.html). The parent `opennlp-addons` artifact is a build
 POM and is not an application dependency.
 
 ```xml
 <dependency>
-  <groupId>org.apache.opennlp</groupId>
+  <groupId>org.apache.opennlp.addons</groupId>
   <artifactId>jwnl-addon</artifactId>
   <version>${opennlp-addons.version}</version>
 </dependency>
