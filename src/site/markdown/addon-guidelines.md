@@ -260,7 +260,7 @@ marker:
 
 ## Working agreements (not policy, just how the revamp branch operates)
 
-These govern the `OPENNLP-1224-canary-addon` branch while the questions above
+These govern the `OPENNLP-1924-canary-addon` branch while the questions above
 are open:
 
 - Add-ons modules inherit the root `opennlp.version`, currently `3.0.0-M5`.
