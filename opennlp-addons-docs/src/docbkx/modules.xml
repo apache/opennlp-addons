@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="modules" xmlns="http://docbook.org/ns/docbook">
+  <title>Module Catalog</title>
+  <para>All modules use the Maven group <code>org.apache.opennlp.addons</code>.</para>
+  <table xml:id="modules.catalog">
+    <title>Add-ons modules</title>
+    <tgroup cols="2">
+      <thead><row><entry>Artifact</entry><entry>Function</entry></row></thead>
+      <tbody>
+        <row>
+          <entry><code>geoentitylinker</code></entry>
+          <entry>Detects and links geographic entities</entry>
+        </row>
+        <row>
+          <entry><code>japanese</code></entry>
+          <entry>Adds features for Japanese text processing</entry>
+        </row>
+        <row>
+          <entry><code>liblinear</code></entry>
+          <entry>Supplies LIBLINEAR-backed model support</entry>
+        </row>
+        <row>
+          <entry><code>modelbuilder</code></entry>
+          <entry>Provides model-building utilities</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </table>
+  <para>Depend on the artifact for the selected module. The root <code>opennlp-addons</code> POM coordinates the
+        reactor build and is not a combined add-ons JAR.</para>
+</chapter>

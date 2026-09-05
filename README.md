@@ -17,6 +17,8 @@ limitations under the License.
 
 # Apache OpenNLP Add-ons
 
+![Apache OpenNLP](opennlp-addons-docs/src/docbkx/images/opennlp-logo.png)
+
 [![Build Status](https://github.com/apache/opennlp-addons/workflows/Java%20CI/badge.svg)](https://github.com/apache/opennlp-addons/actions)
 [![Contributors](https://img.shields.io/github/contributors/apache/opennlp-addons)](https://github.com/apache/opennlp-addons/graphs/contributors)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/apache/opennlp-addons.svg)](https://github.com/apache/opennlp-addons/pulls)
@@ -30,11 +32,10 @@ only the integrations they use.
 
 | Artifact | Purpose |
 | --- | --- |
-| `geoentitylinker-addon` | Geographic entity detection and linking |
-| `japanese-addon` | Features for Japanese text processing |
-| `jwnl-addon` | WordNet access through extJWNL |
-| `liblinear-addon` | LIBLINEAR integration |
-| `modelbuilder-addon` | Utilities for building OpenNLP models |
+| `geoentitylinker` | Geographic entity detection and linking |
+| `japanese` | Features for Japanese text processing |
+| `liblinear` | LIBLINEAR integration |
+| `modelbuilder` | Utilities for building OpenNLP models |
 
 ## Using an add-on
 
@@ -43,7 +44,7 @@ Depend on the module artifact, not the parent `opennlp-addons` POM:
 ```xml
 <dependency>
   <groupId>org.apache.opennlp.addons</groupId>
-  <artifactId>jwnl-addon</artifactId>
+  <artifactId>japanese</artifactId>
   <version>${opennlp-addons.version}</version>
 </dependency>
 ```
@@ -54,20 +55,44 @@ artifacts.
 
 ## Building
 
-The build requires JDK 21 or newer and Maven 3.3.9 or newer:
+The build requires JDK 21 or newer and Maven 3.9.6 or newer:
 
 ```bash
-mvn verify
+mvn clean verify -Dopennlp.forkCount=1
 ```
 
-Generate the Markdown-based manual with Maven 3.6.3 or newer:
+Generate the DocBook manual:
 
 ```bash
-mvn -N site
+mvn -pl opennlp-addons-docs -am package -Dopennlp.forkCount=1
 ```
 
-The generated manual starts at `target/site/index.html`. Its Markdown sources
-are under [`src/site/markdown`](src/site/markdown/index.md).
+The generated HTML manual is
+`opennlp-addons-docs/target/docbkx/html/opennlp-addons.html` and the PDF is
+`opennlp-addons-docs/target/docbkx/pdf/opennlp-addons.pdf`. Its sources are
+under [`opennlp-addons-docs/src/docbkx`](opennlp-addons-docs/src/docbkx).
+
+Verification runs OpenNLP's Checkstyle rules, forbidden API checks, tests,
+RAT license-header checks, and a dependency-license report. Use `-Pjacoco`
+to generate coverage reports.
+
+## Maven publication
+
+Artifacts use the `org.apache.opennlp.addons` group. The ASF parent POM
+provides Apache staging and snapshot repository settings and the
+`apache-release` profile for source archives, SHA-512 checksums, and signatures.
+Deployment is disabled in this branch's POM. CI only builds and checks files.
+
+Inspect release packaging locally without signing or uploading:
+
+```bash
+mvn clean verify -Papache-release -Dgpg.skip=true -Dopennlp.forkCount=1
+```
+
+This produces unsigned test artifacts, not an Apache release. Enabling
+publication requires a reviewed build change and the Apache release process.
+See the manual's
+[`Maven publication` section](opennlp-addons-docs/src/docbkx/building.xml).
 
 ## Project links
 

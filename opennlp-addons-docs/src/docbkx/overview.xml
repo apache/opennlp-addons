@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at http://www.apache.org/licenses/LICENSE-2.0.
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="overview" xmlns="http://docbook.org/ns/docbook">
+  <title>Apache OpenNLP Add-ons</title>
+  <para>OpenNLP Add-ons provides optional components that use the public OpenNLP API for integrations and
+        specialized NLP tasks. Each module is packaged as its own Maven artifact. Applications can add one
+        integration without adding the dependencies used by the other modules.</para>
+  <section xml:id="overview.start">
+    <title>Start here</title>
+    <itemizedlist>
+      <listitem>
+        <para><link linkend="using-addons">Using add-ons</link> explains module dependencies and version selection.</para>
+      </listitem>
+      <listitem><para><link linkend="modules">Module catalog</link> lists the available artifacts.</para></listitem>
+      <listitem>
+        <para><link linkend="building">Build from source</link> covers the repository build and this manual.</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+  <section xml:id="overview.core">
+    <title>Relationship to OpenNLP core</title>
+    <para>Add-ons use contracts from <code>opennlp-api</code> and may use other published OpenNLP artifacts. An
+          add-on can provide a model-format reader, an optional third-party integration, or a specialized component
+          without expanding the core runtime.</para>
+    <para>Shared contracts remain in OpenNLP core. Their implementations can live here when they use a distinct
+          model format, external data, or optional libraries. This keeps applications in control of their dependency
+          set while giving each integration an Apache release path.</para>
+  </section>
+  <section xml:id="overview.documentation">
+    <title>Documentation</title>
+    <para>The manual is written in DocBook XML under <code>opennlp-addons-docs/src/docbkx</code> and rendered by the
+          DocBook Maven Plugin.</para>
+  </section>
+</chapter>

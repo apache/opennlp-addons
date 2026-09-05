@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="addon-guidelines" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>OpenNLP Add-ons Proposal</title>
+  <para><emphasis role="bold">Status: Proposed for consensus on dev@opennlp.apache.org.</emphasis></para>
+  <para>This proposal defines how the existing Apache OpenNLP project will develop, review, publish, and maintain
+        <code>apache/opennlp-addons</code>.</para>
+  <para>The work is tracked by <link
+        xlink:href="https://issues.apache.org/jira/browse/OPENNLP-1924">OPENNLP-1924</link>.</para>
+  <section xml:id="addon-guidelines.purpose">
+    <title>Purpose</title>
+    <para>OpenNLP add-ons should be visible, documented Maven artifacts with a regular release path. They provide a
+          supported home for useful components that should not enlarge the core API or dependency set.</para>
+  </section>
+  <section xml:id="addon-guidelines.boundary">
+    <title>Repository boundary</title>
+    <para>OpenNLP core contains shared contracts and implementations that fit its component model without new
+          runtime dependencies or bundled data.</para>
+    <para>An add-on implements a core contract or supplies an independent component when it needs additional
+          dependencies, models, dictionaries, datasets, or a separate release cycle. Add-ons use public OpenNLP APIs
+          and do not duplicate or bypass them.</para>
+    <para>The sandbox remains the place for proofs of concept, services, and work that is not ready for an Apache
+          release.</para>
+    <para>If an add-on needs a missing reusable contract, the contract is proposed as a small core change. The
+          implementation remains in add-ons. The <code>SubwordTokenizer</code> contract and its SentencePiece
+          implementation follow this split and will be the first test of this boundary.</para>
+  </section>
+  <section xml:id="addon-guidelines.compatibility">
+    <title>Publication and compatibility</title>
+    <para>Each module is published to Maven Central as
+          <code>org.apache.opennlp.addons:<replaceable>artifactId</replaceable></code>. OpenNLP core dependencies
+          continue to use <code>org.apache.opennlp:<replaceable>artifactId</replaceable></code>.</para>
+    <para>Module and artifact names describe the feature without an <code>-addon</code> suffix. Java packages
+          describe the feature, not its repository, and remain stable during graduation. Each implementation
+          package belongs to one module. Add-ons use public core APIs and do not copy core classes or depend on
+          package-private access.</para>
+    <para>Graduation moves the implementation without publishing a second copy of its classes. Keep artifact
+          coordinates stable where practical. If published coordinates change, provide a relocation POM for the
+          transition and verify dependency resolution. Older published JARs remain available; consumers must
+          exclude obsolete artifacts where necessary to avoid duplicate classes and split packages.</para>
+    <para>Add-ons release on their own cadence through the normal OpenNLP vote process. Each release documents the
+          supported OpenNLP version and verifies every module against that version. A module may extend a public
+          core contract, but it may not replace that contract with a competing API.</para>
+    <para>Dependencies and bundled resources must have ASF-compatible licenses and recorded provenance. Modules that
+          download user-selected resources must document the source, license responsibility, and integrity checks.</para>
+    <para>Dependencies should <emphasis>always</emphasis> be at a minimum, if at all. Additional dependencies in either core or add-ons
+          would likely have far more scrutiny from a committer than hand coding a solution.</para>
+  </section>
+  <section xml:id="addon-guidelines.review">
+    <title>Contributions and review</title>
+    <para>Each feature PR contains one module or one focused change. It includes:</para>
+    <itemizedlist>
+      <listitem><para>tests for normal and invalid input;</para></listitem>
+      <listitem><para>a short manual page with dependency and usage examples;</para></listitem>
+      <listitem><para>required LICENSE and NOTICE changes; and</para></listitem>
+      <listitem><para>the OpenNLP versions used for verification.</para></listitem>
+    </itemizedlist>
+    <para>A feature that depends on an unmerged core API stays draft and documents its local build procedure. It
+          becomes ready after it builds against an Apache artifact containing that API.</para>
+    <para>The proposed merge threshold is green CI and one committer approval. A reviewer may request another review
+          for public API, licensing, security, or release risk.</para>
+  </section>
+  <section xml:id="addon-guidelines.adoption">
+    <title>Releases and adoption</title>
+    <para>An add-ons release needs a volunteer release manager and the normal project vote. Released modules should
+          be listed in the OpenNLP website and add-ons manual so users can find them.</para>
+    <para>Downloads, user reports, and downstream use can support a later proposal to move an add-on into core.
+          Promotion is a separate consensus decision, not an automatic result of usage.</para>
+  </section>
+  <section xml:id="addon-guidelines.consensus">
+    <title>Consensus requested</title>
+    <para>Project consensus covers:</para>
+    <itemizedlist>
+      <listitem><para>the core, add-ons, and sandbox boundary above;</para></listitem>
+      <listitem><para><code>org.apache.opennlp.addons</code> as the Maven group;</para></listitem>
+      <listitem><para>independent add-ons releases using the normal project vote;</para></listitem>
+      <listitem><para>the compatibility and documentation requirements above; and</para></listitem>
+      <listitem><para>one committer approval as the default add-ons review threshold.</para></listitem>
+    </itemizedlist>
+    <para>Future changes to this agreement are discussed on the DEV list.</para>
+  </section>
+  <section xml:id="addon-guidelines.dev">
+    <title>DEV discussion</title>
+    <itemizedlist>
+      <listitem>
+        <para><link xlink:href="https://lists.apache.org/thread/vc8mnvfp6rmr5qb2s9y6hw0zpcxm6t68">Core and
+          add-ons scope discussion</link></para>
+      </listitem>
+      <listitem>
+        <para><link xlink:href="https://www.mail-archive.com/dev%40opennlp.apache.org/msg09074.html">OpenNLP
+          3.0.0-M6 release discussion</link></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+</chapter>
