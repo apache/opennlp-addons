@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<book version="5.0" xml:lang="en"
+      xmlns="http://docbook.org/ns/docbook"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:xlink="http://www.w3.org/1999/xlink">
+  <info>
+    <releaseinfo>Version <?eval ${project.version}?></releaseinfo>
+    <productname>OpenNLP Add-ons</productname>
+    <subtitle>
+      <inlinemediaobject>
+        <imageobject>
+          <imagedata fileref="images/opennlp-logo.png" contentwidth="240px"/>
+        </imageobject>
+        <textobject><phrase>Apache OpenNLP</phrase></textobject>
+      </inlinemediaobject>
+    </subtitle>
+    <authorgroup>
+      <corpauthor>Written and maintained by the Apache OpenNLP Development Community</corpauthor>
+    </authorgroup>
+    <copyright>
+      <year>2026</year>
+      <holder>The Apache Software Foundation</holder>
+    </copyright>
+    <legalnotice>
+      <para>This manual is licensed under the
+        <link xlink:href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</link>
+        and is provided without warranties or conditions of any kind.
+        Apache OpenNLP and its logo are trademarks of The Apache Software Foundation.</para>
+    </legalnotice>
+  </info>
+
+  <title>Apache OpenNLP Add-ons Manual</title>
+  <toc/>
+  <xi:include href="overview.xml" />
+  <xi:include href="using-addons.xml" />
+  <xi:include href="modules.xml" />
+  <xi:include href="building.xml" />
+  <xi:include href="addon-guidelines.xml" />
+</book>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="using-addons" xmlns="http://docbook.org/ns/docbook">
+  <title>Using OpenNLP Add-ons</title>
+  <section xml:id="using-addons.select">
+    <title>Select a module</title>
+    <para>Each add-on is published as a separate artifact under the <code>org.apache.opennlp.addons</code> group.
+          Select the artifact from the <link linkend="modules">module catalog</link>. The parent
+          <code>opennlp-addons</code> artifact is a build POM and is not an application dependency.</para>
+    <programlisting language="xml"><![CDATA[<dependency>
+  <groupId>org.apache.opennlp.addons</groupId>
+  <artifactId>japanese</artifactId>
+  <version>${opennlp-addons.version}</version>
+</dependency>]]></programlisting>
+    <para>Use the same add-ons version for each add-on in one application.</para>
+  </section>
+  <section xml:id="using-addons.development">
+    <title>Current development versions</title>
+    <para>The repository version is <code>3.0.0-SNAPSHOT</code>. Most modules currently compile against OpenNLP
+          <code>3.0.0-M5</code>, which is set by the root <code>opennlp.version</code> property. A module that
+          requires an API still under review can override that property on its development branch.</para>
+    <para>Before a 3.x release is available from Maven Central, install the selected add-on from a local checkout:</para>
+    <screen><![CDATA[mvn -pl japanese -am install]]></screen>
+    <para>Then use <code>3.0.0-SNAPSHOT</code> as <code>opennlp-addons.version</code> in the consuming build.</para>
+  </section>
+  <section xml:id="using-addons.resources">
+    <title>Models and data</title>
+    <para>An add-on may require a model, dictionary, or dataset that is not included in its JAR. Check the module
+          documentation for required resources and their licenses. The presence of an Apache-licensed add-on does
+          not change the license of a separately supplied resource.</para>
+  </section>
+</chapter>

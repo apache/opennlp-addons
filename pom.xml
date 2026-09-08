@@ -19,7 +19,7 @@
    under the License.
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" child.project.url.inherit.append.path="false" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache</groupId>
@@ -28,14 +28,27 @@
         <relativePath />
     </parent>
 
-    <groupId>org.apache.opennlp</groupId>
+    <groupId>org.apache.opennlp.addons</groupId>
     <artifactId>opennlp-addons</artifactId>
     <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Apache OpenNLP Addons</name>
+    <description>Optional natural language processing components for Apache OpenNLP.</description>
+    <url>https://opennlp.apache.org/</url>
 
-    <scm>
+    <developers>
+        <developer>
+            <name>Apache OpenNLP Development Community</name>
+            <email>dev@opennlp.apache.org</email>
+            <organization>The Apache Software Foundation</organization>
+            <organizationUrl>https://www.apache.org/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm child.scm.connection.inherit.append.path="false"
+         child.scm.developerConnection.inherit.append.path="false"
+         child.scm.url.inherit.append.path="false">
         <connection>scm:git:https://github.com/apache/opennlp-addons.git</connection>
         <developerConnection>scm:git:git@github.com:apache/opennlp-addons.git</developerConnection>
         <url>https://github.com/apache/opennlp-addons.git</url>
@@ -94,22 +107,23 @@
     </issueManagement>
 
     <modules>
-        <module>geoentitylinker-addon</module>
-        <module>japanese-addon</module>
-        <module>jwnl-addon</module>
-        <module>liblinear-addon</module>
-        <module>modelbuilder-addon</module>
-        <module>morfologik-addon</module>
+        <module>opennlp-addons-docs</module>
+        <module>geoentitylinker</module>
+        <module>japanese</module>
+        <module>liblinear</module>
+        <module>modelbuilder</module>
     </modules>
 
     <properties>
         <!-- Build Properties -->
         <java.version>21</java.version>
-        <maven.version>3.3.9</maven.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <javaVersion>${java.version}</javaVersion>
+        <maven.version>3.9.6</maven.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.outputTimestamp>2026-09-05T00:00:00Z</project.build.outputTimestamp>
+        <argLine />
 
+        <opennlp.core.groupId>org.apache.opennlp</opennlp.core.groupId>
         <opennlp.version>3.0.0-M5</opennlp.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
@@ -118,10 +132,8 @@
 
         <junit.version>6.1.3</junit.version>
 
-        <coveralls.maven.plugin>4.3.0</coveralls.maven.plugin>
         <jacoco.maven.plugin>0.8.15</jacoco.maven.plugin>
         <maven.failsafe.plugin>3.6.0</maven.failsafe.plugin>
-
         <license-maven-plugin.version>2.7.1</license-maven-plugin.version>
     </properties>
 
@@ -129,22 +141,22 @@
         <dependencies>
             <dependency>
                 <artifactId>opennlp-api</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-runtime</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-formats</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
             <dependency>
                 <artifactId>opennlp-cli</artifactId>
-                <groupId>${project.groupId}</groupId>
+                <groupId>${opennlp.core.groupId}</groupId>
                 <version>${opennlp.version}</version>
             </dependency>
 
@@ -202,8 +214,9 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <configuration>
                         <useReleaseProfile>false</useReleaseProfile>
-                        <goals>deploy</goals>
+                        <goals>verify</goals>
                         <arguments>-Papache-release</arguments>
+                        <pushChanges>false</pushChanges>
                         <mavenExecutorId>forked-path</mavenExecutorId>
                     </configuration>
                 </plugin>
@@ -219,16 +232,14 @@
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>6.1.2</version>
                 </plugin>
-                <!--
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>${checkstyle.plugin.version}</version>
                     <dependencies>
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.20.0</version>
+                            <version>13.3.0</version>
                         </dependency>
                     </dependencies>
                     <executions>
@@ -236,7 +247,7 @@
                             <id>validate</id>
                             <phase>validate</phase>
                             <configuration>
-                                <configLocation>checkstyle.xml</configLocation>
+                                <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
                                 <consoleOutput>true</consoleOutput>
                                 <includeTestSourceDirectory>true</includeTestSourceDirectory>
                                 <testSourceDirectories>${project.basedir}/src/test/java</testSourceDirectories>
@@ -249,19 +260,12 @@
                         </execution>
                     </executions>
                 </plugin>
-                -->
                 
                 <!-- Coverage analysis for tests -->
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco.maven.plugin}</version>
-                    <configuration>
-                        <excludes>
-                            <exclude>**/stemmer/*</exclude>
-                            <exclude>**/stemmer/snowball/*</exclude>
-                        </excludes>
-                    </configuration>
                     <executions>
                         <execution>
                             <id>jacoco-prepare-agent</id>
@@ -289,7 +293,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <argLine>-Xmx2048m -Dfile.encoding=UTF-8</argLine>
+                        <argLine>@{argLine} -Xmx2048m -Dfile.encoding=UTF-8</argLine>
                         <forkCount>${opennlp.forkCount}</forkCount>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                         <excludes>
@@ -328,16 +332,16 @@
                     <configuration>
                         <failOnUnsupportedJava>false</failOnUnsupportedJava>
                         <bundledSignatures>
-                            <bundledSignature>jdk-deprecated</bundledSignature>
+                            <bundledSignature>jdk-deprecated-${java.version}</bundledSignature>
                             <bundledSignature>jdk-non-portable</bundledSignature>
-                            <bundledSignature>jdk-internal</bundledSignature>
+                            <bundledSignature>jdk-internal-${java.version}</bundledSignature>
                             <!-- don't allow unsafe reflective access: -->
                             <bundledSignature>jdk-reflection</bundledSignature>
                         </bundledSignatures>
                     </configuration>
                     <executions>
                         <execution>
-                            <phase>validate</phase>
+                            <phase>verify</phase>
                             <goals>
                                 <goal>check</goal>
                                 <goal>testCheck</goal>
@@ -349,6 +353,14 @@
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <!-- Publication requires a separate reviewed change to this configuration. -->
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -371,17 +383,6 @@
                             <excludes>
                                 <exclude>release.properties</exclude>
                                 <exclude>.gitattributes</exclude>
-                                <exclude>.github/*</exclude>
-                                <exclude>**/*.md</exclude>
-                                <exclude>**/NOTICE.template</exclude>
-                                <!-- We do not ship files from test/resources, so ok to exclude -->
-                                <exclude>**/src/test/resources/**/*.txt</exclude>
-                                <exclude>**/src/test/resources/**/*.csv</exclude>
-                                <exclude>**/src/test/resources/**/*.cxt</exclude>
-                                <exclude>**/src/test/resources/**/*.xml</exclude>
-                                <exclude>**/src/test/resources/**/*.info</exclude>
-                                <!-- These files do not allow a license header -->
-                                <exclude>**/src/main/readme/MORFOLOGIK-LICENSE</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -397,7 +398,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>create-javadoc-jar</id>
+                        <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -415,9 +416,9 @@
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>create-source-jar</id>
+                        <id>attach-sources</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
                         </goals>
                         <phase>package</phase>
                     </execution>
@@ -451,7 +452,7 @@
                                     <version>[${java.version},)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <message>Maven 3.3.9 or higher is required to compile this module</message>
+                                    <message>Maven 3.9.6 or higher is required to compile this module</message>
                                     <version>[${maven.version},)</version>
                                 </requireMavenVersion>
                             </rules>
@@ -463,6 +464,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} -Xmx2048m -Dfile.encoding=UTF-8</argLine>
+                    <forkCount>${opennlp.forkCount}</forkCount>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -478,6 +487,20 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <version>${license-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-and-check-licenses</id>
+                        <inherited>false</inherited>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>aggregate-add-third-party</goal>
+                        </goals>
+                        <configuration>
+                            <thirdPartyFilename>DEPENDENCY-LICENSES</thirdPartyFilename>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <useMissingFile>true</useMissingFile>
                     <failOnMissing>true</failOnMissing>

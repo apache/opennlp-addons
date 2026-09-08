@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: CI Master - Regenerate NOTICE
+name: Dependency licenses
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -27,16 +28,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Maven packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ~/.m2
+          path: ~/.m2/repository
           key: ${{ runner.os }}-master-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-master-m2
 
@@ -48,23 +49,5 @@ jobs:
           -Dlicense.thirdPartyFilename=DEPENDENCY-LICENSES \
           -Dlicense.outputDirectory=target
 
-      - name: Create NOTICE File
-        run: |
-          cat src/license/NOTICE.template target/DEPENDENCY-LICENSES > NOTICE
-
-      - name: Create Pull Request after License Regeneration
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          base: main
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Minor: Regenerated NOTICE File for ${{ github.sha }}"
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          signoff: true
-          branch: regenerate_license_file_after_dep_upgrade
-          delete-branch: true
-          title: "Regenerated NOTICE file after dependency changes"
-          body: |
-            Found some uncommited changes (from NOTICE regeneration) after running build on OpenNLP addons
-          labels: |
-            dependency
+      - name: Show dependency licenses
+        run: cat target/DEPENDENCY-LICENSES
