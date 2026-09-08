@@ -53,7 +53,7 @@
   <section xml:id="building.publication">
     <title>Maven publication</title>
     <para>Each module uses the <code>org.apache.opennlp.addons</code> Maven group. The ASF parent POM supplies
-          the Apache staging repository (<code>apache.releases.https</code>) and snapshot repository
+          the ASF staging repository (<code>apache.releases.https</code>) and snapshot repository
           (<code>apache.snapshots.https</code>). Credentials belong in the release manager's Maven settings,
           never in the repository.</para>
     <para>The <code>apache-release</code> profile creates a buildable source archive and its SHA-512 checksum,
@@ -61,18 +61,17 @@
           <code>META-INF/LICENSE</code> and <code>META-INF/NOTICE</code> in jars through the ASF resource bundle.
           The dependency-license report is written to <code>target/DEPENDENCY-LICENSES</code>; it is not a
           substitute for checking the contents of each distributed artifact.</para>
-    <para>Deployment is disabled in this branch's POM, including when <code>apache-release</code> is active.
-          The release plugin runs <code>verify</code> and does not push SCM changes. CI has read-only repository
-          permissions and does not publish artifacts. Enabling publication requires a separate reviewed
-          build change.</para>
+    <para>The release plugin is configured in this branch to run <code>verify</code> and to leave SCM changes
+          unpushed. CI has read-only repository permissions and does not publish artifacts. Enabling publication
+          requires a separate reviewed build change.</para>
     <para>Check release packaging locally without signing or uploading:</para>
     <screen><![CDATA[mvn clean verify -Papache-release -Dgpg.skip=true \
   -Dopennlp.forkCount=1]]></screen>
     <para>The unsigned source archive and checksum are written under the root <code>target</code> directory.
-          These are test artifacts, not an Apache release. Before publication, a release manager must verify
+          These are test artifacts, not an ASF release. Before publication, a release manager must verify
           source completeness, dependency licenses, signatures, reproducibility, and compatibility with the
-          selected core release. Staging and publication require the
-          <link xlink:href="https://infra.apache.org/publishing-maven-artifacts.html">Apache Maven release procedure</link>
+          selected core release. Staging and publication follow the
+          <link xlink:href="https://opennlp.apache.org/release.html">OpenNLP release procedure</link>
           and an approved release vote under the
           <link xlink:href="https://www.apache.org/legal/release-policy.html">ASF release policy</link>.</para>
   </section>
@@ -88,8 +87,8 @@
     <title>Building against a local core snapshot</title>
     <para>An add-on normally uses the OpenNLP version selected by the root <code>opennlp.version</code> property. A
           feature branch may temporarily override that property when its required API is still under OpenNLP review.</para>
-    <para>Use a local core build only when the required API is absent from the current OpenNLP release and Apache
-          snapshot.</para>
+    <para>Use a local core build only when the required API is absent from the current OpenNLP release and the
+          ASF snapshot repository.</para>
     <section xml:id="building.snapshot.isolated-repository">
       <title>Use an isolated Maven repository</title>
       <para>An isolated local repository prevents an experimental core build from replacing the regular OpenNLP
@@ -112,11 +111,11 @@ mvn -pl "$OPENNLP_ADDON_MODULE" -am verify -Dopennlp.forkCount=1 \
             the local core build is no longer needed.</para>
     </section>
     <section xml:id="building.snapshot.return">
-      <title>Return to the Apache snapshot</title>
+      <title>Return to the ASF snapshot</title>
       <para>After the core PR merges and its snapshot is published, remove the module's temporary
             <code>opennlp.version</code> override. Verify with a fresh dependency lookup:</para>
       <screen><![CDATA[mvn -pl "$OPENNLP_ADDON_MODULE" -am verify -U -Dopennlp.forkCount=1]]></screen>
-      <para>The add-on PR should compile against the published Apache artifacts before it is opened for review.</para>
+      <para>The add-on PR should compile against the published OpenNLP artifacts before it is opened for review.</para>
     </section>
   </section>
 </chapter>

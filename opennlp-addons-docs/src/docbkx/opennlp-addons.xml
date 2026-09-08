@@ -25,7 +25,7 @@
       xmlns:xlink="http://www.w3.org/1999/xlink">
   <info>
     <releaseinfo>Version <?eval ${project.version}?></releaseinfo>
-    <productname>OpenNLP Add-ons</productname>
+    <productname>Apache OpenNLP Add-ons</productname>
     <subtitle>
       <inlinemediaobject>
         <imageobject>

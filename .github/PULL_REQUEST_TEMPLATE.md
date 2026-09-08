@@ -35,6 +35,7 @@ to ensure the following steps have been taken:
 
 - [ ] Does `mvn clean verify -Dopennlp.forkCount=1` pass at the repository root?
 - [ ] Have you written or updated unit tests to verify your changes?
+- [ ] Which OpenNLP version was this change verified against?
 - [ ] If adding new dependencies to the code, are these dependencies licensed in a way that is compatible for inclusion under [ASF 2.0](https://www.apache.org/legal/resolved.html#category-a)? 
 - [ ] If applicable, have you updated LICENSE for the files included in the source and binary artifacts?
 - [ ] If applicable, have you updated NOTICE for the files included in the source and binary artifacts?

@@ -36,12 +36,12 @@
   </section>
   <section xml:id="overview.core">
     <title>Relationship to OpenNLP core</title>
-    <para>Add-ons use contracts from <code>opennlp-api</code> and may use other published OpenNLP artifacts. An
+    <para>Add-ons use interfaces from <code>opennlp-api</code> and may use other published OpenNLP artifacts. An
           add-on can provide a model-format reader, an optional third-party integration, or a specialized component
           without expanding the core runtime.</para>
-    <para>Shared contracts remain in OpenNLP core. Their implementations can live here when they use a distinct
+    <para>Shared interfaces remain in OpenNLP core. Their implementations can live here when they use a distinct
           model format, external data, or optional libraries. This keeps applications in control of their dependency
-          set while giving each integration an Apache release path.</para>
+          set while giving each integration an ASF release path.</para>
   </section>
   <section xml:id="overview.documentation">
     <title>Documentation</title>

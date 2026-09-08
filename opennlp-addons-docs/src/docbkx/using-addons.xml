@@ -35,12 +35,13 @@
   </section>
   <section xml:id="using-addons.development">
     <title>Current development versions</title>
-    <para>The repository version is <code>3.0.0-SNAPSHOT</code>. Most modules currently compile against OpenNLP
-          <code>3.0.0-M5</code>, which is set by the root <code>opennlp.version</code> property. A module that
-          requires an API still under review can override that property on its development branch.</para>
+    <para>The repository version is <code><?eval ${project.version}?></code>. Most modules currently compile
+          against the OpenNLP 3.x release selected by the root <code>opennlp.version</code> property. A module
+          that requires an API still under review can override that property on its development branch.</para>
     <para>Before a 3.x release is available from Maven Central, install the selected add-on from a local checkout:</para>
     <screen><![CDATA[mvn -pl japanese -am install]]></screen>
-    <para>Then use <code>3.0.0-SNAPSHOT</code> as <code>opennlp-addons.version</code> in the consuming build.</para>
+    <para>Then use <code><?eval ${project.version}?></code> as <code>opennlp-addons.version</code> in the
+          consuming build.</para>
   </section>
   <section xml:id="using-addons.resources">
     <title>Models and data</title>
