@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="building" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Building from Source</title>
+  <section xml:id="building.requirements">
+    <title>Requirements</title>
+    <itemizedlist>
+      <listitem><para>JDK 21 or newer</para></listitem>
+      <listitem><para>Maven 3.9.6 or newer</para></listitem>
+    </itemizedlist>
+    <para>The repository does not include a Maven wrapper.</para>
+  </section>
+  <section xml:id="building.verify">
+    <title>Verify every module</title>
+    <para>Run from the repository root:</para>
+    <screen><![CDATA[mvn clean verify -Dopennlp.forkCount=1]]></screen>
+    <para>Verification runs OpenNLP's Checkstyle rules, forbidden API checks on compiled production and test
+          classes, unit and integration tests, RAT license-header checks, and dependency-license reporting.
+          Add <code>-Pjacoco</code> to generate coverage reports.</para>
+    <para>Build one module and its reactor dependencies with <code>-pl</code> and <code>-am</code>:</para>
+    <screen><![CDATA[mvn -pl japanese -am verify -Dopennlp.forkCount=1]]></screen>
+  </section>
+  <section xml:id="building.manual">
+    <title>Generate the manual</title>
+    <para>The manual uses the DocBook Maven Plugin, matching the established OpenNLP manual toolchain. These are
+          build plugins and do not become application dependencies.</para>
+    <para>Generate the HTML and PDF manual:</para>
+    <screen><![CDATA[mvn -pl opennlp-addons-docs -am package -Dopennlp.forkCount=1]]></screen>
+    <para>Open <code>opennlp-addons-docs/target/docbkx/html/opennlp-addons.html</code> in a browser. The PDF is
+          written to <code>opennlp-addons-docs/target/docbkx/pdf/opennlp-addons.pdf</code>. Use a clean build after
+          changing manual sources:</para>
+    <screen><![CDATA[mvn -pl opennlp-addons-docs -am clean package -Dopennlp.forkCount=1]]></screen>
+  </section>
+  <section xml:id="building.publication">
+    <title>Maven publication</title>
+    <para>Each module uses the <code>org.apache.opennlp.addons</code> Maven group. The ASF parent POM supplies
+          the Apache staging repository (<code>apache.releases.https</code>) and snapshot repository
+          (<code>apache.snapshots.https</code>). Credentials belong in the release manager's Maven settings,
+          never in the repository.</para>
+    <para>The <code>apache-release</code> profile creates a buildable source archive and its SHA-512 checksum,
+          attaches source and Javadoc jars, and signs artifacts with GPG. Normal builds include
+          <code>META-INF/LICENSE</code> and <code>META-INF/NOTICE</code> in jars through the ASF resource bundle.
+          The dependency-license report is written to <code>target/DEPENDENCY-LICENSES</code>; it is not a
+          substitute for checking the contents of each distributed artifact.</para>
+    <para>Deployment is disabled in this branch's POM, including when <code>apache-release</code> is active.
+          The release plugin runs <code>verify</code> and does not push SCM changes. CI has read-only repository
+          permissions and does not publish artifacts. Enabling publication requires a separate reviewed
+          build change.</para>
+    <para>Check release packaging locally without signing or uploading:</para>
+    <screen><![CDATA[mvn clean verify -Papache-release -Dgpg.skip=true \
+  -Dopennlp.forkCount=1]]></screen>
+    <para>The unsigned source archive and checksum are written under the root <code>target</code> directory.
+          These are test artifacts, not an Apache release. Before publication, a release manager must verify
+          source completeness, dependency licenses, signatures, reproducibility, and compatibility with the
+          selected core release. Staging and publication require the
+          <link xlink:href="https://infra.apache.org/publishing-maven-artifacts.html">Apache Maven release procedure</link>
+          and an approved release vote under the
+          <link xlink:href="https://www.apache.org/legal/release-policy.html">ASF release policy</link>.</para>
+  </section>
+  <section xml:id="building.contributing">
+    <title>Contributing</title>
+    <para>Use the <link xlink:href="https://github.com/apache/opennlp/blob/main/.github/CONTRIBUTING.md">OpenNLP
+          contribution guide</link> and discuss project-wide changes on the <link
+          xlink:href="https://opennlp.apache.org/mailing-lists.html">development mailing list</link>.</para>
+    <para>An add-on that requires an API from an unmerged OpenNLP branch also needs the <link
+          linkend="building.snapshot">local core snapshot procedure</link>.</para>
+  </section>
+  <section xml:id="building.snapshot">
+    <title>Building against a local core snapshot</title>
+    <para>An add-on normally uses the OpenNLP version selected by the root <code>opennlp.version</code> property. A
+          feature branch may temporarily override that property when its required API is still under OpenNLP review.</para>
+    <para>Use a local core build only when the required API is absent from the current OpenNLP release and Apache
+          snapshot.</para>
+    <section xml:id="building.snapshot.isolated-repository">
+      <title>Use an isolated Maven repository</title>
+      <para>An isolated local repository prevents an experimental core build from replacing the regular OpenNLP
+            snapshot in the default Maven cache. Set one absolute path and use it for both builds:</para>
+      <screen><![CDATA[export OPENNLP_FEATURE_M2=/absolute/path/to/opennlp-feature-m2
+export OPENNLP_CORE_REF=pull/NUMBER/head
+export OPENNLP_ADDON_MODULE=the-addon-module]]></screen>
+      <para>Build the exact OpenNLP feature branch:</para>
+      <screen><![CDATA[git clone https://github.com/apache/opennlp.git
+cd opennlp
+git fetch origin "$OPENNLP_CORE_REF"
+git switch --detach FETCH_HEAD
+./mvnw install -DskipTests -Drat.skip=true -Dopennlp.forkCount=1 \
+  -Dmaven.repo.local="$OPENNLP_FEATURE_M2"]]></screen>
+      <para>Use the same repository when verifying the add-on:</para>
+      <screen><![CDATA[cd ../opennlp-addons
+mvn -pl "$OPENNLP_ADDON_MODULE" -am verify -Dopennlp.forkCount=1 \
+  -Dmaven.repo.local="$OPENNLP_FEATURE_M2"]]></screen>
+      <para>This procedure does not change artifacts in the default Maven cache. Remove the isolated directory when
+            the local core build is no longer needed.</para>
+    </section>
+    <section xml:id="building.snapshot.return">
+      <title>Return to the Apache snapshot</title>
+      <para>After the core PR merges and its snapshot is published, remove the module's temporary
+            <code>opennlp.version</code> override. Verify with a fresh dependency lookup:</para>
+      <screen><![CDATA[mvn -pl "$OPENNLP_ADDON_MODULE" -am verify -U -Dopennlp.forkCount=1]]></screen>
+      <para>The add-on PR should compile against the published Apache artifacts before it is opened for review.</para>
+    </section>
+  </section>
+</chapter>

@@ -1,10 +1,10 @@
 <!--
 Licensed to the Apache Software Foundation (ASF) under one or more
-contributor license agreements.  See the NOTICE file distributed with
+contributor license agreements. See the NOTICE file distributed with
 this work for additional information regarding copyright ownership.
 The ASF licenses this file to You under the Apache License, Version 2.0
 (the "License"); you may not use this file except in compliance with
-the License.  You may obtain a copy of the License at
+the License. You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
@@ -15,79 +15,61 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-Welcome to Apache OpenNLP!
+Welcome to Apache OpenNLP Add-ons!
 ===========
 
+[![GitHub license](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://raw.githubusercontent.com/apache/opennlp-addons/main/LICENSE)
 [![Build Status](https://github.com/apache/opennlp-addons/workflows/Java%20CI/badge.svg)](https://github.com/apache/opennlp-addons/actions)
 [![Contributors](https://img.shields.io/github/contributors/apache/opennlp-addons)](https://github.com/apache/opennlp-addons/graphs/contributors)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/apache/opennlp-addons.svg)](https://github.com/apache/opennlp-addons/pulls)
-[![Stack Overflow](https://img.shields.io/badge/stack%20overflow-opennlp-f1eefe.svg)](https://stackoverflow.com/questions/tagged/opennlp)
 
-The Apache OpenNLP library is a machine learning based toolkit for the processing of natural language text.
+Apache OpenNLP Add-ons is a set of optional components built on the Apache OpenNLP API.
 
-These addons of the toolkit are written in Java and provide components for special NLP tasks, such as 
-geographic entity linking, Wordnet dictionary access and integration with Liblinear and Morfologik!
-
-The goal of the OpenNLP addons is to provide extra components, potentially in an experimental stage.
-
-OpenNLP addons code can be used programmatically through its Java API, some components even from a terminal through its CLI.
+Each add-on is published as its own Maven artifact, so an application can take a single integration without taking the dependencies of the others. Shared contracts stay in OpenNLP core; an implementation belongs here when it needs a distinct model format, external data, or an optional third-party library.
 
 ## Useful Links
 
-For additional information, visit the [OpenNLP Home Page](https://opennlp.apache.org/)
-
-You can use OpenNLP with any language, demo models are provided [here](https://downloads.apache.org/opennlp/models/).
-The models are fully compatible with the latest release, they can be used for testing or getting started.
-
-> [!NOTE]  
-> Please train your own models for all other use cases.
-
-Documentation, including JavaDocs, code usage and command-line interface examples are available [here](https://opennlp.apache.org/docs/)
-
-You can also follow our [mailing lists](https://opennlp.apache.org/mailing-lists.html) for news and updates.
+- [OpenNLP home page](https://opennlp.apache.org/)
+- [OpenNLP documentation](https://opennlp.apache.org/docs/)
+- [Mailing lists](https://opennlp.apache.org/mailing-lists.html)
+- [OpenNLP questions on Stack Overflow](https://stackoverflow.com/questions/tagged/opennlp)
 
 ## Overview
 
-Currently, the library has different components:
+Currently, the repository has the following modules:
 
-* `geoentitylinker-addon`: A set of Java classes that allows for detecting and linking geographic entities.
-* `japanese-addon`: An addon providing a set of Java classes specialized for processing text written in the Japanese language.
-* `jwnl-addon`: An addon that uses [extJWNL](https://github.com/extjwnl/extjwnl) for accessing WordNet-style relational dictionaries.
-* `liblinear-addon`: An addon that binds to [LIBLINEAR](https://www.csie.ntu.edu.tw/~cjlin/liblinear/) via [liblinear-java](https://github.com/bwaldvogel/liblinear-java).
-* `modelbuilder-addon`: A set of Java classes to build models more conveniently.
-* `morfologik-addon`: An addon that binds to [Morfologik](https://github.com/morfologik).
+* `geoentitylinker` : Links place names found in text to entries of a gazetteer index.
+* `japanese` : Feature generators and a name finder factory for Japanese text.
+* `liblinear` : LIBLINEAR based machine learning implementation.
+* `modelbuilder` : Utilities for semi-supervised generation of name finder models.
+* `opennlp-addons-docs` : The DocBook sources of the add-ons manual.
 
 ## Getting Started
 
-You can import the addons components directly via Maven, SBT or Gradle after you have built it locally:
+Depend on the module you need, not on the parent `opennlp-addons` POM:
 
 #### Maven
 
 ```
 <dependency>
-    <groupId>org.apache.opennlp</groupId>
-    <artifactId>opennlp-addons</artifactId>
-    <version>${opennlp.version}</version>
+    <groupId>org.apache.opennlp.addons</groupId>
+    <artifactId>japanese</artifactId>
+    <version>${opennlp-addons.version}</version>
 </dependency>
-```
-
-#### SBT
-
-```
-libraryDependencies += "org.apache.opennlp" % "opennlp-addons" % "${opennlp.version}"
 ```
 
 #### Gradle
 
 ```
-compile group: "org.apache.opennlp", name: "opennlp-addons", version: "${opennlp.version}"
+compile group: "org.apache.opennlp.addons", name: "japanese", version: "${opennlp-addons.version}"
 ```
 
-For more details please check our [documentation](https://opennlp.apache.org/docs/)
+> [!NOTE]
+> No 3.x add-ons release is published yet. Until one is, build this repository locally to use its artifacts.
 
-## Building OpenNLP
+## Building OpenNLP Add-ons
 
-At least JDK 21 and Maven 3.3.9 are required to build the addons components.
+At least JDK 21 and Maven 3.9.6 are required to build the add-ons.
 
 After cloning the repository go into the destination directory and run:
 
@@ -95,10 +77,10 @@ After cloning the repository go into the destination directory and run:
 mvn install
 ```
 
+A `verify` build additionally runs Checkstyle, forbidden API checks, the RAT license header check, and a dependency license report. Use `-Pjacoco` for coverage.
+
+The manual is written in DocBook XML under [`opennlp-addons-docs/src/docbkx`](opennlp-addons-docs/src/docbkx) and builds with the rest of the reactor.
+
 ## Contributing
 
-The Apache OpenNLP project is developed by volunteers and is always looking for new contributors to work on all parts of the project. 
-Every contribution is welcome and needed to make it better. 
-A contribution can be anything from a small documentation typo fix to a new component.
-
-If you would like to get involved please follow the instructions [here](https://github.com/apache/opennlp/blob/main/.github/CONTRIBUTING.md)
+Every contribution is welcome, from a documentation typo fix to a new add-on. To get involved, please follow the instructions [here](https://github.com/apache/opennlp/blob/main/.github/CONTRIBUTING.md)
