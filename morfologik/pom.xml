@@ -23,13 +23,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.apache.opennlp</groupId>
+		<groupId>org.apache.opennlp.addons</groupId>
 		<artifactId>opennlp-addons</artifactId>
 		<version>3.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>morfologik-addon</artifactId>
+	<artifactId>morfologik</artifactId>
 	<name>Apache OpenNLP Morfologik Addon</name>
+	<description>Morfologik based dictionary, lemmatizer, and POS tagger support.</description>
 	<packaging>jar</packaging>
 
 	<dependencies>
@@ -145,6 +146,25 @@
 									</fileset>
 								</checksum>
 							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.rat</groupId>
+				<artifactId>apache-rat-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-cli</id>
+						<configuration>
+							<excludes>
+								<!-- A third-party license text, which must keep its own wording. -->
+								<exclude>src/main/readme/MORFOLOGIK-LICENSE</exclude>
+								<!-- Test fixtures in formats that have no comment syntax. -->
+								<exclude>src/test/resources/AnnotatedSentences.txt</exclude>
+								<exclude>src/test/resources/dictionaryWithLemma.info</exclude>
+								<exclude>src/test/resources/dictionaryWithLemma.txt</exclude>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>

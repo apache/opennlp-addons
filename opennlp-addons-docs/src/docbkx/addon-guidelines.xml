@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements. See the NOTICE file
+   distributed with this work for additional information regarding
+   copyright ownership. The ASF licenses this file to You under the
+   Apache License, Version 2.0 (the "License"); you may not use this
+   file except in compliance with the License. You may obtain a copy of
+   the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<chapter xml:id="addon-guidelines" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Contributing an Add-on</title>
+  <para>This chapter describes what belongs in this repository, how add-on artifacts are named and published, and
+        what a contribution is expected to include.</para>
+  <section xml:id="addon-guidelines.boundary">
+    <title>Where a component belongs</title>
+    <para>OpenNLP core contains the shared interfaces, published in <code>opennlp-api</code>, and the
+          implementations that fit its component model without new runtime dependencies or bundled data.</para>
+    <para>An add-on implements a core interface, or supplies an independent component, when it needs additional
+          dependencies, models, dictionaries, datasets, or a separate release cycle. Add-ons use public OpenNLP
+          APIs; they do not duplicate them, bypass them, or rely on package-private access.</para>
+    <para>The <link xlink:href="https://github.com/apache/opennlp-sandbox">sandbox</link> remains the place for
+          proofs of concept, services, and work that is not ready for an ASF release.</para>
+    <para>When an add-on needs a reusable interface that core does not have yet, propose it as a small core
+          change and keep the implementation here.</para>
+  </section>
+  <section xml:id="addon-guidelines.naming">
+    <title>Artifacts and packages</title>
+    <para>Each add-on module is published to Maven Central as
+          <code>org.apache.opennlp.addons:<replaceable>artifactId</replaceable></code>.</para>
+    <para>Module and artifact names describe the feature and carry no <code>-addon</code> suffix. Java package
+          names describe the feature rather than the repository it is hosted in, so that a package does not have
+          to be renamed if a component later moves into core. Each implementation package belongs to exactly one
+          module.</para>
+    <para>Keep published Maven coordinates stable. If Maven coordinates do change, ship a relocation POM for the transition
+          and verify that dependency resolution still works; previously published JARs stay available, and
+          consumers otherwise face duplicate classes and split packages.</para>
+  </section>
+  <section xml:id="addon-guidelines.dependencies">
+    <title>Dependencies and licensing</title>
+    <para>Keep dependencies to a minimum. A new dependency, in core or in an add-on, draws considerably more
+          scrutiny from reviewers than an equivalent hand-written solution.</para>
+    <para>Every dependency and bundled resource needs a license that the
+          <link xlink:href="https://www.apache.org/legal/resolved.html">ASF third-party licensing policy</link>
+          permits, and recorded provenance. A module
+          that downloads user-selected resources documents the source, who is responsible for its license, and
+          how integrity is verified.</para>
+  </section>
+  <section xml:id="addon-guidelines.review">
+    <title>What a pull request includes</title>
+    <para>Each pull request covers one module, or one focused change, and includes:</para>
+    <itemizedlist>
+      <listitem><para>tests for normal and for invalid input;</para></listitem>
+      <listitem><para>a manual page with dependency and usage examples; and</para></listitem>
+      <listitem><para>a completed pull request template, including the OpenNLP version the change was verified
+            against.</para></listitem>
+    </itemizedlist>
+    <para>LICENSE and NOTICE are not edited by hand. The <code>CI Master - Regenerate NOTICE</code> workflow
+          regenerates them from the dependency tree and opens a pull request with the result.</para>
+    <para>A contribution that depends on an unreleased core API stays in draft and documents how to build it
+          locally. It is ready for review once it builds against a published OpenNLP artifact that contains that
+          API.</para>
+  </section>
+  <section xml:id="addon-guidelines.releases">
+    <title>Releases</title>
+    <para>Add-ons release on their own cadence through the regular voting process. A release records the
+          supported OpenNLP version and verifies every module against it. A module may extend a public core
+          interface, but it may not offer a competing replacement for one.</para>
+    <para>Moving an add-on into core is a separate decision taken on the dev list, not an automatic consequence
+          of adoption.</para>
+  </section>
+</chapter>

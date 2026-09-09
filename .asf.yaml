@@ -15,6 +15,35 @@
 # limitations under the License.
 
 github:
+  description: "Apache OpenNLP Add-ons"
+  homepage: https://opennlp.apache.org/
+  autolink_jira:
+    - OPENNLP
+  custom_subjects:
+    new_pr: "[PR] {title} ({repository})"
+    close_pr: "Re: [PR] {title} ({repository})"
+    comment_pr: "Re: [PR] {title} ({repository})"
+    diffcomment: "Re: [PR] {title} ({repository})"
+    merge_pr: "Re: [PR] {title} ({repository})"
+    new_issue: "[I] {title} ({repository})"
+    comment_issue: "Re: [I] {title} ({repository})"
+    close_issue: "Re: [I] {title} ({repository})"
+    catchall: "[GH] {title} ({repository})"
+    new_discussion: "[D] {title} ({repository})"
+    edit_discussion: "Re: [D] {title} ({repository})"
+    close_discussion: "Re: [D] {title} ({repository})"
+    close_discussion_with_comment: "Re: [D] {title} ({repository})"
+    reopen_discussion: "Re: [D] {title} ({repository})"
+    new_comment_discussion: "Re: [D] {title} ({repository})"
+    edit_comment_discussion: "Re: [D] {title} ({repository})"
+    delete_comment_discussion: "Re: [D] {title} ({repository})"
+  labels:
+    - apache
+    - opennlp
+    - nlp
+    - languagetechnology
+    - textprocessing
+    - compling
   rulesets:
     - name: "Default Branch Protection"
       type: branch
@@ -28,3 +57,11 @@ github:
         - root
       restrict_deletion: true
       restrict_force_push: true
+
+notifications:
+  jobs: commits@opennlp.apache.org
+  commits: commits@opennlp.apache.org
+  issues: commits@opennlp.apache.org
+  pullrequests: commits@opennlp.apache.org
+  discussions: commits@opennlp.apache.org
+  jira_options: link worklog

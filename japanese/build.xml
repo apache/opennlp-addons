@@ -16,14 +16,14 @@
 	specific language governing permissions and limitations
 	under the License.
 -->
-<project name="japanese-addon"
+<project name="japanese"
          default="jar" basedir=".">
 
     <property name="src.dir" value="src"/>
     <property name="cls.dir" value="classes"/>
     <property name="lib.dir" value="lib"/>
     <property name="test.result.dir" value="test-result"/>
-    <property name="product.jar" value="opennlp-japanese-addon-2.3.4-SNAPSHOT.jar"/>
+    <property name="product.jar" value="japanese-3.0.0-SNAPSHOT.jar"/>
 
     <target name="compile" description="compile source and test code">
         <mkdir dir="${cls.dir}"/>
