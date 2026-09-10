@@ -114,6 +114,7 @@
         <module>modelbuilder</module>
         <module>morfologik</module>
         <module>jwnl</module>
+        <module>subword</module>
     </modules>
 
     <properties>
