@@ -82,7 +82,7 @@ public class JWNLLemmatizer implements Lemmatizer {
       } else if (postag.startsWith(constantTag)) {
         lemma = word;
       } else {
-        lemma= word.toLowerCase();
+        lemma = word.toLowerCase();
       }
     } catch (JWNLException e) {
       return null;

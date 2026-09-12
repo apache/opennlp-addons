@@ -31,15 +31,18 @@ interface XMLDictionaryToTableParams extends EncodingParameter {
   @ParameterDescription(valueName = "in", description = "OpenNLP XML Tag Dictionary.")
   File getInputFile();
 
-  @ParameterDescription(valueName = "out", description = "Output for Morfologik (.info will be also created).")
+  @ParameterDescription(valueName = "out",
+      description = "Output for Morfologik (.info will be also created).")
   File getOutputFile();
 
   @ParameterDescription(valueName = "char", description = "Column separator (must be a single character)")
-  @OptionalParameter(defaultValue=",")
+  @OptionalParameter(defaultValue = ",")
   String getSeparator();
   
-  @ParameterDescription(valueName = "value", description = " Type of lemma-inflected form encoding compression that precedes automaton construction. Allowed values: [suffix, infix, prefix, none].")
-  @OptionalParameter(defaultValue="prefix")
+  @ParameterDescription(valueName = "value",
+      description = " Type of lemma-inflected form encoding compression that precedes automaton"
+          + " construction. Allowed values: [suffix, infix, prefix, none].")
+  @OptionalParameter(defaultValue = "prefix")
   String getEncoder();
   
 }

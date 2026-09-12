@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,7 +48,8 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan<BaseLink>> {
   private AdminBoundaryContextGenerator countryContext;
   private EntityLinkerProperties linkerProperties;
   private GazetteerSearcher gazetteerSearcher;
-  private final List<LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext>> scorers = new ArrayList<>();
+  private final List<LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext>> scorers =
+      new ArrayList<>();
 
   @Override
   public List<LinkedSpan<BaseLink>> find(String doctext, Span[] sentences,
@@ -73,8 +75,10 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan<BaseLink>> {
               }
             }
           }
-        } else { //this means there were no where clauses generated so the where clause will default to look at the entire index
-          List<GazetteerEntry> find = gazetteerSearcher.find(matches[i], topN, " gaztype:usgs geonames regions ");
+        } else { //this means there were no where clauses generated so the where clause
+          // will default to look at the entire index
+          List<GazetteerEntry> find = gazetteerSearcher.find(matches[i], topN,
+              " gaztype:usgs geonames regions ");
           for (GazetteerEntry gazetteerEntry : find) {
             if (!geoNamesEntries.contains(gazetteerEntry)) {
               geoNamesEntries.add(gazetteerEntry);
@@ -113,7 +117,9 @@ public class GeoEntityLinker implements EntityLinker<LinkedSpan<BaseLink>> {
 
     if (!scorers.isEmpty()) {
       for (LinkedEntityScorer<? extends BaseLink, AdminBoundaryContext> scorer : scorers) {
-        LinkedEntityScorer<BaseLink, AdminBoundaryContext> s = (LinkedEntityScorer) scorer;
+        @SuppressWarnings("unchecked")
+        LinkedEntityScorer<BaseLink, AdminBoundaryContext> s =
+            (LinkedEntityScorer<BaseLink, AdminBoundaryContext>) scorer;
         s.score(spans, doctext, sentences, linkerProperties, context);
       }
     }

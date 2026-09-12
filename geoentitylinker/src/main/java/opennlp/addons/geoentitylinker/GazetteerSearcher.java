@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -101,7 +102,8 @@ public class GazetteerSearcher {
        */
       String placeNameQueryString = "placename:(" + searchString.toLowerCase() + ") " + "AND " + whereClause;
       if (searchString.trim().contains(" ") && useHierarchyField) {
-        placeNameQueryString = "(placename:(" + searchString.toLowerCase() + ") AND hierarchy:(" + formatForHierarchy(searchString) + "))"
+        placeNameQueryString = "(placename:(" + searchString.toLowerCase() + ") AND hierarchy:("
+            + formatForHierarchy(searchString) + "))"
             + " AND " + whereClause;
       }
 
@@ -118,7 +120,8 @@ public class GazetteerSearcher {
        */
       QueryParser parser = new QueryParser(placeNameQueryString, opennlpAnalyzer);
       Query q = parser.parse(placeNameQueryString);
-      //Filter filter = new QueryWrapperFilter(new QueryParser(Version.LUCENE_48, whereClause, opennlpAnalyzer).parse(whereClause));      
+      //Filter filter = new QueryWrapperFilter(new QueryParser(Version.LUCENE_48, whereClause,
+      // opennlpAnalyzer).parse(whereClause));      
 
       TopDocs bestDocs = opennlpSearcher.search(q, rowsReturned);
       Double maxscore = 0d;
@@ -208,7 +211,8 @@ public class GazetteerSearcher {
       IndexReader opennlpReader = DirectoryReader.open(opennlpIndex);
       opennlpSearcher = new IndexSearcher(opennlpReader);
       opennlpAnalyzer
-          = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48, new ArrayList(), true));
+          = //new StandardAnalyzer(Version.LUCENE_48, new CharArraySet(Version.LUCENE_48,
+          // new ArrayList(), true));
           new StandardAnalyzer(new CharArraySet(new ArrayList<>(), true));
       Map<String, Analyzer> analyMap = new HashMap<>();
 
@@ -221,7 +225,8 @@ public class GazetteerSearcher {
       opennlpAnalyzer
           = new PerFieldAnalyzerWrapper(opennlpAnalyzer, analyMap);
 
-      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min", String.valueOf(scoreCutoff));
+      String cutoff = properties.getProperty("opennlp.geoentitylinker.gaz.lucenescore.min",
+          String.valueOf(scoreCutoff));
       String usehierarchy = properties.getProperty("opennlp.geoentitylinker.gaz.hierarchyfield", "0");
       if (cutoff != null && !cutoff.isEmpty()) {
         scoreCutoff = Double.parseDouble(cutoff);

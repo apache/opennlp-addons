@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,7 +52,7 @@ public class AdminBoundaryContextGenerator {
   private Map<String, String> countyRegexMap = new HashMap<>();
 
   private final Set<CountryContextEntry> countryHits = new HashSet<>();
-  private final List<AdminBoundary> adminBoundaryData= new ArrayList<>();
+  private final List<AdminBoundary> adminBoundaryData = new ArrayList<>();
   private final Set<AdminBoundary> adminBoundaryHits = new HashSet<>();
 
   private final Set<String> countryHitSet = new HashSet<>();
@@ -76,7 +77,8 @@ public class AdminBoundaryContextGenerator {
                       "Eastern Africa people are cool.");
       System.out.println(c);
     } catch (Exception ex) {
-      java.util.logging.Logger.getLogger(AdminBoundaryContextGenerator.class.getName()).log(Level.SEVERE, null, ex);
+      java.util.logging.Logger.getLogger(AdminBoundaryContextGenerator.class.getName())
+          .log(Level.SEVERE, null, ex);
     }
   }
 
@@ -198,8 +200,9 @@ public class AdminBoundaryContextGenerator {
         }
       }
 
-      return new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet, provHits, countyHits,
-              countryRefMap, provMap, countyMap, nameCodesMap, countryRegexMap, provinceRegexMap, countyRegexMap);
+      return new AdminBoundaryContext(countryhitMap, provMentions, countyMentions, countryHitSet,
+              provHits, countyHits, countryRefMap, provMap, countyMap, nameCodesMap,
+              countryRegexMap, provinceRegexMap, countyRegexMap);
     } catch (Exception e) {
       LOG.error(e.getLocalizedMessage(), e);
     }
@@ -214,7 +217,8 @@ public class AdminBoundaryContextGenerator {
    * value is an actual name.
    * @param hitsRef a reference to a set that stores the hits by id
    */
-  private Map<String, Set<Integer>> regexfind(String docText, Map<String, String> lookupMap, Set<String> hitsRef, String locationType) {
+  private Map<String, Set<Integer>> regexfind(String docText, Map<String, String> lookupMap,
+      Set<String> hitsRef, String locationType) {
     Map<String, Set<Integer>> mentions = new HashMap<>();
     if (lookupMap == null) {
       return mentions;
@@ -339,7 +343,7 @@ public class AdminBoundaryContextGenerator {
           if (currentRegex.length() > adm.countryRegex().length()) {
             // the longest one wins if they are not all the same for each entry in the file
             countryRegexMap.put(adm.countryCode(), currentRegex);
-          }//else do nothing
+          } //else do nothing
         } else {
           countryRegexMap.put(adm.countryCode(), adm.countryRegex());
         }
@@ -355,7 +359,8 @@ public class AdminBoundaryContextGenerator {
           provMap.put(adm.countryCode(), provs);
           // }
 
-          if (!adm.countyCode().equalsIgnoreCase("no_data_found") && !adm.countyName().equalsIgnoreCase("no_data_found")) {
+          if (!adm.countyCode().equalsIgnoreCase("no_data_found")
+              && !adm.countyName().equalsIgnoreCase("no_data_found")) {
             Map<String, String> counties = countyMap.get(combined);
             if (counties == null) {
               counties = new HashMap<>();
@@ -382,7 +387,7 @@ public class AdminBoundaryContextGenerator {
         if (currentRegex.length() > adm.provinceRegex().length()) {
           // the longest one wins if they are not all the same for each entry in the file
           provinceRegexMap.put(adm.getProvCode(), currentRegex);
-        }//else do nothing
+        } //else do nothing
       } else {
         provinceRegexMap.put(adm.getProvCode(), adm.provinceRegex());
       }
@@ -399,7 +404,7 @@ public class AdminBoundaryContextGenerator {
         if (currentRegex.length() > adm.countyRegex().length()) {
           // the longest one wins if they are not all the same for each entry in the file
           countyRegexMap.put(adm.countyCode(), currentRegex);
-        }//else do nothing
+        } //else do nothing
       } else {
         countyRegexMap.put(adm.countyCode(), adm.countyRegex());
       }
