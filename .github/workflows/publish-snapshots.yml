@@ -1,0 +1,66 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Publishes SNAPSHOT artifacts to repository.apache.org on demand. Run it from the
+# Actions view, selecting the branch to publish; a branch under development should
+# carry a version such as 3.0.0-FEATURE-XYZ-SNAPSHOT so its artifacts cannot shadow
+# the main snapshots. Non-SNAPSHOT versions are never deployed by this workflow.
+
+name: Publish snapshot artifacts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish snapshot artifacts
+    if: github.repository == 'apache/opennlp-addons'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Cache Maven Repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Setup Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - id: extract_version
+        name: Extract version
+        shell: bash
+        run: |
+          VERSION=$(mvn exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive -q)
+          if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
+             echo "snapshot=SNAPSHOT" >> $GITHUB_OUTPUT
+          fi
+      - name: Deploy Maven snapshots
+        if: steps.extract_version.outputs.snapshot == 'SNAPSHOT'
+        env:
+          ASF_USERNAME: ${{ secrets.NEXUS_USER }}
+          ASF_PASSWORD: ${{ secrets.NEXUS_PW }}
+        run: |
+          echo "<settings><servers><server><id>apache.snapshots.https</id><username>$ASF_USERNAME</username><password>$ASF_PASSWORD</password></server></servers></settings>" > settings.xml
+          mvn --settings settings.xml -U -B -e -fae -ntp -DskipTests deploy
