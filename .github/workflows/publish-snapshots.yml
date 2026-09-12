@@ -17,9 +17,11 @@
 #
 
 # Publishes SNAPSHOT artifacts to repository.apache.org on demand. Run it from the
-# Actions view, selecting the branch to publish; a branch under development should
-# carry a version such as 3.0.0-FEATURE-XYZ-SNAPSHOT so its artifacts cannot shadow
-# the main snapshots. Non-SNAPSHOT versions are never deployed by this workflow.
+# Actions view, selecting the branch to publish. On main the pom version deploys as
+# is. On any other branch the branch name is folded into the version, so a run on
+# branch FEATURE-XYZ deploys 3.0.0-FEATURE-XYZ-SNAPSHOT and cannot shadow the main
+# snapshots; a pom version that already names the branch is kept unchanged.
+# Non-SNAPSHOT versions are never deployed by this workflow.
 
 name: Publish snapshot artifacts
 
@@ -48,19 +50,33 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - id: extract_version
-        name: Extract version
+      - id: version
+        name: Determine deploy version
         shell: bash
         run: |
-          VERSION=$(mvn exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive -q)
-          if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
-             echo "snapshot=SNAPSHOT" >> $GITHUB_OUTPUT
+          POM_VERSION=$(mvn exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive -q)
+          if [[ "$POM_VERSION" != *-SNAPSHOT ]]; then
+            echo "Refusing to publish non-SNAPSHOT version $POM_VERSION" >&2
+            echo "deploy=no" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          DEPLOY_VERSION="$POM_VERSION"
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            FEATURE=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9.' '-' | sed -E 's/-+/-/g; s/^-//; s/-$//')
+            if [[ "$POM_VERSION" != *"$FEATURE"* ]]; then
+              DEPLOY_VERSION="${POM_VERSION%-SNAPSHOT}-${FEATURE}-SNAPSHOT"
+            fi
+          fi
+          echo "Deploying version $DEPLOY_VERSION from branch $GITHUB_REF_NAME"
+          echo "deploy=yes" >> "$GITHUB_OUTPUT"
+          echo "version=$DEPLOY_VERSION" >> "$GITHUB_OUTPUT"
       - name: Deploy Maven snapshots
-        if: steps.extract_version.outputs.snapshot == 'SNAPSHOT'
+        if: steps.version.outputs.deploy == 'yes'
         env:
           ASF_USERNAME: ${{ secrets.NEXUS_USER }}
           ASF_PASSWORD: ${{ secrets.NEXUS_PW }}
+          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
         run: |
+          mvn -B -q -ntp versions:set -DnewVersion="$DEPLOY_VERSION" -DgenerateBackupPoms=false
           echo "<settings><servers><server><id>apache.snapshots.https</id><username>$ASF_USERNAME</username><password>$ASF_PASSWORD</password></server></servers></settings>" > settings.xml
           mvn --settings settings.xml -U -B -e -fae -ntp -DskipTests deploy
