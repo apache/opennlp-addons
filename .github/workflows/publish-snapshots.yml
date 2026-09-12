@@ -99,5 +99,6 @@ jobs:
           DEPLOY_VERSION: ${{ steps.version.outputs.version }}
         run: |
           mvn -B -q -ntp versions:set -DnewVersion="$DEPLOY_VERSION" -DgenerateBackupPoms=false
-          echo "<settings><servers><server><id>apache.snapshots.https</id><username>$ASF_USERNAME</username><password>$ASF_PASSWORD</password></server></servers></settings>" > settings.xml
-          mvn --settings settings.xml -U -B -e -fae -ntp -DskipTests deploy
+          SETTINGS="$RUNNER_TEMP/settings.xml"
+          echo "<settings><servers><server><id>apache.snapshots.https</id><username>$ASF_USERNAME</username><password>$ASF_PASSWORD</password></server></servers></settings>" > "$SETTINGS"
+          mvn --settings "$SETTINGS" -U -B -e -fae -ntp -DskipTests deploy
