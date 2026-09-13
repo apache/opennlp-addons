@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +44,8 @@ public class FileModelValidatorImpl implements ModelGenerationValidator {
 
   @Override
   public Boolean validSentence(String sentence) {
-    //returning true by default, because the sentence provider will  return only "valid" sentences in this case
+    //returning true by default, because the sentence provider will  return only "valid" sentences
+    // in this case
     return true;
   }
 
@@ -68,7 +70,7 @@ public class FileModelValidatorImpl implements ModelGenerationValidator {
     }
     if (!badentities.isEmpty()) {
       try (BufferedReader br = new BufferedReader(new InputStreamReader(
-              new FileInputStream(params.getKnownEntityBlacklist()), StandardCharsets.UTF_8))){
+              new FileInputStream(params.getKnownEntityBlacklist()), StandardCharsets.UTF_8))) {
         String line;
         while ((line = br.readLine()) != null) {
           badentities.add(line);

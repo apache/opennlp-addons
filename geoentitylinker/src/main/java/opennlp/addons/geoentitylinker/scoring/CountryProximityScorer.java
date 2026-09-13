@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,8 +26,8 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
-import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
@@ -44,9 +45,11 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
   private Map<String, String> regexMap = new HashMap<>();
 
   @Override
-  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans,
+      EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     regexMap = additionalContext.getCountryRegexMap();
-    score(linkedSpans, additionalContext.getCountryMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
+    score(linkedSpans, additionalContext.getCountryMentions(), additionalContext.getNameCodesMap(),
+        docText, sentenceSpans, 1000);
   }
 
   /**
@@ -69,7 +72,9 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
    * Named Entity.
    * @return
    */
-  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
+  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData,
+      Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText,
+      Span[] sentences, Integer maxAllowedDist) {
     this.nameCodesMap = nameCodesMap;
     setDominantCode(countryHits);
     for (LinkedSpan<BaseLink> linkedspan : linkedData) {
@@ -104,7 +109,9 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
    * @param span
    * @return
    */
-  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences, Map<String, Set<Integer>> countryHits, LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
+  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences,
+      Map<String, Set<Integer>> countryHits, LinkedSpan<BaseLink> span,
+      Integer maxAllowedDistance) {
     Double score = 0.0;
     /*
      * get the index of the actual span, beginning of sentence //should generate
@@ -152,10 +159,12 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
 
         score = scoreMap.get(spanCountryCode);
         ///does the name extracted match a country name?
-        if (nameCodesMap.containsKey(link.getItemName().toLowerCase()) || regexMatch(link.getItemName(), link.getItemParentID())) {
+        if (nameCodesMap.containsKey(link.getItemName().toLowerCase())
+            || regexMatch(link.getItemName(), link.getItemParentID())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(link.getItemName().toLowerCase()).contains(link.getItemParentID())) {
-            //boost the score because it is likely that this is the location in the text, so add 50% to the score or set to 1
+            //boost the score because it is likely that this is the location in the text,
+            // so add 50% to the score or set to 1
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 
             if (link.getItemParentID().equals(dominantCode)) {
@@ -181,7 +190,8 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
    * @param span
    * @return
    */
-  private Map<String, Double> analyzeMap(Map<String, Set<Integer>> distanceMap, Span[] sentences, LinkedSpan<BaseLink> span) {
+  private Map<String, Double> analyzeMap(Map<String, Set<Integer>> distanceMap, Span[] sentences,
+      LinkedSpan<BaseLink> span) {
 
     Map<String, Double> scoreMap = new HashMap<>();
     if (distanceMap.isEmpty()) {
@@ -219,7 +229,7 @@ public class CountryProximityScorer  implements LinkedEntityScorer<BaseLink, Adm
     if (regexMap.containsKey(countryCode)) {
       String regexForCountry = regexMap.get(countryCode);
 
-      Pattern p = Pattern.compile(regexForCountry,Pattern.DOTALL|Pattern.CASE_INSENSITIVE);
+      Pattern p = Pattern.compile(regexForCountry,Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
       return p.matcher(placeName.trim()).matches();
     }
     return false;

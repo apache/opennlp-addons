@@ -20,10 +20,10 @@ package opennlp.tools.util.featuregen.lang.jpn;
 import java.util.ArrayList;
 import java.util.List;
 
-import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -46,9 +46,9 @@ public class TokenClassFeatureGeneratorTest {
 
     generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
-   assertEquals(2, features.size());
-   assertEquals("wc=alpha", features.get(0));
-   assertEquals("w&c=example,alpha", features.get(1));
+    assertEquals(2, features.size());
+    assertEquals("wc=alpha", features.get(0));
+    assertEquals("w&c=example,alpha", features.get(1));
   }
 
   @Test
@@ -60,7 +60,7 @@ public class TokenClassFeatureGeneratorTest {
 
     generator.createFeatures(features, TEST_SENTENCE, testTokenIndex, null);
 
-   assertEquals(1, features.size());
-   assertEquals("wc=alpha", features.get(0));
+    assertEquals(1, features.size());
+    assertEquals("wc=alpha", features.get(0));
   }
 }

@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,9 +38,9 @@ public class FileSentenceProvider implements SentenceProvider {
 
   @Override
   public Set<String> getSentences() {
-     if (sentences.isEmpty()) {
+    if (sentences.isEmpty()) {
       try (BufferedReader br = new BufferedReader(new InputStreamReader(
-              new FileInputStream(params.getSentenceFile()), StandardCharsets.UTF_8))){
+              new FileInputStream(params.getSentenceFile()), StandardCharsets.UTF_8))) {
         String line;
         while ((line = br.readLine()) != null) {
           sentences.add(line);
@@ -51,7 +52,7 @@ public class FileSentenceProvider implements SentenceProvider {
     return sentences;
   }
 
- public void setParameters(BaseModelBuilderParams params) {
+  public void setParameters(BaseModelBuilderParams params) {
     this.params = params;
   }
 }

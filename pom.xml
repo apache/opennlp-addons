@@ -255,9 +255,7 @@
                                 <includeTestSourceDirectory>true</includeTestSourceDirectory>
                                 <testSourceDirectories>${project.basedir}/src/test/java</testSourceDirectories>
                                 <violationSeverity>error</violationSeverity>
-                                <!-- Reports without breaking the build. The existing sources predate these rules;
-                                     a follow-up brings them into line and then turns this on. -->
-                                <failOnViolation>false</failOnViolation>
+                                <failOnViolation>true</failOnViolation>
                             </configuration>
                             <goals>
                                 <goal>check</goal>

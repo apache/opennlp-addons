@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,8 +23,8 @@ import java.util.Set;
 
 import opennlp.addons.geoentitylinker.AdminBoundaryContext;
 import opennlp.addons.geoentitylinker.GazetteerEntry;
-import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.BaseLink;
+import opennlp.tools.entitylinker.EntityLinkerProperties;
 import opennlp.tools.entitylinker.LinkedSpan;
 import opennlp.tools.util.Span;
 
@@ -33,20 +34,24 @@ import opennlp.tools.util.Span;
 public class FuzzyStringMatchScorer implements LinkedEntityScorer<GazetteerEntry, AdminBoundaryContext> {
 
   @Override
-  public void score(List<LinkedSpan<GazetteerEntry>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<GazetteerEntry>> linkedSpans, String docText,
+      Span[] sentenceSpans, EntityLinkerProperties properties,
+      AdminBoundaryContext additionalContext) {
 
     for (LinkedSpan<GazetteerEntry> linkedSpan : linkedSpans) {
       for (BaseLink link : linkedSpan.getLinkedEntries()) {
         if (link instanceof GazetteerEntry entry) {
           String hierarchy = entry.getHierarchy();
           if (hierarchy != null) {
-            Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase(), 2);
+            Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(),
+                hierarchy.toLowerCase(), 2);
             link.getScoreMap().put("hierarchydicecoef", dice);
-            Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase(), hierarchy.toLowerCase());
+            Double ld = (double) getLevenshteinDistance(linkedSpan.getSearchTerm().toLowerCase(),
+                hierarchy.toLowerCase());
             link.getScoreMap().put("hierarchylevenshtein", ld);
           }
           String placename = entry.getItemName().toLowerCase();
-           if (placename != null) {
+          if (placename != null) {
             Double dice = getDiceCoefficient(linkedSpan.getSearchTerm().toLowerCase(), placename, 2);
             link.getScoreMap().put("placenamedicecoef", dice);
           }

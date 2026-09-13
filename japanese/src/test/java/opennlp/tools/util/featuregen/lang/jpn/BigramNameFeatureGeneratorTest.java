@@ -20,10 +20,10 @@ package opennlp.tools.util.featuregen.lang.jpn;
 import java.util.ArrayList;
 import java.util.List;
 
-import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

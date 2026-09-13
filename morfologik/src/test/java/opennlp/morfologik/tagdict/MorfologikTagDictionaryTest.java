@@ -21,10 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import morfologik.stemming.Dictionary;
+import org.junit.jupiter.api.Test;
+
 import opennlp.morfologik.builder.POSDictionaryBuilderTest;
 import opennlp.tools.postag.TagDictionary;
-
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -82,7 +82,8 @@ public class MorfologikTagDictionaryTest {
     return this.createDictionary(caseSensitive, null);
   }
 
-  private MorfologikTagDictionary createDictionary(boolean caseSensitive, List<String> constant) throws Exception {
+  private MorfologikTagDictionary createDictionary(boolean caseSensitive, List<String> constant)
+      throws Exception {
 
     Dictionary dic = Dictionary.read(POSDictionaryBuilderTest.createMorfologikDictionary());
     return new MorfologikTagDictionary(dic, caseSensitive);

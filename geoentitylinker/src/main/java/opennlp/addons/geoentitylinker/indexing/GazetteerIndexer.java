@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,27 +53,27 @@ public class GazetteerIndexer {
 
   public enum GazType implements Separable {
     GEONAMES {
-          @Override
-          public String toString() {
-            return "/opennlp_geoentitylinker_geonames_idx";
-          }
+      @Override
+      public String toString() {
+        return "/opennlp_geoentitylinker_geonames_idx";
+      }
 
-          @Override
-          public String getSeparator() {
-            return "\t";
-          }
-        },
+      @Override
+      public String getSeparator() {
+        return "\t";
+      }
+    },
     USGS {
-          @Override
-          public String toString() {
-            return "/opennlp_geoentitylinker_usgsgaz_idx";
-          }
+      @Override
+      public String toString() {
+        return "/opennlp_geoentitylinker_usgsgaz_idx";
+      }
 
-          @Override
-          public String getSeparator() {
-            return "\\|";
-          }
-        }
+      @Override
+      public String getSeparator() {
+        return "\\|";
+      }
+    }
   }
 
   /**
@@ -115,8 +116,9 @@ public class GazetteerIndexer {
    * @throws FileNotFoundException Thrown if required resources do not exist.
    * @throws IllegalArgumentException Thrown if parameters are invalid.
    */
-  public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII, File usgsDataFile,
-                    File usgsGovUnitsFile, File outputIndexDir, File outputCountryContextFile, File regionsFile)
+  public void index(File geonamesData, File geoNamesCountryInfo, File geonamesAdmin1CodesASCII,
+                    File usgsDataFile, File usgsGovUnitsFile, File outputIndexDir,
+                    File outputCountryContextFile, File regionsFile)
           throws IOException {
     if (!outputIndexDir.isDirectory()) {
       throw new IllegalArgumentException("outputIndexDir must be a directory.");
@@ -158,12 +160,15 @@ public class GazetteerIndexer {
     try (IndexWriter w = new IndexWriter(index, config)) {
       //write the column headers for the countryContextFile
       try (FileWriter writer = new FileWriter(outputCountryContextFile, false)) {
-        String colNamesForCountryContextFile = "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname\tcountryregex\tprovregex\tcountyregex\n";
+        String colNamesForCountryContextFile =
+            "countrycode\tprovcode\tcountycode\tcountryname\tprovincename\tcountyname"
+                + "\tcountryregex\tprovregex\tcountyregex\n";
         writer.write(colNamesForCountryContextFile);
         writer.flush();
       }
       USGSProcessor.process(usgsGovUnitsFile, usgsDataFile, outputCountryContextFile, w);
-      GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData, outputCountryContextFile, w);
+      GeonamesProcessor.process(geoNamesCountryInfo, geonamesAdmin1CodesASCII, geonamesData,
+          outputCountryContextFile, w);
       RegionProcessor.process(regionsFile, outputCountryContextFile, w);
       w.commit();
     }
@@ -179,7 +184,8 @@ public class GazetteerIndexer {
       System.out.println("Usage: GazetteerIndexer geonamesData geoNamesCountryInfo geonamesAdmin1CodesASCII "
               + "usgsDataFile usgsGovUnitsFile outputIndexDir outputCountryContextFile regionsFile");
       System.out.println();
-      System.out.println("The GazetteerIndexer.index methods javadoc explains how to retrieve the data files.");
+      System.out.println(
+          "The GazetteerIndexer.index methods javadoc explains how to retrieve the data files.");
       return;
     }
 

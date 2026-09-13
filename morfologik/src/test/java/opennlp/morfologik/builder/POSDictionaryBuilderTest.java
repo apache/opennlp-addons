@@ -23,9 +23,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import morfologik.stemming.DictionaryMetadata;
-import opennlp.morfologik.lemmatizer.MorfologikLemmatizer;
-
 import org.junit.jupiter.api.Test;
+
+import opennlp.morfologik.lemmatizer.MorfologikLemmatizer;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
