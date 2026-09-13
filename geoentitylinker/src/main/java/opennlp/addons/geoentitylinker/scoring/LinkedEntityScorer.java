@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,9 +33,11 @@ import opennlp.tools.util.Span;
 public interface LinkedEntityScorer<L extends BaseLink, T> {
 
   /**
-   * Scores a collection of linked entities. Implementations should populate the scoreMap in the list of BaseLink for each linkedSpan
+   * Scores a collection of linked entities. Implementations should populate the scoreMap
+   * in the list of BaseLink for each linkedSpan
    * this method internally affects the reference to linkedSpans that was passed in
-   * @param linkedSpans the spans that have been linked to some external source and have all the data they need to be scored
+   * @param linkedSpans the spans that have been linked to some external source and have
+   *                    all the data they need to be scored
    * @param docText the full text of the document.
    * @param sentenceSpans the sentence spans that corresponds to the document text
    * @param properties the entitylinker properties config file

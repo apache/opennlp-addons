@@ -1,11 +1,12 @@
 /*
- * Copyright 2014 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,15 +69,15 @@ public class PlacetypeScorer implements LinkedEntityScorer<GazetteerEntry, Admin
       for (String type : boosts) {
         if (type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), 1d);
-        } else if ((type.startsWith("PC")|| type.startsWith("PP")) && !type.equals("PCLI")) {
+        } else if ((type.startsWith("PC") || type.startsWith("PP")) && !type.equals("PCLI")) {
           boosetedTypes.put(type.toLowerCase(), .5d);
         } else if (type.startsWith("ADM")) {
           boosetedTypes.put(type.toLowerCase(), .75d);
-        }else if (type.equalsIgnoreCase("civil")){
+        } else if (type.equalsIgnoreCase("civil")) {
           boosetedTypes.put(type.toLowerCase(), .9d);
         }
-        if(type.equalsIgnoreCase("populated_place")){
-           boosetedTypes.put("Populated Place", .75d);
+        if (type.equalsIgnoreCase("populated_place")) {
+          boosetedTypes.put("Populated Place", .75d);
         }
 
       }

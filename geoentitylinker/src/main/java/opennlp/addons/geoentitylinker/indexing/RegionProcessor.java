@@ -1,11 +1,12 @@
 /*
- * Copyright 2014 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -92,9 +93,10 @@ public class RegionProcessor {
           doc.add(new StringField("locid", id, Field.Store.YES));
           doc.add(new StringField("gazsource", "region", Field.Store.YES));
           //countrycontext file format
-          // US	KY	131	United States	Kentucky	Leslie
+          // US\tKY\t131\tUnited States\tKentucky\tLeslie
 
-          ccfileentries.add(id + "\t" + id + "\t" + id + "\t" + placeName + "\t" + "NO_DATA_FOUND" + "\t" + "NO_DATA_FOUND" + "\t" + "("
+          ccfileentries.add(id + "\t" + id + "\t" + id + "\t" + placeName + "\t" + "NO_DATA_FOUND"
+                  + "\t" + "NO_DATA_FOUND" + "\t" + "("
                   + placeName + ")" + "\t" + "NO_DATA_FOUND" + "\t" + "NO_DATA_FOUND" + "\n");
           if (w != null) {
             w.addDocument(doc);

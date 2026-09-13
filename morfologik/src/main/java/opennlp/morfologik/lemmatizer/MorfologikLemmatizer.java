@@ -30,6 +30,7 @@ import morfologik.stemming.Dictionary;
 import morfologik.stemming.DictionaryLookup;
 import morfologik.stemming.IStemmer;
 import morfologik.stemming.WordData;
+
 import opennlp.tools.lemmatizer.Lemmatizer;
 
 public class MorfologikLemmatizer implements Lemmatizer {

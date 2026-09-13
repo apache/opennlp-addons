@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import morfologik.stemming.DictionaryMetadata;
+
 import opennlp.tools.postag.POSTaggerFactory;
 import opennlp.tools.postag.TagDictionary;
 import opennlp.tools.util.model.ArtifactSerializer;
@@ -52,13 +53,13 @@ public class MorfologikPOSTaggerFactory extends POSTaggerFactory {
   @Override
   public TagDictionary createTagDictionary(File dictionary) throws IOException {
     
-    if(!dictionary.canRead()) {
+    if (!dictionary.canRead()) {
       throw new FileNotFoundException("Could not read dictionary: " + dictionary.getAbsolutePath());
     }
     
     Path dictionaryMeta = DictionaryMetadata.getExpectedMetadataLocation(dictionary.toPath());
     
-    if(dictionaryMeta == null || !dictionaryMeta.toFile().canRead()) {
+    if (dictionaryMeta == null || !dictionaryMeta.toFile().canRead()) {
       throw new FileNotFoundException("Could not read dictionary metadata: " + dictionaryMeta.getFileName());
     }
     

@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,10 +47,12 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
   private Map<String, String> regexMap = new HashMap<>();
 
   @Override
-  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans, EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
+  public void score(List<LinkedSpan<BaseLink>> linkedSpans, String docText, Span[] sentenceSpans,
+      EntityLinkerProperties properties, AdminBoundaryContext additionalContext) {
     if (!additionalContext.getProvHits().isEmpty()) {
       regexMap = additionalContext.getProvinceRegexMap();
-      score(linkedSpans, additionalContext.getProvMentions(), additionalContext.getNameCodesMap(), docText, sentenceSpans, 1000);
+      score(linkedSpans, additionalContext.getProvMentions(), additionalContext.getNameCodesMap(),
+          docText, sentenceSpans, 1000);
     } else {
       for (LinkedSpan<BaseLink> span : linkedSpans) {
         for (BaseLink link : span.getLinkedEntries()) {
@@ -80,7 +83,9 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
    * Named Entity.
    * @return
    */
-  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData, Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText, Span[] sentences, Integer maxAllowedDist) {
+  public List<LinkedSpan<BaseLink>> score(List<LinkedSpan<BaseLink>> linkedData,
+      Map<String, Set<Integer>> countryHits, Map<String, Set<String>> nameCodesMap, String docText,
+      Span[] sentences, Integer maxAllowedDist) {
     this.nameCodesMap = nameCodesMap;
     setDominantCode(countryHits);
     for (LinkedSpan<BaseLink> linkedspan : linkedData) {
@@ -114,8 +119,10 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
    * @param span
    * @return
    */
-  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences, Map<String, Set<Integer>> countryHits,
-                                                       LinkedSpan<BaseLink> span, Integer maxAllowedDistance) {
+  private LinkedSpan<BaseLink> simpleProximityAnalysis(Span[] sentences,
+                                                       Map<String, Set<Integer>> countryHits,
+                                                       LinkedSpan<BaseLink> span,
+                                                       Integer maxAllowedDistance) {
     Double score = 0.0;
     /*
      * get the index of the actual span, beginning of sentence //should generate
@@ -165,10 +172,12 @@ public class ProvinceProximityScorer implements LinkedEntityScorer<BaseLink, Adm
 
         score = scoreMap.get(spanCountryCode);
         ///does the name extracted match a province name?
-        if (nameCodesMap.containsKey(link.getItemName().toLowerCase()) || regexMatch(link.getItemName(), link.getItemParentID())) {
+        if (nameCodesMap.containsKey(link.getItemName().toLowerCase())
+            || regexMatch(link.getItemName(), link.getItemParentID())) {
           //if so, is it the correct country code for that name?
           if (nameCodesMap.get(entry.getItemName().toLowerCase()).contains(entry.getProvinceCode())) {
-            //boost the score because it is likely that this is the location in the text, so add 50% to the score or set to 1
+            //boost the score because it is likely that this is the location in the text,
+            // so add 50% to the score or set to 1
             //TODO: make this smarter
             score = (score + .75) > 1.0 ? 1d : (score + .75);
 

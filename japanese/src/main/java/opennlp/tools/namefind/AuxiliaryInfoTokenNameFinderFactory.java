@@ -18,6 +18,7 @@
 package opennlp.tools.namefind;
 
 import opennlp.tools.util.featuregen.AdaptiveFeatureGenerator;
+import opennlp.tools.util.featuregen.AggregatedFeatureGenerator;
 import opennlp.tools.util.featuregen.BigramNameFeatureGenerator;
 import opennlp.tools.util.featuregen.CachedFeatureGenerator;
 import opennlp.tools.util.featuregen.OutcomePriorFeatureGenerator;
@@ -42,13 +43,13 @@ public class AuxiliaryInfoTokenNameFinderFactory extends TokenNameFinderFactory 
     AdaptiveFeatureGenerator featureGenerator = createFeatureGenerators();
 
     if (featureGenerator == null) {
-      featureGenerator = new CachedFeatureGenerator(
+      featureGenerator = new CachedFeatureGenerator(new AggregatedFeatureGenerator(
           new WindowFeatureGenerator(new TokenFeatureGenerator(), 2, 2),
           new WindowFeatureGenerator(new TokenClassFeatureGenerator(true), 2, 2),
           new OutcomePriorFeatureGenerator(),
           new PreviousMapFeatureGenerator(),
           new BigramNameFeatureGenerator(),
-          new SentenceFeatureGenerator(true, false));
+          new SentenceFeatureGenerator(true, false)));
     }
 
     return new AuxiliaryInfoNameContextGenerator(featureGenerator);

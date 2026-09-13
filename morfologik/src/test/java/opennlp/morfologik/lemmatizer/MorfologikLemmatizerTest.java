@@ -19,9 +19,9 @@ package opennlp.morfologik.lemmatizer;
 
 import java.nio.file.Path;
 
-import opennlp.morfologik.builder.POSDictionaryBuilderTest;
-
 import org.junit.jupiter.api.Test;
+
+import opennlp.morfologik.builder.POSDictionaryBuilderTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

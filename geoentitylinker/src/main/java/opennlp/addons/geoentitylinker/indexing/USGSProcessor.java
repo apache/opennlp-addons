@@ -1,11 +1,12 @@
 /*
- * Copyright 2014 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,8 +43,11 @@ public class USGSProcessor {
 
   public static void main(String[] args) {
     try {
-      Map<String, AdminBoundary> provData = getProvData(new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"), GazetteerIndexer.GazType.USGS);
-      process(new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"), new File("C:\\temp\\gazetteers\\usgsdata\\NationalFile_20140601.txt"), null, null);
+      Map<String, AdminBoundary> provData = getProvData(
+          new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"),
+          GazetteerIndexer.GazType.USGS);
+      process(new File("C:\\temp\\gazetteers\\usgsdata\\GOVT_UNITS_20140601.txt"),
+          new File("C:\\temp\\gazetteers\\usgsdata\\NationalFile_20140601.txt"), null, null);
     } catch (Exception ex) {
       Logger.getLogger(USGSProcessor.class.getName()).log(Level.SEVERE, null, ex);
     }
@@ -90,7 +94,8 @@ public class USGSProcessor {
           AdminBoundary get = lookupMap.get(admincode + "." + ccode);
           String countyname = "";
           if (get == null) {
-            System.out.println("null...continuing to index" + " ccode: " + ccode + " , admincode: " + admincode + " , placename: " + placeName);
+            System.out.println("null...continuing to index" + " ccode: " + ccode
+                + " , admincode: " + admincode + " , placename: " + placeName);
             continue;
 
           }
@@ -102,7 +107,8 @@ public class USGSProcessor {
           if (!get.countyCode().equals("NO_DATA_FOUND_VALUE")) {
             countyCode = get.countyCode();
           }
-          String hierarchy = get.countryName() + ", " + get.provinceName() + ", " + countyname + ", " + placeName;
+          String hierarchy = get.countryName() + ", " + get.provinceName() + ", " + countyname
+              + ", " + placeName;
 
           if (states.containsKey(get.provinceName())) {
             StateCentroid entry = states.get(get.provinceName());
@@ -123,9 +129,12 @@ public class USGSProcessor {
           doc.add(new TextField("latitude", lat, Field.Store.YES));
           doc.add(new TextField("longitude", lon, Field.Store.YES));
           doc.add(new StringField("loctype", dsg, Field.Store.YES));
-          doc.add(new StringField("admincode", (get.countryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
+          doc.add(new StringField("admincode",
+              (get.countryCode() + "." + get.getProvCode()).toLowerCase(), Field.Store.YES));
           doc.add(new StringField("countrycode", get.countryCode().toLowerCase(), Field.Store.YES));
-          doc.add(new StringField("countycode", (get.countryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(), Field.Store.YES));
+          doc.add(new StringField("countycode",
+              (get.countryCode() + "." + get.getProvCode() + "." + countyCode).toLowerCase(),
+              Field.Store.YES));
 
           doc.add(new StringField("locid", id, Field.Store.YES));
           doc.add(new StringField("gazsource", "usgs", Field.Store.YES));
@@ -213,8 +222,8 @@ public class USGSProcessor {
         String stateName = values[6];
         String countryCode = values[7];
         String countryName = values[8];
-        AdminBoundary adminBoundary = new AdminBoundary(countryCode, countryName, stateCode, stateName, countyCode,
-                countyName, null, null, null);
+        AdminBoundary adminBoundary = new AdminBoundary(countryCode, countryName, stateCode,
+                stateName, countyCode, countyName, null, null, null);
         outmap.put(stateCode + "." + countyCode, adminBoundary);
         //  System.out.println(adminBoundary);
 

@@ -1,11 +1,12 @@
 /*
- * Copyright 2014 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,11 +50,13 @@ public class GeonamesProcessor {
   }
 
   public static void process(File countryCodesLookup, File adm1CodesLookup,
-                             File geonamesGazetteer, File outputCountryContext, IndexWriter w) throws IOException {
+                             File geonamesGazetteer, File outputCountryContext, IndexWriter w)
+      throws IOException {
     Map<String, String> countryCodes = getCountryCodes(countryCodesLookup);
 
     Map<String, AdminBoundary> adm1s = getProvData(adm1CodesLookup, countryCodes);
-    //  List<AdminBoundary> adm2s = getCountryContextFromFile(new File("C:\\temp\\gazetteers\\geonamesdata\\admin2Codes.txt"));
+    //  List<AdminBoundary> adm2s = getCountryContextFromFile(
+    //  new File("C:\\temp\\gazetteers\\geonamesdata\\admin2Codes.txt"));
     //admin2Codes.txt
 
     readFile(geonamesGazetteer, GazetteerIndexer.GazType.GEONAMES, adm1s, countryCodes, w);
@@ -62,12 +65,14 @@ public class GeonamesProcessor {
 
   }
 
-  private static Map<String, AdminBoundary> getProvData(File adm1CodesLookupFile, Map<String, String> ccodes) {
-    System.out.println("Attempting to read geonames province data from: " + adm1CodesLookupFile.getPath());
+  private static Map<String, AdminBoundary> getProvData(File adm1CodesLookupFile,
+      Map<String, String> ccodes) {
+    System.out.println("Attempting to read geonames province data from: "
+        + adm1CodesLookupFile.getPath());
 
     Map<String, AdminBoundary> outmap = new HashMap<>();
     Set<String> nullcodes = new HashSet<>();
-    try (BufferedReader reader = new BufferedReader(new FileReader(adm1CodesLookupFile))){
+    try (BufferedReader reader = new BufferedReader(new FileReader(adm1CodesLookupFile))) {
       String line;
       while ((line = reader.readLine()) != null) {
 
@@ -99,12 +104,14 @@ public class GeonamesProcessor {
         if (cname == null) {
           nullcodes.add(ccode);
         }
-        AdminBoundary data = new AdminBoundary(ccode, cname, pcode, pname, "NO_DATA_FOUND", "NO_DATA_FOUND", cname, pname, "NO_DATA_FOUND");
+        AdminBoundary data = new AdminBoundary(ccode, cname, pcode, pname, "NO_DATA_FOUND",
+            "NO_DATA_FOUND", cname, pname, "NO_DATA_FOUND");
         //  System.out.println(data);
         outmap.put(ccode + "." + pcode, data);
 
       }
-      System.out.println("INFO: there were " + nullcodes.size() + " null prov codes. This is due to inconsistencies in reference data.");
+      System.out.println("INFO: there were " + nullcodes.size()
+          + " null prov codes. This is due to inconsistencies in reference data.");
     } catch (IOException ex) {
       ex.printStackTrace();
     }
@@ -116,7 +123,7 @@ public class GeonamesProcessor {
 
   private static Map<String, String> getCountryCodes(File countryContextFile) {
     Map<String, String> ccs = new HashMap<>();
-    try (BufferedReader reader = new BufferedReader(new FileReader(countryContextFile))){
+    try (BufferedReader reader = new BufferedReader(new FileReader(countryContextFile))) {
       String line;
       boolean start = false;
       while ((line = reader.readLine()) != null) {
