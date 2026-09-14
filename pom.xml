@@ -126,7 +126,7 @@
         <argLine />
 
         <opennlp.core.groupId>org.apache.opennlp</opennlp.core.groupId>
-        <opennlp.version>3.0.0-M5</opennlp.version>
+        <opennlp.version>3.0.0-M6</opennlp.version>
         <opennlp.forkCount>1.0C</opennlp.forkCount>
 
         <slf4j.version>2.0.18</slf4j.version>
