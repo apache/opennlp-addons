@@ -32,15 +32,6 @@
           <entry>Detects and links geographic entities</entry>
         </row>
         <row>
-<<<<<<< HEAD
-          <entry><code>japanese</code></entry>
-          <entry>Adds features for Japanese text processing</entry>
-=======
-          <entry><code>liblinear</code></entry>
-          <entry>Supplies LIBLINEAR-backed model support</entry>
->>>>>>> origin/main
-        </row>
-        <row>
           <entry><code>modelbuilder</code></entry>
           <entry>Provides model-building utilities</entry>
         </row>
