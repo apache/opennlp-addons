@@ -31,10 +31,6 @@
           <entry><code>geoentitylinker</code></entry>
           <entry>Detects and links geographic entities</entry>
         </row>
-        <row>
-          <entry><code>liblinear</code></entry>
-          <entry>Supplies LIBLINEAR-backed model support</entry>
-        </row>
       </tbody>
     </tgroup>
   </table>
