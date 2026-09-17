@@ -40,7 +40,6 @@ Currently, the repository has the following modules:
 
 * `geoentitylinker` : Links place names found in text to entries of a gazetteer index.
 * `japanese` : Feature generators and a name finder factory for Japanese text.
-* `liblinear` : LIBLINEAR based machine learning implementation.
 * `modelbuilder` : Utilities for semi-supervised generation of name finder models.
 * `opennlp-addons-docs` : The DocBook sources of the add-ons manual.
 

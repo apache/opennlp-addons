@@ -36,10 +36,6 @@
           <entry>Adds features for Japanese text processing</entry>
         </row>
         <row>
-          <entry><code>liblinear</code></entry>
-          <entry>Supplies LIBLINEAR-backed model support</entry>
-        </row>
-        <row>
           <entry><code>modelbuilder</code></entry>
           <entry>Provides model-building utilities</entry>
         </row>
