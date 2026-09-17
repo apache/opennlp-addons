@@ -28,7 +28,7 @@
           <code>opennlp-addons</code> artifact is a build POM and is not an application dependency.</para>
     <programlisting language="xml"><![CDATA[<dependency>
   <groupId>org.apache.opennlp.addons</groupId>
-  <artifactId>japanese</artifactId>
+  <artifactId>${addon.artifactId}</artifactId>
   <version>${opennlp-addons.version}</version>
 </dependency>]]></programlisting>
     <para>Use the same add-ons version for each add-on in one application.</para>
@@ -39,7 +39,7 @@
           against the OpenNLP 3.x release selected by the root <code>opennlp.version</code> property. A module
           that requires an API still under review can override that property on its development branch.</para>
     <para>Before a 3.x release is available from Maven Central, install the selected add-on from a local checkout:</para>
-    <screen><![CDATA[mvn -pl japanese -am install]]></screen>
+    <screen><![CDATA[mvn -pl <module> -am install]]></screen>
     <para>Then use <code><?eval ${project.version}?></code> as <code>opennlp-addons.version</code> in the
           consuming build.</para>
   </section>
