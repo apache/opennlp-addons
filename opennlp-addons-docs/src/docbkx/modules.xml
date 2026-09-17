@@ -39,10 +39,6 @@
           <entry><code>liblinear</code></entry>
           <entry>Supplies LIBLINEAR-backed model support</entry>
         </row>
-        <row>
-          <entry><code>modelbuilder</code></entry>
-          <entry>Provides model-building utilities</entry>
-        </row>
       </tbody>
     </tgroup>
   </table>
