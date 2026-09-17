@@ -37,7 +37,7 @@
           classes, unit and integration tests, RAT license-header checks, and dependency-license reporting.
           Add <code>-Pjacoco</code> to generate coverage reports.</para>
     <para>Build one module and its reactor dependencies with <code>-pl</code> and <code>-am</code>:</para>
-    <screen><![CDATA[mvn -pl japanese -am verify -Dopennlp.forkCount=1]]></screen>
+    <screen><![CDATA[mvn -pl <module> -am verify -Dopennlp.forkCount=1]]></screen>
   </section>
   <section xml:id="building.manual">
     <title>Generate the manual</title>
