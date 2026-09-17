@@ -22,14 +22,6 @@
 <chapter xml:id="modules" xmlns="http://docbook.org/ns/docbook">
   <title>Module Catalog</title>
   <para>All modules use the Maven group <code>org.apache.opennlp.addons</code>.</para>
-  <table xml:id="modules.catalog">
-    <title>Add-ons modules</title>
-    <tgroup cols="2">
-      <thead><row><entry>Artifact</entry><entry>Function</entry></row></thead>
-      <tbody>
-      </tbody>
-    </tgroup>
-  </table>
-  <para>Depend on the artifact for the selected module. The root <code>opennlp-addons</code> POM coordinates the
-        reactor build and is not a combined add-ons JAR.</para>
+  <para>The repository currently ships no add-on modules. The former add-ons were removed because
+        Apache OpenNLP itself, or a maintained replacement, now covers their functionality.</para>
 </chapter>
