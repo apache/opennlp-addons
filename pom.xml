@@ -111,7 +111,6 @@
         <module>geoentitylinker</module>
         <module>liblinear</module>
         <module>modelbuilder</module>
-        <module>jwnl</module>
     </modules>
 
     <properties>
