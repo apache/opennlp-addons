@@ -38,7 +38,11 @@ Each add-on is published as its own Maven artifact, so an application can take a
 
 Currently, the repository has the following modules:
 
+<<<<<<< HEAD
 * `japanese` : Feature generators and a name finder factory for Japanese text.
+=======
+* `geoentitylinker` : Links place names found in text to entries of a gazetteer index.
+>>>>>>> origin/main
 * `liblinear` : LIBLINEAR based machine learning implementation.
 * `modelbuilder` : Utilities for semi-supervised generation of name finder models.
 * `opennlp-addons-docs` : The DocBook sources of the add-ons manual.
@@ -52,7 +56,7 @@ Depend on the module you need, not on the parent `opennlp-addons` POM:
 ```
 <dependency>
     <groupId>org.apache.opennlp.addons</groupId>
-    <artifactId>japanese</artifactId>
+    <artifactId>${addon.artifactId}</artifactId>
     <version>${opennlp-addons.version}</version>
 </dependency>
 ```
@@ -60,7 +64,7 @@ Depend on the module you need, not on the parent `opennlp-addons` POM:
 #### Gradle
 
 ```
-compile group: "org.apache.opennlp.addons", name: "japanese", version: "${opennlp-addons.version}"
+compile group: "org.apache.opennlp.addons", name: "${addon.artifactId}", version: "${opennlp-addons.version}"
 ```
 
 > [!NOTE]

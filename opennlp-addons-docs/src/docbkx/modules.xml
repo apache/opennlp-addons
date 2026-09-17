@@ -28,8 +28,13 @@
       <thead><row><entry>Artifact</entry><entry>Function</entry></row></thead>
       <tbody>
         <row>
+<<<<<<< HEAD
           <entry><code>japanese</code></entry>
           <entry>Adds features for Japanese text processing</entry>
+=======
+          <entry><code>geoentitylinker</code></entry>
+          <entry>Detects and links geographic entities</entry>
+>>>>>>> origin/main
         </row>
         <row>
           <entry><code>liblinear</code></entry>
