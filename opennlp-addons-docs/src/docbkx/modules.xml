@@ -31,10 +31,6 @@
           <entry><code>geoentitylinker</code></entry>
           <entry>Detects and links geographic entities</entry>
         </row>
-        <row>
-          <entry><code>modelbuilder</code></entry>
-          <entry>Provides model-building utilities</entry>
-        </row>
       </tbody>
     </tgroup>
   </table>

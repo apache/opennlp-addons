@@ -109,7 +109,6 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>geoentitylinker</module>
-        <module>modelbuilder</module>
     </modules>
 
     <properties>
