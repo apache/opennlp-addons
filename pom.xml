@@ -109,10 +109,8 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>geoentitylinker</module>
-        <module>japanese</module>
         <module>liblinear</module>
         <module>modelbuilder</module>
-        <module>morfologik</module>
     </modules>
 
     <properties>
