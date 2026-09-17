@@ -108,7 +108,6 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
-        <module>geoentitylinker</module>
     </modules>
 
     <properties>

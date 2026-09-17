@@ -38,7 +38,6 @@ Each add-on is published as its own Maven artifact, so an application can take a
 
 Currently, the repository has the following modules:
 
-* `geoentitylinker` : Links place names found in text to entries of a gazetteer index.
 * `opennlp-addons-docs` : The DocBook sources of the add-ons manual.
 
 ## Getting Started
