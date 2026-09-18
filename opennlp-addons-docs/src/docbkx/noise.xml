@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="tools.noise" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<title>Noise Scoring</title>
+
+	<section xml:id="tools.noise.introduction">
+		<title>Introduction</title>
+		<para>
+			The package <code>opennlp.tools.noise</code> detects possible optical character
+			recognition (OCR) errors, repetitive text, and encoded binary data. Annotations
+			on the <code>opennlp:noise</code> layer use these severities in increasing order:
+			<code>misspelled</code>, <code>damaged</code>, <code>gibberish</code>, and
+			<code>binaryish</code>. A score in <code>(0, 1]</code> indicates the strength of
+			the evidence within that severity. It is not a probability. Scores from
+			different severities are not comparable. Scoring does not change the text.
+		</para>
+		<para>
+			<code>StructuralNoiseScorer</code> uses rules and includes no model or dictionary.
+			It examines whitespace-delimited tokens after trimming common ASCII punctuation.
+			Cores shorter than 3 characters or containing non-ASCII characters are skipped.
+			The rules count consonant runs, repeated characters, vowel proportions, and
+			letter-digit transitions. Binary-content detection also checks length and
+			case changes. A digit in a long identifier is insufficient for that category.
+		</para>
+		<para>
+			These heuristics can mark technical identifiers or unfamiliar words as noise
+			and miss damaged text with ordinary letter patterns. An empty result is not a
+			quality guarantee. The rules have no published accuracy benchmark.
+		</para>
+	</section>
+
+	<section xml:id="tools.noise.scoring">
+		<title>Scoring text</title>
+		<para>
+			The scorer accepts text and spans to exclude. A dictionary predicate accepts
+			lowercase words. Recognized words are omitted from the results. Otherwise, a
+			token with no structural or binary-content signal is reported as misspelled
+			when a single OCR substitution produces a dictionary word:
+			<programlisting language="java">
+<![CDATA[Set<String> words = Set.of("modern", "times");
+NoiseScorer scorer = new StructuralNoiseScorer(words::contains);
+
+String text = "rnodern tirnes and zxkcvbnmsdfg";
+for (NoiseSpan noise : scorer.score(text, List.of())) {
+    System.out.println(noise.severity() + " " + noise.span());
+}]]>
+			</programlisting>
+			The substitution <code>rn</code> to <code>m</code> produces the dictionary
+			words <code>modern times</code>. Consecutive results separated by whitespace
+			are merged:
+			<programlisting>
+<![CDATA[misspelled [0..14)
+gibberish [19..31)]]>
+			</programlisting>
+			Without a dictionary, this example reports only the gibberish span.
+		</para>
+		<para>
+			Exclusions must fit within the text. Empty exclusions have no effect. A token
+			that overlaps an exclusion is omitted, and results are not merged across
+			excluded whitespace. Returned spans use UTF-16 offsets into the original text.
+		</para>
+	</section>
+
+	<section xml:id="tools.noise.pipeline">
+		<title>Document annotations</title>
+		<para>
+			<code>NoiseAnnotator</code> provides <code>opennlp:noise</code>. In its
+			default mode it requires <code>opennlp:assets</code> and excludes those spans
+			from scoring. Run the asset annotator first:
+			<programlisting language="java">
+<![CDATA[String text = "The scan contains zxkcvbnmsdfg here.";
+Document document = new AssetAnnotator().annotate(Document.of(text));
+document = new NoiseAnnotator().annotate(document);
+
+List<Annotation<NoiseSpan>> noise = document.get(NoiseAnnotator.NOISE);]]>
+			</programlisting>
+			This produces a gibberish annotation for <code>zxkcvbnmsdfg</code>. The asset
+			layer may be empty, but it must be present. To scan without asset detection,
+			select standalone mode:
+			<programlisting language="java">
+<![CDATA[Document document = new NoiseAnnotator(new StructuralNoiseScorer(), false)
+    .annotate(Document.of("The scan contains zxkcvbnmsdfg here."));
+List<Annotation<NoiseSpan>> noise = document.get(NoiseAnnotator.NOISE);]]>
+			</programlisting>
+		</para>
+	</section>
+</chapter>
