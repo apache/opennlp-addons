@@ -377,6 +377,11 @@
                                 <exclude>release.properties</exclude>
                                 <!-- Original multilingual input data used by the embedding benchmark. -->
                                 <exclude>dev/embeddings/parity/sentences.txt</exclude>
+                                <!-- Corpus checksum tables and invented interchange data. -->
+                                <exclude>dev/legal-corpus/bouvier-snapshots.tsv</exclude>
+                                <exclude>dev/legal-corpus/reporter-snapshots.tsv</exclude>
+                                <exclude>dev/legal-corpus/fixtures/mini-dictionary.tsv</exclude>
+                                <exclude>dev/legal-corpus/fixtures/mini-passages.jsonl</exclude>
                                 <exclude>.gitattributes</exclude>
                                 <!-- A NOTICE fragment, which carries no license header of its own. -->
                                 <exclude>src/license/NOTICE.template</exclude>

@@ -104,6 +104,18 @@
           </excludes>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <!-- These invented corpus fixtures use formats that do not admit an AL header. -->
+          <excludes combine.children="append">
+            <exclude>src/test/resources/opennlp/embeddings/corpus/mini-bouvier.htm</exclude>
+            <exclude>src/test/resources/opennlp/embeddings/corpus/mini-dictionary.tsv</exclude>
+            <exclude>src/test/resources/opennlp/embeddings/corpus/mini-passages.jsonl</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 

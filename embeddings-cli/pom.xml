@@ -32,6 +32,7 @@
   <properties>
     <opennlp.version>3.0.0-SNAPSHOT</opennlp.version>
     <jmh.version>1.37</jmh.version>
+    <lucene.version>10.4.0</lucene.version>
   </properties>
   <dependencies>
     <dependency>
@@ -79,6 +80,13 @@
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <!-- Lucene is used only by the independent HNSW comparison tests. -->
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>${lucene.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>

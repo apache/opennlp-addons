@@ -74,6 +74,7 @@
       <outputDirectory>.</outputDirectory>
       <includes>
         <include>dev/embeddings/**</include>
+        <include>dev/legal-corpus/**</include>
         <include>embeddings-core/src/test/java/opennlp/embeddings/TestTeacherGenerator.java</include>
       </includes>
     </fileSet>
