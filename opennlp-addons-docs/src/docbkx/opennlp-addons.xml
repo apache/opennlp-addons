@@ -56,4 +56,5 @@
   <xi:include href="modules.xml" />
   <xi:include href="building.xml" />
   <xi:include href="addon-guidelines.xml" />
+  <xi:include href="artifacts.xml" />
 </book>
