@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="addons.document.predicates" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Conditional and filter annotators</title>
+<para>The examples use the text <code>The dog barks. It naps.</code>, tokenized on whitespace.</para>
+	<section xml:id="tools.document.custom">
+		<title>Writing a custom annotator</title>
+		<para>
+			The annotator below defines its own key in its own code, reads the token
+			layer, and provides one integer annotation per token; the analyzer's
+			build-time validation guarantees a tokenizer ran earlier:
+		</para>
+		<programlisting language="java"><![CDATA[
+static final LayerKey<Integer> TOKEN_LENGTHS =
+    LayerKey.of("token-lengths", Integer.class);
+
+class TokenLengthAnnotator implements DocumentAnnotator {
+
+  @Override
+  public Document annotate(Document document) {
+    DocumentAnnotators.requireLayers(document, Layers.TOKENS);
+    List<Annotation<String>> tokens = document.get(Layers.TOKENS);
+    List<Annotation<Integer>> lengths = new ArrayList<>(tokens.size());
+    for (Annotation<String> token : tokens) {
+      lengths.add(new Annotation<>(token.span(), token.value().length()));
+    }
+    return document.with(TOKEN_LENGTHS, lengths);
+  }
+
+  @Override
+  public Set<LayerKey<?>> requires() {
+    return Set.of(Layers.TOKENS);
+  }
+
+  @Override
+  public Set<LayerKey<?>> provides() {
+    return Set.of(TOKEN_LENGTHS);
+  }
+}]]>
+		</programlisting>
+		<para>
+			Because the key declares the value type, the values come back as numbers
+			without a cast; for the text above the five values are
+			<code>3, 3, 6, 2, 5</code>, each on its token's span:
+		</para>
+		<programlisting language="java"><![CDATA[
+List<Annotation<Integer>> lengths = document.get(TOKEN_LENGTHS);
+int firstTokenLength = lengths.get(0).value(); // 3, for "The" at [0..3)]]>
+		</programlisting>
+		<para>
+			Required layers must be present, but they may be empty: an empty token layer
+			yields the annotator's provided layers present but empty, so a pipeline degrades
+			gracefully on documents without content. An absent required layer is rejected
+			with an <code>IllegalArgumentException</code> naming the layer, because a
+			missing pipeline stage is an assembly error, not an empty document.
+			<code>DocumentAnnotators.requireLayers</code> performs exactly that rejection,
+			including the null check on the document, and is what the toolkit's own
+			adapters use.
+		</para>
+	</section>
+
+	<section xml:id="tools.document.predicates">
+		<title>Conditional and filter annotators</title>
+		<para>
+			<code>ConditionalAnnotator</code> selects a pipeline stage from a predicate over
+			the document. The two-argument form runs its delegate when the predicate is true.
+			When it is false, the delegate's output layers are added empty:
+		</para>
+		<programlisting language="java">
+				<![CDATA[
+DocumentAnnotator guarded =
+    new ConditionalAnnotator(d -> d.text().length() >= 20, new TokenLengthAnnotator());
+// A short document has the output layer, with no annotations.]]>
+		</programlisting>
+		<para>
+			The three-argument form selects between explicit true and false branches. Both
+			branches must provide the same layers. The wrapper declares the union of their
+			required layers:
+		</para>
+		<programlisting language="java">
+				<![CDATA[
+LayerKey<Integer> SELECTED_LENGTHS =
+    LayerKey.of("token-lengths-selected", Integer.class);
+
+DocumentAnnotator selected = new ConditionalAnnotator(
+    d -> d.text().length() >= 20,
+    new FilterAnnotator<>(TOKEN_LENGTHS, SELECTED_LENGTHS, a -> a.value() >= 5),
+    new FilterAnnotator<>(TOKEN_LENGTHS, SELECTED_LENGTHS, a -> a.value() < 5));]]>
+		</programlisting>
+		<para>
+			<code>FilterAnnotator</code> copies matching annotations to a distinct layer without
+			modifying the source layer:
+		</para>
+		<programlisting language="java">
+				<![CDATA[
+LayerKey<Integer> SELECTED_LENGTHS =
+    LayerKey.of("token-lengths-selected", Integer.class);
+
+DocumentAnnotator filter =
+    new FilterAnnotator<>(TOKEN_LENGTHS, SELECTED_LENGTHS, a -> a.value() >= 5);
+// SELECTED_LENGTHS contains 6 and 5. TOKEN_LENGTHS still contains all five values.]]>
+		</programlisting>
+		<para>
+			A filter function receives an annotation and can also receive the document,
+			so it can compare a normalized value with
+			the original text at the annotation span:
+		</para>
+		<programlisting language="java">
+				<![CDATA[
+LayerKey<String> NORMALIZED_WORDS =
+    LayerKey.of("normalized-words", String.class);
+LayerKey<String> CAPITALIZED_WORDS =
+    LayerKey.of("capitalized-words", String.class);
+
+DocumentAnnotator capitalized = new FilterAnnotator<>(
+    NORMALIZED_WORDS, CAPITALIZED_WORDS,
+    (document, word) -> {
+      Span span = word.span();
+      if (span.length() == 0) {
+        return false;
+      }
+      int initial = Character.codePointAt(document.text(), span.getStart());
+      return Character.charCount(initial) <= span.length() && Character.isUpperCase(initial);
+    });]]>
+		</programlisting>
+		<para>
+			Offsets use UTF-16 units, while capitalization is tested on Unicode code points.
+			For example, the Deseret capital letter U+10400 starts the Java string
+			<code>"\uD801\uDC00lice"</code> and occupies UTF-16 offsets 0 to 2.
+			Empty spans and spans containing only part of that
+			character do not pass the filter.
+		</para>
+		<para>
+			Both wrappers reject a document that lacks a required layer, with an
+			<code>IllegalArgumentException</code> naming the layer: the filter needs its
+			source layer, and the conditional needs the declared inputs of every branch.
+			For the filter above, a document without the token-length layer produces:
+		</para>
+		<programlisting language="java">
+				<![CDATA[
+filter.annotate(Document.of("The dog barks. It naps."));
+// IllegalArgumentException: document lacks the required layer token-lengths<Integer>]]>
+		</programlisting>
+		<para>
+			<code>PredicateManualExampleTest</code> runs the examples above.
+		</para>
+	</section>
+</chapter>
