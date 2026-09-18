@@ -57,4 +57,5 @@
   <xi:include href="building.xml" />
   <xi:include href="addon-guidelines.xml" />
   <xi:include href="subword.xml" />
+  <xi:include href="embeddings.xml" />
 </book>

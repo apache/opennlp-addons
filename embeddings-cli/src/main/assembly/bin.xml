@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements.  See the NOTICE file
+   distributed with this work for additional information
+   regarding copyright ownership.  The ASF licenses this file
+   to you under the Apache License, Version 2.0 (the
+   "License"); you may not use this file except in compliance
+   with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
+  <id>bin</id>
+  <formats><format>zip</format><format>tar.gz</format></formats>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <dependencySets>
+    <dependencySet>
+      <scope>runtime</scope>
+      <outputDirectory>lib</outputDirectory>
+      <unpack>false</unpack>
+      <useProjectArtifact>true</useProjectArtifact>
+    </dependencySet>
+    <dependencySet>
+      <scope>runtime</scope>
+      <outputDirectory>licenses/${artifact.groupId}.${artifact.artifactId}</outputDirectory>
+      <unpack>true</unpack>
+      <useProjectArtifact>false</useProjectArtifact>
+      <unpackOptions>
+        <includes>
+          <include>META-INF/LICENSE*</include>
+          <include>META-INF/NOTICE*</include>
+          <include>META-INF/DEPENDENCIES*</include>
+          <include>LICENSE*</include>
+          <include>NOTICE*</include>
+          <include>ThirdPartyNotices*</include>
+        </includes>
+      </unpackOptions>
+    </dependencySet>
+  </dependencySets>
+  <fileSets>
+    <fileSet>
+      <directory>src/main/bin</directory>
+      <outputDirectory>bin</outputDirectory>
+      <fileMode>0755</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/conf</directory>
+      <outputDirectory>conf</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>..</directory>
+      <outputDirectory>.</outputDirectory>
+      <includes><include>LICENSE</include><include>NOTICE</include></includes>
+    </fileSet>
+    <fileSet>
+      <directory>../embeddings</directory>
+      <outputDirectory>embeddings</outputDirectory>
+      <includes><include>README.md</include><include>TRAINING.md</include></includes>
+    </fileSet>
+    <fileSet>
+      <directory>..</directory>
+      <outputDirectory>.</outputDirectory>
+      <includes>
+        <include>dev/embeddings/**</include>
+        <include>embeddings-core/src/test/java/opennlp/embeddings/TestTeacherGenerator.java</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+  <files>
+    <file><source>README.md</source><outputDirectory>.</outputDirectory></file>
+    <file>
+      <source>src/main/bin/embeddings</source>
+      <outputDirectory>bin</outputDirectory>
+      <destName>opennlp-embeddings</destName>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>src/main/bin/embeddings.bat</source>
+      <outputDirectory>bin</outputDirectory>
+      <destName>opennlp-embeddings.bat</destName>
+      <fileMode>0755</fileMode>
+    </file>
+  </files>
+</assembly>
