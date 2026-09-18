@@ -489,4 +489,71 @@ document = new RegionAwareMoneyAnnotator().annotate(document);]]>
 			<code>LocationPipelineExampleTest</code> asserts the behavior shown here.
 		</para>
 	</section>
+
+	<section xml:id="tools.geo.hierarchy">
+		<title>Containment hierarchy</title>
+		<para>
+			<code>HierarchyAnnotator</code> expands each geocoded mention into the
+			chain of places that contain it. It requires the locations layer from
+			<code>GeocodeAnnotator</code> and a <code>PlaceHierarchy</code> of parent
+			links. Ancestors are nearest first, excluding the mentioned place.
+			Each chain retains the mention's original character span.
+		</para>
+		<para>
+			The join identifier is the value of a gazetteer attribute, by default
+			<code>GazetteerEntry.ATTRIBUTE_KEY_WHOSONFIRST</code>. A constructor overload
+			accepts another key. The value is passed unchanged to the hierarchy;
+			it is independent of the gazetteer entry's source and record identifier.
+			The example uses custom identifiers and in-memory records. It requires
+			no model or external data file.
+		</para>
+		<programlisting language="java"><![CDATA[String joinKey = "customer:district";
+GazetteerEntry place = new GazetteerEntry("catalog", "record-7", "Le Marais",
+    List.of(), new GeoPoint(48.859, 2.361), "FR", List.of(), 0,
+    GazetteerEntry.FEATURE_CLASS_CITY,
+    Map.of(joinKey, new AttributeValue("district-1", "customer", "")));
+InMemoryGazetteer gazetteer = InMemoryGazetteer.fromEntries(List.of(place));
+ContainmentSpine hierarchy = ContainmentSpine.builder()
+    .add("district-1", "city-1", "Le Marais", "neighbourhood")
+    .add("city-1", "country-1", "Paris", "locality")
+    .add("country-1", null, "France", "country")
+    .build();
+
+Dictionary names = new Dictionary();
+names.put(new StringList("Le", "Marais"));
+names.put(new StringList("Narnia"));
+DocumentAnalyzer analyzer = DocumentAnalyzer.builder()
+    .add(new SentenceDetectorAnnotator(new NewlineSentenceDetector()))
+    .add(new TokenizerAnnotator(SimpleTokenizer.INSTANCE))
+    .add(new NameFinderAnnotator(new DictionaryNameFinder(names, "location")))
+    .add(new GeocodeAnnotator(new PopulationPriorGeocoder(gazetteer)))
+    .add(new HierarchyAnnotator(hierarchy, joinKey))
+    .build();
+
+Document document = analyzer.analyze("\uD83D\uDE86 Le Marais.\nLe Marais and Narnia.");
+List<Annotation<ContainmentChain>> chains =
+    document.get(HierarchyAnnotator.CONTAINMENT);
+// Both Le Marais mentions: Paris, France
+// Original UTF-16 spans: [3, 12) and [14, 23)]]></programlisting>
+		<para>
+			<code>HierarchyPipelineExampleTest</code> runs this listing. The name
+			finder reports Narnia, but the gazetteer has no matching record, so
+			it receives no location or containment annotation. Reusing the analyzer
+			with empty text produces the same layers with empty results.
+		</para>
+		<para>
+			Location candidates are grouped by start and end offsets, regardless of span
+			type. The first candidate determines the chain. A missing join attribute or an empty
+			hierarchy result produces no chain; later candidates are not substituted.
+			Unknown identifiers and root places normally return empty results.
+		</para>
+		<para>
+			An existing containment layer or mismatched annotation and resolution
+			offsets cause <code>IllegalArgumentException</code> before any hierarchy
+			lookup. All locations are checked, including lower-ranked candidates.
+			A null hierarchy result, a null ancestor, or an ancestor matching the
+			queried identifier also causes <code>IllegalArgumentException</code>.
+			Provider failures propagate to the application; no partial document is returned.
+		</para>
+	</section>
 </chapter>
