@@ -23,9 +23,12 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import opennlp.tools.embeddings.TextEmbedder;
 import opennlp.tools.embeddings.TextEmbedderProvider;
+import opennlp.tools.util.InvalidFormatException;
 import opennlp.tools.util.ext.ProviderSpec;
 import opennlp.tools.util.ext.Providers;
 
@@ -109,5 +112,26 @@ class StaticTextEmbedderProviderTest {
     assertThrows(IllegalArgumentException.class, () -> provider.load(dir, null));
     assertThrows(IllegalArgumentException.class,
         () -> provider.load(dir, Map.of("lowerCase", "true")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testQuantizedDirectoryRequiresOneMatrix(boolean keepFloatMatrix, @TempDir Path dir)
+      throws Exception {
+    EmbeddingTestFixtures.writeSearchDirectory(dir);
+    ModelQuantizer.quantize(dir, 4, 42L);
+    if (!keepFloatMatrix) {
+      Files.delete(dir.resolve(ModelFileNames.SAFETENSORS));
+    }
+    assertEquals(!keepFloatMatrix, provider.supports(dir, Map.of()));
+    final ProviderSpec spec = ProviderSpec.of(dir, Map.of());
+    assertTrue(provider.supports(spec), "discovery must not inspect matrix files");
+    if (keepFloatMatrix) {
+      assertThrows(InvalidFormatException.class, () -> provider.create(spec));
+    } else {
+      try (TextEmbedder model = provider.create(spec)) {
+        assertArrayEquals(StaticEmbeddingModel.load(dir).embed("king"), model.embed("king"));
+      }
+    }
   }
 }

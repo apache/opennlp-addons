@@ -68,7 +68,8 @@ public final class StaticTextEmbedderProvider implements TextEmbedderProvider {
   /**
    * Checks the files in a model directory. Unlike {@link #supports(ProviderSpec)},
    * this convenience method inspects the file system. The tokenizer layout is checked
-   * by {@link #load(Path, Map)}.
+   * by {@link #load(Path, Map)}. The directory must hold exactly one float or
+   * quantized matrix file and a configuration file.
    *
    * @param model The model directory.
    * @param options An empty option map.
@@ -77,7 +78,8 @@ public final class StaticTextEmbedderProvider implements TextEmbedderProvider {
   public boolean supports(Path model, Map<String, String> options) {
     return model != null && options != null && options.isEmpty()
         && Files.isDirectory(model)
-        && Files.isRegularFile(model.resolve(ModelFileNames.SAFETENSORS))
+        && (Files.isRegularFile(model.resolve(ModelFileNames.SAFETENSORS))
+            ^ Files.isRegularFile(model.resolve(ModelFileNames.QUANTIZED)))
         && Files.isRegularFile(model.resolve(ModelFileNames.CONFIG));
   }
 
