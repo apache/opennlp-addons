@@ -138,7 +138,8 @@ public class FeedforwardPOSTaggerTest {
       "2020, *digit*",
       "B2B, *alnum*",
       "--, *other*",
-      "dog, *lower*"})
+      "dog, *lower*",
+      "'', *other*"})
   void testShapes(String word, String expected) {
     assertEquals(expected, FeedforwardPOSContext.shape(word));
   }
@@ -149,6 +150,8 @@ public class FeedforwardPOSTaggerTest {
       "dog, 2, og",
       "dog, 3, dog",
       "a, 2, a",
+      "a, 3, a",
+      "'', 2, ''",
       "running, 3, ing"})
   void testSuffixes(String word, int length, String expected) {
     assertEquals(expected, FeedforwardPOSContext.suffix(word, length));
