@@ -1,0 +1,225 @@
+# Golden false positive corpus for the PII extractors.
+#
+# Every line below must yield no mention at all from the widest configuration this
+# package offers, PiiPacks.allStructured(), which turns on every detector including the
+# national identifier packs that are off by default. A line that starts to match is a
+# regression: the detector became less specific than the standard it implements.
+#
+# The fixtures are near misses on purpose. Text is full of things shaped like the values
+# these detectors look for, and the cost of a false positive is real: a redaction pipeline
+# that masks order numbers, build identifiers, and version strings destroys the document it
+# was meant to make safe. Each section names the check that is expected to reject the line,
+# so a failure points at the rule that weakened rather than at a detector in general.
+#
+# Lines starting with # are comments, blank lines are skipped, and everything else is a
+# fixture. Leading and trailing whitespace of a fixture is kept, since a boundary check is
+# exactly what several of these exercise.
+
+# Payment cards: the digits are there but the Luhn check digit is not.
+card 4111111111111112
+card 4111 1111 1111 1112
+card 5500005555555558
+paid with 1234567812345678
+order 4111111111111111111111
+sku 49927398717
+
+# Payment cards: right checksum, wrong length for any issuer.
+value 79927398713
+value 799273987130123456789
+
+# IBAN: the country and the shape are right, the mod 97 check is not.
+iban DE89370400440532013001
+iban GB82WEST12345698765431
+iban FR1420041010050500013M02607
+
+# IBAN: valid check digits for a length the country does not use.
+iban DE8937040044053201
+iban NL91ABNA041716430012345
+
+# Phone numbers: too few or too many digits to be a subscriber number anywhere.
+call 555-123
+call 555 12
+extension 12345
+tracking 1234567890123456789012
+build 2024 0131 0942 1122 3344
+
+# Phone numbers: digit runs that carry no visible grouping at all.
+identifier 5551234567
+sequence 15551234567
+
+# Email: no top level domain that IANA has ever delegated.
+write to jane@example.invalidtld
+write to jane@localhost
+write to jane@example.c
+mailto jane@example.
+user@ example.com
+jane@@example.com
+@example.com
+jane@
+
+# Email: an at sign in prose rather than in an address.
+meet @ the office
+priced @ 40 each
+cc @jane on the thread
+
+# IPv4: an octet above 255, or a leading zero that no standard form uses.
+host 256.1.1.1
+host 192.168.1.256
+host 192.168.01.1
+host 300.300.300.300
+version 1.2.3.4.5
+release 10.15.7.1.2
+
+# IPv4: the addresses the extractor refuses as placeholders rather than hosts.
+host 0.0.0.0
+mask 255.255.255.255
+
+# IPv4: three groups is a version string, not an address.
+version 1.2.3
+opennlp 2.5.4
+schema 10.0.1
+
+# IPv6: too many groups, two compressions, or a group that is not hexadecimal.
+addr 1:2:3:4:5:6:7:8:9
+addr 1::2::3
+addr 2001:0db8:85a3:0000:0000:8a2g:0370:7334
+addr 12345::1
+ratio 1:2:3
+
+# IPv6: a timestamp is a colon separated number sequence too.
+at 12:34:56
+at 1:2:3:4
+duration 100:200:300:400
+
+# MAC: too few or too many groups, or a separator that changes halfway.
+mac 00:1b:44:11:3a
+mac 00:1b:44:11:3a:b7:c9
+mac 00:1b:44-11:3a:b7
+mac 00:1g:44:11:3a:b7
+
+# MAC: the addresses the extractor refuses as placeholders.
+mac 00:00:00:00:00:00
+mac ff:ff:ff:ff:ff:ff
+
+# AWS access key: the prefix is right, the body is not twenty uppercase characters.
+key AKIAIOSFODNN7EXAMPL
+key AKIAIOSFODNN7EXAMPLES
+key akiaiosfodnn7example
+key AKIAIOSFODNN7EXAMPL3S
+key ABIAIOSFODNN7EXAMPLE
+
+# GitHub token: the prefix is right, the body length is not.
+token ghp_0123456789abcdefghijklmnopqrstuvwxy
+token ghx_0123456789abcdefghijklmnopqrstuvwxyz0
+token ghp_
+token gh_0123456789abcdefghijklmnopqrstuvwxyz
+token github_pat_11ABCDEFG0abcdefghij
+
+# Context-gated identifiers: valid bare values and labeled checksum failures.
+device 860000000000009
+device IMEI: 860000000000008
+employee 046 454 286
+employee SIN: 046 454 287
+
+# JWT: three dot separated parts whose first part is not a JSON header.
+token bWFkZSB1cA.cGF5bG9hZA.c2lnbmF0dXJl
+token abc.def.ghi
+path src/main/java
+version 1.2.3-SNAPSHOT
+
+# JWT: a header that decodes to JSON without an algorithm claim, and one whose only
+# member merely ends in those three letters.
+token eyJ0eXAiOiJKV1QifQ.cGF5bG9hZA.c2lnbmF0dXJl
+token eyJub3RhbGciOiJIUzI1NiJ9.cGF5bG9hZA.c2lnbmF0dXJl
+token eyJhbGdvcml0aG0iOiJIUzI1NiJ9.cGF5bG9hZA.c2lnbmF0dXJl
+
+# Bitcoin: legacy addresses whose Base58Check checksum is wrong.
+btc 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb
+btc 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNL8
+btc 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3
+
+# Bitcoin: a legacy address containing a character the alphabet excludes.
+btc 1A1zP1eP5QGefi2DMPTfTL5SLmv70ivfNa
+btc 1A1zP1eP5QGefi2DMPTfTL5SLmv7IivfNa
+
+# Bitcoin: segwit addresses with a broken Bech32 checksum or mixed case.
+btc bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5
+btc BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7Kv8f3t4
+btc bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdp
+
+# Ethereum: forty hexadecimal digits with a mixed case that fails EIP-55. An address in
+# one case throughout carries no checksum and is a true positive, so none appears here.
+eth 0x52908400098527886E0F7030069857D2E4169Ee7
+eth 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD
+eth 0xFB6916095ca1df60bB79Ce92cE3Ea74c37c5d359
+
+# Ethereum: the wrong number of digits, or a digit that is not hexadecimal.
+eth 0x52908400098527886E0F7030069857D2E4169EE
+eth 0x52908400098527886E0F7030069857D2E4169EE77
+eth 0x52908400098527886E0F7030069857D2E4169EEG
+commit 0x1234abcd
+
+# Ethereum: the zero address, which names no account.
+eth 0x0000000000000000000000000000000000000000
+
+# ABA routing: nine digits whose weighted checksum is wrong.
+routing 021000022
+routing 123456789
+routing 111111111
+
+# ABA routing: a checksum that happens to work under a prefix nobody issues.
+routing 601000015
+
+# US SSN: the area, group, or serial ranges the SSA never issued.
+ssn 000-45-6789
+ssn 666-45-6789
+ssn 123-00-6789
+ssn 123-45-0000
+ssn 900-45-6789
+
+# US SSN: bare or inconsistently separated digits, which the extractor requires against.
+ssn 123456789
+ssn 123-456789
+ssn 123 45-6789
+ssn 123.45.6789
+ssn 12-345-6789
+
+# US ITIN: a group outside the ranges the IRS assigns.
+itin 900-49-1234
+itin 900-66-1234
+itin 900-69-1234
+itin 900-89-1234
+itin 900-93-1234
+itin 900-00-1234
+
+# UK NHS: ten digits whose mod 11 check digit is wrong. The bare form is used here because
+# a grouped ten digit number is also a validly formatted phone number, which the phone
+# detector reports and which no NHS rule can tell apart.
+nhs 9434765918
+nhs 1234567890
+nhs 9999999999
+
+# UK NHS: a check digit that computes to ten, which invalidates the number.
+nhs 8584345677
+
+# German tax identifier: eleven digits with a wrong ISO 7064 check digit.
+idnr 65929970488
+idnr 12345678901
+
+# German tax identifier: digit repetition the specification forbids.
+idnr 11123456780
+idnr 01234567890
+idnr 22233456789
+
+# URL credentials: a colon in a URL that separates a port, not a password.
+see https://example.com:8443/path
+see http://example.com:80
+see ftp://files.example.com:21/pub
+ratio is 3:4 overall
+
+# Values that are only shaped like something because of the words around them.
+invoice 2024-01-31
+range 100-200-300
+matrix 1-2-3-4-5
+uuid 123e4567-e89b-12d3-a456-426614174000
+sha 0123456789abcdef0123456789abcdef01234567

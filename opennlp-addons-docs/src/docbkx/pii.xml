@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="tools.pii" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<title>PII Detection</title>
+
+	<section xml:id="tools.pii.introduction">
+		<title>Introduction</title>
+		<para>
+			The package <code>opennlp.tools.pii</code> finds personally identifiable
+			mentions as exact spans over the original text. A
+			<code>PiiAnnotator</code> writes the <code>opennlp:pii</code> layer from a
+			<code>PiiExtractor</code>; the built-in <code>CursorPiiExtractor</code>
+			recognizes email addresses, phone numbers, IBANs, and payment card
+			numbers, each with a type constant and a normalized form. IBANs and card
+			numbers are checksum validated. Phone candidates use formatting and
+			length checks. An IBAN candidate must also match the
+			ISO 13616 registry: a registered country code and exactly the length that
+			country assigns, so a checksum-passing run with an unknown country or a
+			wrong length is not reported. Email domains must end in an
+			IANA-registered top-level domain (including punycode forms) and stay
+			within the RFC 1035 presentation-length limit, so private-use suffixes
+			such as <code>.internal</code> or <code>.local</code> are not reported.
+			The ASCII local part is capped at 64 characters and the complete
+			mailbox at 254 characters. Local-part case is preserved in the normalized
+			form, while the case-insensitive domain is lowercased. The baked IANA
+			snapshot is refreshed with
+			<code>dev/fetch-iana-tlds.sh</code>; pass <code>--check</code> in an
+			automated drift check without changing the source tree. The calling-code
+			and IBAN length tables are regenerated from libphonenumber and the SWIFT
+			registry with <code>dev/fetch-phone-number-lengths.sh</code> and
+			<code>dev/fetch-iban-lengths.sh</code>, respectively. See
+			<link linkend="tools.pii.reference-data">Reference data</link> for
+			offline phone-table generation and validation.
+			An extractor limited to a subset of the types, for a caller that wants
+			only payment data found, is built with
+			<code>new CursorPiiExtractor(Set.of(PiiMention.TYPE_CARD))</code>.
+			A type set must be non-null and non-empty, with no null or unrecognized
+			entries; invalid selections raise <code>IllegalArgumentException</code>.
+			Each configurable detector copies the selection, so changing the supplied
+			set after construction does not change its enabled types.
+		</para>
+		<para>
+			Further detectors, for network addresses, credentials, cryptocurrency
+			addresses, bank routing numbers, national identifiers, and device
+			identifiers, are opt-in and
+			described under
+			<link linkend="tools.pii.packs">Opt-in detectors and packs</link>. None of
+			them is part of <code>CursorPiiExtractor</code>, so what a caller already
+			redacts never changes when a detector is added.
+		</para>
+	</section>
+
+	<section xml:id="tools.pii.pipeline">
+		<title>Annotating and masking</title>
+		<para>
+			Annotate a document, read the layer, then produce a redacted copy in which
+			only detected spans are replaced. Length is preserved: every character
+			inside a mention becomes the mask character, and everything outside stays
+			unchanged. <code>PiiUsageExampleTest</code> asserts the behavior shown
+			here.
+			<programlisting language="java"><![CDATA[
+String text =
+    "Contact jane@example.com, call (555) 123-4567, or charge card 4111 1111 1111 1111.";
+
+Document document = new PiiAnnotator(new CursorPiiExtractor())
+    .annotate(Document.of(text));
+
+List<Annotation<PiiMention>> mentions = document.get(PiiAnnotator.PII);
+// email, phone, card: exact spans, types, and normalized forms
+
+String masked = Masker.mask(document, PiiAnnotator.PII, '*');
+// "Contact ****************, call **************, or charge card *******************."]]>
+			</programlisting>
+		</para>
+		<para>
+			An ASCII email candidate is rejected if the domain continues into a
+			Unicode letter or digit, including after dots or hyphens. A terminal dot
+			or hyphen is excluded from the span. The scanner does not convert Unicode
+			domain names to punycode. <code>EmailSpanTest</code> checks this example:
+			<programlisting language="java"><![CDATA[
+String emailText = "Skip user@example.com.é; contact User+tag@Example.COM.";
+Document emailDocument = new PiiAnnotator(PiiPacks.contact())
+    .annotate(Document.of(emailText));
+String emailMasked = Masker.mask(emailDocument, PiiAnnotator.PII, '*');
+// "Skip user@example.com.é; contact " + "*".repeat("User+tag@Example.COM".length()) + "."
+String emailReplaced = new Pseudonymizer().rewrite(emailDocument).text();
+// "Skip user@example.com.é; contact EMAIL-1."]]>
+			</programlisting>
+		</para>
+		<para>
+			A phone span includes its formatting, including a closing parenthesis
+			paired with an opening parenthesis inside the number. Normalization
+			removes that formatting. The following period is outside the span, so
+			masking and label replacement leave it in place.
+			<code>PhoneSpanTest</code> checks this example:
+			<programlisting language="java"><![CDATA[
+String phone = "+1 (4155550123)";
+Document phoneDocument = new PiiAnnotator(PiiPacks.contact())
+    .annotate(Document.of("Call " + phone + "."));
+String phoneMasked = Masker.mask(phoneDocument, PiiAnnotator.PII, '*');
+// "Call " + "*".repeat(phone.length()) + "."
+String phoneReplaced = new Pseudonymizer().rewrite(phoneDocument).text();
+// "Call PHONE-1."]]>
+			</programlisting>
+		</para>
+		<para>
+			An international candidate starts with <code>+</code> and an assigned
+			calling code without leading zeros. For example, <code>+01</code> is
+			not treated as <code>+1</code>. Zeros within the national number are
+			preserved. <code>InternationalPhonePrefixTest</code> checks this example:
+			<programlisting language="java"><![CDATA[
+Document internationalPhones = new PiiAnnotator(PiiPacks.contact())
+    .annotate(Document.of("Invalid +014155550123; call +14155550123."));
+String internationalMasked = Masker.mask(internationalPhones, PiiAnnotator.PII, '*');
+// "Invalid +014155550123; call ************."]]>
+			</programlisting>
+		</para>
+		<para>
+			A <code>MaskPolicy</code> controls how the covered characters are
+			replaced while staying length preserving. <code>keepingFormat()</code>
+			leaves separators visible so the kind of value stays recognizable, and
+			<code>keepingTrailing(4)</code> leaves the last four letters or digits of
+			each span readable, the customary receipt style.
+			<code>PiiUsageExampleTest</code> asserts the exact output shown here.
+			<programlisting language="java"><![CDATA[
+String receipt = Masker.mask(document, PiiAnnotator.PII,
+    MaskPolicy.of('*').keepingFormat().keepingTrailing(4));
+// "Contact ****@******e.com, call (***) ***-4567, or charge card **** **** **** 1111."]]>
+			</programlisting>
+		</para>
+		<para>
+			What is customary differs by type, and <code>MaskPolicies</code> collects
+			those defaults: a card keeps its last four digits, an address or an IP
+			address keeps only its separators, and a credential is masked whole,
+			formatting included, since even its shape says which system it opens.
+			Passing the defaults to <code>Masker</code> chooses a policy per mention,
+			so one pass redacts a mixed document correctly.
+			<programlisting language="java"><![CDATA[
+String masked = Masker.mask(document, PiiAnnotator.PII, MaskPolicies.byType());
+// "Contact ****@*******.***, call (***) ***-****, or charge card **** **** **** 1111."]]>
+			</programlisting>
+		</para>
+		<para>
+			Card candidates have 13 to 19 digits and pass the Luhn checksum. Their
+			accepted prefixes are 2 through 6 and
+			<ulink url="https://www.unionpayintl.com/en/mediaCenter/brandCenter/brandEmbodiment/">UnionPay's
+			81 prefix</ulink>. Single spaces or hyphens may separate digits,
+			including the prefix digits. <code>CardPrefixTest</code> checks this
+			synthetic number and the receipt-style output:
+			<programlisting language="java"><![CDATA[
+Document cards = new PiiAnnotator(PiiPacks.payment())
+    .annotate(Document.of("Card 8100 0000 0000 0028."));
+String cardReceipt = Masker.mask(cards, PiiAnnotator.PII, MaskPolicies.byType());
+// "Card **** **** **** 0028."]]>
+			</programlisting>
+		</para>
+		<para>
+			IBANs are recognized in compact form or with spaces between groups
+			after the 4-character country/check-digit header. Normalization removes
+			those spaces; masking covers the complete original span. Country, length
+			and checksum checks do not establish whether an account exists.
+			<code>IbanValidationTest</code> checks this example:
+			<programlisting language="java"><![CDATA[
+String account = "DE89 3704 0044 0532 0130 00";
+Document transfer = new PiiAnnotator(PiiPacks.payment())
+    .annotate(Document.of("Wire " + account + "; reference 1234."));
+String maskedTransfer = Masker.mask(transfer, PiiAnnotator.PII, '*');
+// "Wire " + "*".repeat(account.length()) + "; reference 1234."
+String replacedTransfer = new Pseudonymizer().rewrite(transfer).text();
+// "Wire IBAN-1; reference 1234."]]>
+			</programlisting>
+		</para>
+		<para>
+			Masking accepts positional layers only. A document-scoped layer, such as
+			a language identifier, has no spans and is rejected with
+			<code>IllegalArgumentException</code>. Each policy reads the original
+			text. When spans overlap, a character remains masked if either span
+			redacts it. Layer order does not affect the result when using one policy:
+			<programlisting language="java"><![CDATA[
+LayerKey<String> left = LayerKey.of("left", String.class);
+LayerKey<String> right = LayerKey.of("right", String.class);
+Document overlaps = Document.of("123456")
+    .with(left, List.of(new Annotation<>(new Span(0, 4), "1234")))
+    .with(right, List.of(new Annotation<>(new Span(2, 6), "3456")));
+
+String masked = Masker.mask(overlaps, List.of(right, left),
+    MaskPolicy.of('*').keepingTrailing(2));
+// "****56" with either layer order]]>
+			</programlisting>
+		</para>
+	</section>
+
+	<section xml:id="tools.pii.packs">
+		<title>Opt-in detectors and packs</title>
+		<para>
+			<code>CursorPiiExtractor</code> reports email addresses, phone numbers,
+			IBANs, and payment card numbers, and it always will: adding a type to it
+			would silently change what every existing caller redacts. Everything else
+			is opt-in, in extractors that each validate against the standard they
+			implement rather than against a shape.
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<code>NetworkPiiExtractor</code>: IPv4, IPv6, and MAC addresses.
+					It rejects matches inside longer dotted names and numeric values,
+					including Unicode continuations. Trailing IPv6 <code>::</code>
+					is retained before brackets, whitespace and sentence punctuation.
+					The unspecified IPv4/IPv6 addresses, limited IPv4 broadcast address,
+					and all-zero or broadcast MAC addresses are excluded.
+					IPv6 without an embedded IPv4 part must spell out at least two groups
+					and either spell out all eight groups or include a group of at least
+					three digits. This false-positive filter omits some valid short forms,
+					including <code>::1</code> and <code>2001::</code>.
+					Normalization uses lowercase hexadecimal IPv6 with the first longest
+					run of at least two zero groups compressed, and lowercase
+					colon-separated MAC pairs.
+					Matching does not check assignment or reachability.
+					<programlisting language="java"><![CDATA[
+Document addresses = new PiiAnnotator(PiiPacks.network()).annotate(Document.of(
+    "Peer [2001:db8::], host 192.0.2.1, MAC 02-1B-44-11-3A-B7."));
+String masked = Masker.mask(addresses, PiiAnnotator.PII, '*');
+// "Peer [**********], host *********, MAC *****************."]]>
+					</programlisting>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>SecretsPiiExtractor</code>: AWS access key identifiers,
+					GitHub tokens, JWT candidates, and URL credentials.
+					Token boundaries use Unicode letters and digits, and exclude
+					adjoining underscores. URL schemes start with an ASCII letter and
+					may include digits, plus signs, hyphens and dots. Usernames and
+					passwords must be non-empty; percent escapes require two hexadecimal
+					digits and remain encoded in the normalized value. Host validity and
+					scheme-specific rules are not checked.
+					<programlisting language="java"><![CDATA[
+Document credentials = new PiiAnnotator(PiiPacks.secrets()).annotate(Document.of(
+    "Fetch s3://user:demo%40pass@example.invalid/model.bin"));
+String masked = Masker.mask(credentials, PiiAnnotator.PII, '*');
+// "Fetch s3://****************@example.invalid/model.bin"]]>
+					</programlisting>
+					GitHub installation tokens start with <code>ghs_</code> and have
+					at least 36 body characters: ASCII letters, digits, underscores,
+					hyphens and dots. The scanner reads the complete token without a
+					fixed maximum length, following
+					<ulink url="https://github.blog/changelog/2026-05-15-github-app-installation-tokens-per-request-override-header/">GitHub's matching guidance</ulink>.
+					Terminal dots are excluded as sentence punctuation. Token contents,
+					checksums and active status are not verified. Other supported GitHub
+					prefixes accept ASCII letters, digits and underscores, with a
+					255-character scanner limit. Their body minimum is 36 characters,
+					or 82 for <code>github_pat_</code>.
+					This installation-token example uses synthetic signature bytes:
+					<programlisting language="java"><![CDATA[
+String installationToken = "ghs_12345_eyJhbGciOiJIUzI1NiJ9.e30." + "A-_".repeat(160);
+Document credentials = new PiiAnnotator(PiiPacks.secrets()).annotate(
+    Document.of("Bearer " + installationToken));
+String masked = Masker.mask(credentials, PiiAnnotator.PII, '*');
+// "Bearer " + "*".repeat(installationToken.length())]]>
+					</programlisting>
+					JWT detection requires three non-empty, unpadded base64url segments
+					with valid lengths and zero unused bits. The complete UTF-8 header
+					must be a JSON object with one top-level <code>alg</code> member
+					containing a non-empty ASCII string. Member order, JSON whitespace,
+					escaped names and nested values are supported. Detection does not
+					verify signatures, claims or other JOSE parameter semantics. Unsigned
+					tokens with empty signatures and five-part encrypted tokens are excluded.
+					This example uses synthetic signature bytes, not a signed credential:
+					<programlisting language="java"><![CDATA[
+String token = "eyAiYWxnIjogIkhTMjU2IiB9.e30.dGVzdA";
+Document bearer = new PiiAnnotator(PiiPacks.secrets()).annotate(Document.of("Bearer " + token));
+String masked = Masker.mask(bearer, PiiAnnotator.PII, '*');
+// "Bearer " + "*".repeat(token.length())]]>
+					</programlisting>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>CryptoPiiExtractor</code>: Bitcoin addresses, legacy
+					Base58Check and segwit bech32 or bech32m, and Ethereum addresses.
+					Bitcoin candidates require a valid checksum and mainnet encoding;
+					testnet and regtest forms are excluded. Segwit versions 0 through 16
+					are supported, including program-length and padding checks.
+					Ethereum candidates require <code>0x</code> or <code>0X</code> and
+					40 ASCII hexadecimal digits. Mixed-case values require the
+					<ulink url="https://eips.ethereum.org/EIPS/eip-55">EIP-55 checksum</ulink>;
+					single-case values are accepted without that check. The zero address
+					is excluded. An Ethereum address does not identify its network.
+					Detection does not verify ownership, use or balances, and single-case
+					hexadecimal identifiers may be false positives.
+					Word boundaries use Unicode letters and digits; punctuation, including
+					underscores, separates candidates. Normalization preserves Base58 case,
+					lowercases segwit text and applies EIP-55 capitalization to Ethereum.
+					Masking uses the original text and offsets:
+					<programlisting language="java"><![CDATA[
+String address = "0X5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED";
+Document result = new PiiAnnotator(PiiPacks.crypto()).annotate(
+    Document.of("Address: " + address + "."));
+String normalized = result.get(PiiAnnotator.PII).getFirst().value().normalized();
+// "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+String masked = Masker.mask(result, PiiAnnotator.PII, '*');
+// "Address: " + "*".repeat(address.length()) + "."]]>
+					</programlisting>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>BankingPiiExtractor</code>: 9 contiguous ASCII digits with
+					a valid checksum and a prefix in <code>00-12</code>, <code>21-32</code>,
+					<code>61-72</code> or <code>80</code>, as allocated by the
+					<ulink url="https://www.aba.com/news-research/analysis-guides/routing-number-policy-procedures">ABA routing policy</ulink>.
+					The <code>00</code> range includes U.S. government checks. All-zero
+					values and digits separated by spaces or hyphens are rejected.
+					A match does not verify that a number is assigned to an institution.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>UsIdentityPiiExtractor</code>: United States Social Security
+					and taxpayer number candidates in <code>3-2-4</code> digit groups.
+					The detector checks number ranges. Social Security numbers require a
+					final group from <code>0001</code> to <code>9999</code>; ITINs permit
+					<code>0000</code> to <code>9999</code>, as specified in
+					<ulink url="https://www.irs.gov/pub/irs-pdf/p4164.pdf#page=253">IRS Publication 4164, table 13-16</ulink>.
+					It requires matching single ASCII spaces or hyphens; compact digits
+					and other separators are rejected. This example masks a grouped ITIN:
+					<programlisting language="java"><![CDATA[
+Document taxpayer = new PiiAnnotator(PiiPacks.usIdentity())
+    .annotate(Document.of("Tax ID 900-50-0000."));
+String masked = Masker.mask(taxpayer, PiiAnnotator.PII, '*');
+// "Tax ID ***********."]]>
+					</programlisting>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>EuIdentityPiiExtractor</code>: United Kingdom NHS numbers and
+					German tax identifiers. It accepts compact ASCII digits or the
+					<code>3-3-4</code> NHS and <code>2-3-3-3</code> tax identifier groupings.
+					Groups require matching single ASCII spaces or hyphens. Control
+					characters, mixed delimiters and other separators are rejected.
+					Both types require valid check digits; German identifiers also have
+					digit-repetition checks. Uniform NHS digit runs are rejected.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>CaIdentityPiiExtractor</code>: labeled Canadian Social Insurance
+					Number candidates.
+					Canadian SINs require <code>SIN</code>, <code>Social Insurance Number</code>
+					or <code>Social Insurance No.</code> immediately before the value.
+					They accept 9 ASCII digits, compact or in three groups of three
+					with matching single spaces or hyphens. Partial groupings are rejected.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<code>DevicePiiExtractor</code>: 15-digit, Luhn-valid IMEIs that
+					directly follow an <code>IMEI</code> label. Variable-length digit groups
+					may use single spaces or hyphens, but not a mixture of both.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			National identity detectors are opt-in. A match checks format and number
+			rules, not assignment to a person. This example selects the European
+			identity pack and masks the original grouped spans:
+			<programlisting language="java"><![CDATA[
+Document identifiers = new PiiAnnotator(PiiPacks.euIdentity())
+    .annotate(Document.of("NHS: 943 476 5919; IdNr: 65-929-970-489."));
+String masked = Masker.mask(identifiers, PiiAnnotator.PII, '*');
+// "NHS: ************; IdNr: **************."]]>
+			</programlisting>
+		</para>
+		<para>
+			SIN and IMEI labels are ASCII case-insensitive and must not continue a
+			Unicode letter or digit. Whitespace and <code>:</code>, <code>#</code> or
+			<code>=</code> may separate labels from values; SIN also permits
+			<code>.</code>. Both detectors check format and checksum, not assignment
+			to a person or device. This example masks only the numeric spans:
+			<programlisting language="java"><![CDATA[
+PiiExtractor labeled = new CompositePiiExtractor(PiiPacks.caIdentity(), PiiPacks.device());
+Document identifiers = new PiiAnnotator(labeled)
+    .annotate(Document.of("SIN: 046 454 286; IMEI: 490154203237518."));
+String masked = Masker.mask(identifiers, PiiAnnotator.PII, '*');
+// "SIN: ***********; IMEI: ***************."]]>
+			</programlisting>
+		</para>
+		<para>
+			This synthetic routing number illustrates extraction and masking without
+			using a bank-directory entry:
+			<programlisting language="java"><![CDATA[
+Document payment = new PiiAnnotator(PiiPacks.payment())
+    .annotate(Document.of("Routing 001234561."));
+String masked = Masker.mask(payment, PiiAnnotator.PII, '*');
+// "Routing *********."]]>
+			</programlisting>
+		</para>
+		<para>
+			<code>CompositePiiExtractor</code> runs several extractors over one text
+			and merges the result. <code>PiiPacks</code> provides
+			<code>payment()</code>, <code>contact()</code>,
+			<code>network()</code>, <code>secrets()</code>, <code>crypto()</code>,
+			<code>usIdentity()</code>, <code>euIdentity()</code>,
+			<code>caIdentity()</code>, <code>device()</code>, and
+			<code>allStructured()</code> for all supported structured types.
+			Overlapping mentions retain their original types, normalized values and
+			offsets. Results are ordered by start offset, descending span length,
+			<code>PiiTypePriority</code> rank, then delegate order. Equal mentions,
+			as defined by <code>PiiMention.equals</code>, are combined using the
+			first original object. Nested composites contribute their individual
+			extractors in depth-first, left-to-right order.
+			<programlisting language="java"><![CDATA[
+String text = "Deploy from 10.0.0.7 using AKIAIOSFODNN7EXAMPLE, ask jane@example.com.";
+
+List<PiiMention> mentions = PiiPacks.allStructured().extract(text);
+// ipv4, aws-access-key, email
+
+PiiExtractor keysOnly = PiiPacks.secrets();
+PiiExtractor custom = new CompositePiiExtractor(
+    new CursorPiiExtractor(), new NetworkPiiExtractor());]]>
+			</programlisting>
+		</para>
+		<para>
+			A context-labeled IMEI can also match the payment-card detector.
+			Both detections are retained. IMEI sorts before card regardless of pack order.
+			<code>PiiPacksTest</code> checks this example:
+			<programlisting language="java"><![CDATA[
+PiiExtractor deviceAndPayment =
+    new CompositePiiExtractor(PiiPacks.payment(), PiiPacks.device());
+Document deviceDocument = new PiiAnnotator(deviceAndPayment)
+    .annotate(Document.of("IMEI: 490154203237518."));
+List<String> types = deviceDocument.get(PiiAnnotator.PII).stream()
+    .map(annotation -> annotation.value().type()).toList();
+// List.of("imei", "card")
+String deviceMasked = Masker.mask(deviceDocument, PiiAnnotator.PII, '*');
+// "IMEI: ***************."]]>
+			</programlisting>
+		</para>
+		<para>
+			Grouping the same ordered extractors into nested composites does not
+			change their result. This example retains all 3 mentions and masks their
+			combined spans, including the space:
+			<programlisting language="java"><![CDATA[
+PiiExtractor first = text -> List.of(new PiiMention(new Span(0, 3), "person", "Amy"));
+PiiExtractor middle = text -> List.of(new PiiMention(new Span(1, 5), "custom", "my B"));
+PiiExtractor last = text -> List.of(new PiiMention(new Span(4, 7), "person", "Bob"));
+PiiExtractor combined = new CompositePiiExtractor(first,
+    new CompositePiiExtractor(middle, last));
+Document people = new PiiAnnotator(combined).annotate(Document.of("Amy Bob"));
+String masked = Masker.mask(people, PiiAnnotator.PII, '*');
+// "*******"]]>
+			</programlisting>
+		</para>
+		<para>
+			Custom extractors must return a non-null list with non-null mentions
+			inside the input text. <code>CompositePiiExtractor</code> and
+			<code>PiiAnnotator</code> reject invalid results with
+			<code>IllegalArgumentException</code>. Overlapping results are accepted.
+			Exceptions raised by an extractor propagate unchanged.
+		</para>
+		<para>
+			Adding detectors preserves the coverage of existing detections. In this
+			URL, the credentials and email overlap. Both remain available, so full
+			masking covers the credentials and the email domain:
+			<programlisting language="java"><![CDATA[
+String address = "https://john:pass@example.com/path";
+Document link = new PiiAnnotator(PiiPacks.allStructured()).annotate(Document.of(address));
+List<PiiMention> matches = link.get(PiiAnnotator.PII).stream()
+    .map(annotation -> annotation.value()).toList();
+// url-credential [8, 17), email [13, 29)
+String maskedLink = Masker.mask(link, PiiAnnotator.PII, '*');
+// "https://*********************/path"]]>
+			</programlisting>
+		</para>
+	</section>
+
+	<section xml:id="tools.pii.transforms">
+		<title>Pseudonymizing, tokenizing, and auditing</title>
+		<para>
+			Text replacement requires non-overlapping mentions.
+			<code>Pseudonymizer</code> and <code>HmacTokenizer.rewrite</code>
+			reject overlapping spans with <code>IllegalArgumentException</code>.
+			Use <code>Masker</code> to redact combined spans without selecting a
+			subset. <code>HmacTokenizer.token</code> can tokenize retained mentions
+			individually, and audit reports accept overlapping detections.
+		</para>
+		<para>
+			<code>Pseudonymizer</code> replaces mentions with numbered labels. Mentions
+			with the same type and normalized value use the same label within a text.
+			<code>PiiRewrite</code> provides the rewritten text, label locations and
+			offset mapping.
+			<programlisting language="java"><![CDATA[
+String text = "Contact jane@example.com; jane@example.com replied to bob@example.com.";
+
+PiiRewrite rewrite = new Pseudonymizer()
+    .rewrite(text, new CursorPiiExtractor().extract(text));
+// "Contact EMAIL-1; EMAIL-1 replied to EMAIL-2."
+
+int moved = rewrite.mapOffset(text.indexOf("bob@example.com"));
+
+Document labelled = Document.of(rewrite.text()).with(PiiAnnotator.PII,
+    rewrite.mentions().stream()
+        .map(mention -> new Annotation<>(mention.span(), mention)).toList());]]>
+			</programlisting>
+		</para>
+		<para>
+			Types are case-sensitive. Labels uppercase ASCII letters in the type and
+			share a numbering sequence when the displayed prefixes match. Custom
+			types such as <code>id</code> and <code>ID</code> receive distinct labels.
+			Numbering starts at one for each rewrite, so matching labels in separate
+			documents do not identify the same value.
+			<programlisting language="java"><![CDATA[
+List<PiiMention> custom = List.of(
+    new PiiMention(new Span(0, 1), "id", "a"),
+    new PiiMention(new Span(2, 3), "ID", "b"));
+String numbered = new Pseudonymizer().rewrite("a b", custom).text();
+// "ID-1 ID-2"]]>
+			</programlisting>
+		</para>
+		<para>
+			<code>mapSpan</code> expands a non-empty span intersecting a replacement
+			to include its complete label. Empty spans remain empty at their mapped
+			position. <code>remap</code> omits empty annotations and changes only the
+			spans of positional annotations. Their values are copied unchanged,
+			including any original text or offsets in those values. Build a new PII
+			layer from <code>rewrite.mentions()</code>, as above, to store the labels
+			instead of the original values.
+		</para>
+		<para>
+			Document-taking rewrite and audit methods require matching annotation and
+			PII mention offsets. They reject a mismatch with
+			<code>IllegalArgumentException</code>. A custom layer must use offsets
+			from the document text in both locations.
+		</para>
+		<para>
+			<code>HmacTokenizer</code> derives a token from the type and normalized value
+			under a secret key. The same input and key produce the same token across
+			documents. Use at least 32 random key bytes and keep the key separate from
+			the data. Retain the key to compare tokens across runs. Tokens are linkable
+			pseudonymous data and require access control.
+			<programlisting language="java"><![CDATA[
+byte[] key = new byte[32];
+new SecureRandom().nextBytes(key);
+HmacTokenizer tokenizer = new HmacTokenizer(key);
+
+PiiAnnotator annotator = new PiiAnnotator(new CursorPiiExtractor());
+Document first = annotator.annotate(Document.of("From jane@example.com"));
+Document second = annotator.annotate(Document.of("To jane@example.com"));
+String stable = tokenizer.token(PiiMention.TYPE_EMAIL, "jane@example.com");
+
+String from = tokenizer.rewrite(first).text();   // "From " + stable
+String to = tokenizer.rewrite(second).text();   // "To " + stable]]>
+			</programlisting>
+		</para>
+		<para>
+			The default token contains sixteen hexadecimal digits (64 bits). The
+			constructor accepts lengths from 4 to 64 digits; shorter tokens increase
+			collision risk. Types and normalized values must contain well-formed
+			UTF-16. Unpaired surrogates cause <code>IllegalArgumentException</code> in
+			tokenization, rewriting and sampled audit values, instead of being
+			replaced during UTF-8 encoding. Count-only reports do not encode values.
+		</para>
+		<para>
+			<code>PiiAuditReport</code> reports mention counts, distinct-value counts
+			for retained detections, including overlaps,
+			and up to three sampled tokens per type by default. It stores types,
+			counts and tokens, without normalized values or offsets. Custom types
+			should be labels, not personal data, because they appear in the report.
+			Tokens remain linkable pseudonymous data.
+			<programlisting language="java"><![CDATA[
+PiiAuditReport report = PiiAuditReport.of(first, tokenizer);
+
+report.total();                                        // 1
+report.counts().get(PiiMention.TYPE_EMAIL);              // 1
+report.distinctCounts().get(PiiMention.TYPE_EMAIL);      // 1
+report.samples(PiiMention.TYPE_EMAIL);                  // List.of(stable)]]>
+			</programlisting>
+		</para>
+		<para>
+			<code>toString()</code> produces one line per type. It doubles backslashes
+			and escapes colons, commas, square brackets, control characters, Unicode
+			formatting characters, line and paragraph separators, and unpaired
+			surrogates as UTF-16 hexadecimal sequences. The types and tokens returned
+			by accessors are unchanged.
+			<programlisting language="java"><![CDATA[
+List<PiiMention> customMentions = List.of(
+    new PiiMention(new Span(0, 1), "custom\nid", "a"));
+PiiAuditReport customReport = PiiAuditReport.of(customMentions, tokenizer, 0);
+String line = customReport.toString();]]>
+			</programlisting>
+			The output is <literal>custom\u000aid: 1 mentions, 1 distinct</literal>
+			on one line. This escaping is for plain-text reports, not HTML or JSON
+			output encoding.
+		</para>
+	</section>
+	<section xml:id="tools.pii.reference-data">
+		<title>Reference data</title>
+		<para>
+			The generators validate downloaded data before replacing Java tables.
+			The IANA list must have a 10-digit version, a valid UTC timestamp, and
+			at least 1,000 sorted, distinct ASCII labels. SWIFT input accepts UTF-8,
+			Windows-1252, or UTF-16 with a byte-order mark. Its country and length
+			rows must each occur once, have matching columns, and contain at least
+			80 distinct countries in alphabetical order. Lengths use two ASCII
+			digits, from 15 through 34. Invalid input leaves the source file unchanged.
+		</para>
+		<para>
+			Use saved IANA or SWIFT files without downloading another copy:
+			<programlisting><![CDATA[
+IANA_TLDS_SOURCE=/path/to/tlds-alpha-by-domain.txt \
+bash dev/fetch-iana-tlds.sh --check
+
+IBAN_REGISTRY_SOURCE=/path/to/iban-registry.txt \
+bash dev/fetch-iban-lengths.sh --check]]>
+			</programlisting>
+		</para>
+		<para>
+			Phone-table generation reads national lengths from libphonenumber
+			metadata. Each value contains comma-separated numbers or inclusive
+			ranges such as <code>[8-10],12</code>. Duplicate lengths within one
+			value, invalid syntax, and lengths outside 1 through 31 stop generation
+			without replacing the Java source. Ranges must contain at least three
+			lengths; use <code>8,9</code> for a pair. Lengths shared by different
+			phone types or territories are combined. Local-only lengths are excluded.
+			The scanner also applies its 15-digit international-number limit.
+			The bundled snapshot accepts national lengths 7 or 9 under
+			<code>+220</code> and 7, 9 or 10 under <code>+263</code>. These
+			length checks do not confirm that a particular phone number exists.
+		</para>
+		<para>
+			To regenerate from a saved metadata file, provide its Git revision and
+			commit date. The revision must contain 7 to 40 lowercase hexadecimal
+			characters and the date must use <code>YYYY-MM-DD</code> with a valid
+			calendar date. Calling codes use one to three digits without leading
+			zeros. With <code>--check</code>, a difference returns a nonzero exit
+			status and leaves the source file unchanged. This command requires
+			Bash and JDK 21 or newer, and does not download metadata:
+			<programlisting><![CDATA[
+PHONE_METADATA_SOURCE=/path/to/PhoneNumberMetadata.xml \
+PHONE_METADATA_REVISION=4ad67e90c65e365658ff9a480d3ac29ccfc6977b \
+PHONE_METADATA_DATE=2026-08-28 \
+bash dev/fetch-phone-number-lengths.sh --check]]>
+			</programlisting>
+		</para>
+		<para>
+			Run <code>mvn -pl pii -am test -Dopennlp.forkCount=1 "-Dtest=ReferenceDataGenerator*Test"
+            -Dsurefire.failIfNoSpecifiedTests=false</code>
+			to check all three generators with synthetic inputs in temporary
+			directories. These tests require no downloaded files and run in CI when
+			a generator, its tests, a reference table or the reference-data workflow
+			changes. Scheduled and manual drift checks compare against live sources.
+		</para>
+	</section>
+
+</chapter>

@@ -1,0 +1,79 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: PII reference data drift
+
+on:
+  push:
+    branches:
+      - main
+      - 'OPENNLP-*-pii'
+    paths:
+      - 'dev/fetch-*.sh'
+      - 'pii/src/test/java/opennlp/tools/pii/ReferenceDataGenerator*.java'
+      - 'pii/src/main/java/opennlp/tools/pii/PhoneNumberLengths.java'
+      - 'pii/src/main/java/opennlp/tools/pii/IanaTlds.java'
+      - 'pii/src/main/java/opennlp/tools/pii/IbanLengths.java'
+      - '.github/workflows/iana-tld-drift.yml'
+  pull_request:
+    paths:
+      - 'dev/fetch-*.sh'
+      - 'pii/src/test/java/opennlp/tools/pii/ReferenceDataGenerator*.java'
+      - 'pii/src/main/java/opennlp/tools/pii/PhoneNumberLengths.java'
+      - 'pii/src/main/java/opennlp/tools/pii/IanaTlds.java'
+      - 'pii/src/main/java/opennlp/tools/pii/IbanLengths.java'
+      - '.github/workflows/iana-tld-drift.yml'
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-generators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Test reference-data generation without downloads
+        run: >-
+          mvn -B -ntp -pl pii -am test -Dopennlp.forkCount=1
+          "-Dtest=ReferenceDataGenerator*Test" -Dsurefire.failIfNoSpecifiedTests=false
+  check:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: test-generators
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Compare the baked snapshot with IANA
+        run: bash dev/fetch-iana-tlds.sh --check
+      - name: Compare phone lengths with libphonenumber
+        run: bash dev/fetch-phone-number-lengths.sh --check
+      - name: Compare IBAN lengths with SWIFT
+        run: bash dev/fetch-iban-lengths.sh --check
