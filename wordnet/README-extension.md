@@ -15,21 +15,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# wordnet
+# WN-LMF lexicon extension composition
 
-Optional OpenNLP components, published as `org.apache.opennlp.addons:wordnet`.
+This feature composes a caller-resolved WN-LMF `LexiconExtension` over its exact base lexicon while validating versions, identifiers, external references, cycles, and nesting limits.
 
-Build and run the module tests from the repository root:
+## Human definition
 
-```sh
-mvn -pl wordnet -am verify -Dopennlp.forkCount=1
-```
+It lets an application add its own entries, senses, synsets, and relations to an existing WordNet without modifying or replacing the original lexicon.
 
-This research module pins core `3.0.0-SNAPSHOT`. Use exact versions when consuming
-snapshots; Maven version ranges may select branch snapshots ahead of releases.
+## Prior art and comparable products
 
-## Source
+- The [Global WordNet Association WN-LMF schemas](https://globalwordnet.github.io/schemas/) define the exchange format and extension model implemented by this feature.
 
-Migrated from [ai-pipestream/opennlp OPENNLP-XXXX-wordnet-extension](https://github.com/ai-pipestream/opennlp/tree/f74744a1f1fe44c613d0776363f271329681bb5d).
-The original feature source and tests remain in that commit. Family contracts
-live in this module; shared document and normalization contracts come from core.
+## Module
+
+The WordNet API, WN-LMF reader, and extension composition live together in the
+addons `wordnet` module. Build instructions are in [README.md](README.md).

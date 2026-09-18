@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements.  See the NOTICE file
+   distributed with this work for additional information
+   regarding copyright ownership.  The ASF licenses this file
+   to you under the Apache License, Version 2.0 (the
+   "License"); you may not use this file except in compliance
+   with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.
+
+   Project-authored base-lexicon fixture for LexiconExtension composition tests. The
+   identifiers follow the shape of the official Global WordNet Association extension
+   example at https://globalwordnet.github.io/schemas/#wordnet-extensions; the reduced
+   content is written for this test and copies no source definitions. The extension
+   fixture extension-computer-science.xml extends this lexicon and deliberately lives
+   in a separate file, because the format forbids a base and its extension sharing one
+   document.
+-->
+<LexicalResource xmlns:dc="https://globalwordnet.github.io/schemas/dc/">
+  <Lexicon id="ewn" label="Open English WordNet (reduced)" language="en"
+           version="2020" license="https://creativecommons.org/licenses/by/4.0/">
+    <LexicalEntry id="ewn-process-n">
+      <Lemma writtenForm="process" partOfSpeech="n"/>
+      <Sense id="ewn-process-n-08056231" synset="ewn-08056231-n"/>
+      <Sense id="ewn-process-n-05984756" synset="ewn-05984756-n"/>
+    </LexicalEntry>
+    <LexicalEntry id="ewn-software-n">
+      <Lemma writtenForm="software" partOfSpeech="n"/>
+      <Sense id="ewn-software-n-06581154" synset="ewn-06581154-n"/>
+    </LexicalEntry>
+    <LexicalEntry id="ewn-stub-n">
+      <Lemma writtenForm="stub" partOfSpeech="n"/>
+      <Sense id="ewn-stub-n-90000001" synset="ewn-90000001-n"/>
+    </LexicalEntry>
+    <Synset id="ewn-08056231-n" partOfSpeech="n" members="ewn-process-n-08056231">
+      <Definition>a phenomenon that unfolds over time</Definition>
+    </Synset>
+    <Synset id="ewn-05984756-n" partOfSpeech="n" members="ewn-process-n-05984756">
+      <Definition>a series of steps followed to reach a result</Definition>
+    </Synset>
+    <Synset id="ewn-06581154-n" partOfSpeech="n" members="ewn-software-n-06581154">
+      <Definition>a written version of a program</Definition>
+      <SynsetRelation relType="hypernym" target="ewn-08056231-n"/>
+    </Synset>
+    <Synset id="ewn-90000001-n" partOfSpeech="n" members="ewn-stub-n-90000001"/>
+  </Lexicon>
+</LexicalResource>

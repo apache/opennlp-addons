@@ -16,23 +16,28 @@
  */
 package opennlp.wordnet;
 
+import java.util.Optional;
+
 import opennlp.tools.commons.ThreadSafe;
 
 /**
- * One WN-LMF {@code Requires} declaration. It identifies another lexicon and the required
- * version, but does not resolve or load that lexicon.
+ * One WN-LMF lexicon reference: a {@code Requires} declaration or the {@code Extends} base of a
+ * {@code LexiconExtension}. It identifies another lexicon and the required version, but does not
+ * resolve or load that lexicon; resolution is the domain of {@link WnLmfResolver}.
  *
- * @param ref     The required lexicon id. Must not be {@code null} or empty.
- * @param version The required lexicon version. Must not be {@code null} or empty.
+ * @param ref     The referenced lexicon id. Must not be {@code null} or empty.
+ * @param version The referenced lexicon version. Must not be {@code null} or empty.
+ * @param url     The optional {@code url} attribute the source declared as a retrieval hint.
+ *                Must not be {@code null} and must not contain an empty value.
  * @since 3.0.0
  */
 @ThreadSafe
-public record WnLmfDependency(String ref, String version) {
+public record WnLmfDependency(String ref, String version, Optional<String> url) {
 
   /**
    * Creates a dependency descriptor.
    *
-   * @throws IllegalArgumentException Thrown if a component is {@code null} or empty.
+   * @throws IllegalArgumentException Thrown if a component violates its documented constraint.
    */
   public WnLmfDependency {
     if (ref == null || ref.isEmpty()) {
@@ -41,5 +46,22 @@ public record WnLmfDependency(String ref, String version) {
     if (version == null || version.isEmpty()) {
       throw new IllegalArgumentException("version must not be null or empty");
     }
+    if (url == null) {
+      throw new IllegalArgumentException("url must not be null; use Optional.empty()");
+    }
+    if (url.isPresent() && url.get().isEmpty()) {
+      throw new IllegalArgumentException("url must not contain an empty value");
+    }
+  }
+
+  /**
+   * Creates a dependency descriptor without a declared url.
+   *
+   * @param ref     The referenced lexicon id. Must not be {@code null} or empty.
+   * @param version The referenced lexicon version. Must not be {@code null} or empty.
+   * @throws IllegalArgumentException Thrown if a component is {@code null} or empty.
+   */
+  public WnLmfDependency(String ref, String version) {
+    this(ref, version, Optional.empty());
   }
 }
