@@ -108,6 +108,7 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
+        <module>light-stemmers</module>
     </modules>
 
     <properties>
