@@ -30,6 +30,6 @@ snapshots; Maven version ranges may select branch snapshots ahead of releases.
 
 ## Source
 
-Migrated from [ai-pipestream/opennlp OPENNLP-1880-wordnet-api](https://github.com/ai-pipestream/opennlp/tree/7c84428fd604b9ead891e23aba542b6baa0e36d2).
+Migrated from [ai-pipestream/opennlp OPENNLP-1887-wordnet-expansion](https://github.com/ai-pipestream/opennlp/tree/fbc6be9409ed9bfb67ac776060af9b4356ee674f).
 The original feature source and tests remain in that commit. Family contracts
 live in this module; shared document and normalization contracts come from core.
