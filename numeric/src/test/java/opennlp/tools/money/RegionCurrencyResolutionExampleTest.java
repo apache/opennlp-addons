@@ -20,7 +20,6 @@ package opennlp.tools.money;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +27,9 @@ import opennlp.tools.document.Annotation;
 import opennlp.tools.document.Document;
 import opennlp.tools.document.Layers;
 import opennlp.tools.geo.DocumentRegionAnnotator;
-import opennlp.tools.geo.GazetteerEntry;
-import opennlp.tools.geo.GeoPoint;
 import opennlp.tools.geo.GeoResolution;
+import opennlp.tools.geo.GeoTestUtil;
+import opennlp.tools.geo.GeocodeAnnotator;
 import opennlp.tools.geo.Geocoder;
 import opennlp.tools.geo.RegionVote;
 import opennlp.tools.util.Span;
@@ -71,27 +70,14 @@ public class RegionCurrencyResolutionExampleTest {
             text.subSequence(mention.getStart(), mention.getEnd()).toString();
         switch (name) {
           case "Guadalajara" -> resolutions.add(
-              new GeoResolution(mention, entry(name, "MX"), GUADALAJARA_CONFIDENCE));
+              new GeoResolution(mention, GeoTestUtil.entry(name, "MX"), GUADALAJARA_CONFIDENCE));
           case "Boston" -> resolutions.add(
-              new GeoResolution(mention, entry(name, "US"), BOSTON_CONFIDENCE));
+              new GeoResolution(mention, GeoTestUtil.entry(name, "US"), BOSTON_CONFIDENCE));
           default -> throw new IllegalStateException("unexpected mention: " + name);
         }
       }
       return resolutions;
     };
-  }
-
-  /**
-   * Builds a minimal city entry for a country; the coordinates and population are
-   * placeholders because only the country code matters for the region ballot.
-   *
-   * @param name The city name. Must not be {@code null}.
-   * @param countryCode The ISO 3166-1 alpha-2 country code. Must not be {@code null}.
-   * @return A {@link GazetteerEntry} for the city. Never {@code null}.
-   */
-  private static GazetteerEntry entry(String name, String countryCode) {
-    return new GazetteerEntry("test", name, name, List.of(), new GeoPoint(0.0, 0.0),
-        countryCode, List.of(), 1_000_000, GazetteerEntry.FEATURE_CLASS_CITY, Map.of());
   }
 
   /**
@@ -110,9 +96,10 @@ public class RegionCurrencyResolutionExampleTest {
   }
 
   /**
-   * Runs the example: the entity layer feeds the region ballot, and the ballot winner
-   * picks the symbol table for the money layer. Asserts the exact ranked shares, that
-   * every ballot row is span-less under the document-scoped key, and that the {@code $} amount is
+   * Runs the example: the entity layer is geocoded into a locations layer that feeds
+   * the region ballot, and the ballot winner picks the symbol table for the money
+   * layer. Asserts the exact ranked shares, that every ballot row is span-less under
+   * the document-scoped key, and that the {@code $} amount is
    * identified as {@code MXN} because Mexico wins the ballot.
    */
   @Test
@@ -121,7 +108,8 @@ public class RegionCurrencyResolutionExampleTest {
         List.of(locationEntity("Guadalajara"), locationEntity("Boston")));
 
     final Document document = new RegionAwareMoneyAnnotator().annotate(
-        new DocumentRegionAnnotator(exampleGeocoder()).annotate(withEntities));
+        new DocumentRegionAnnotator().annotate(
+            new GeocodeAnnotator(exampleGeocoder()).annotate(withEntities)));
 
     final List<Annotation<RegionVote>> ballot =
         document.get(DocumentRegionAnnotator.REGIONS);
@@ -149,9 +137,10 @@ public class RegionCurrencyResolutionExampleTest {
    */
   @Test
   void testReadingTheRankedBallotRows() {
-    final Document document = new DocumentRegionAnnotator(exampleGeocoder())
-        .annotate(Document.of(TEXT).with(Layers.ENTITIES,
-            List.of(locationEntity("Guadalajara"), locationEntity("Boston"))));
+    final Document document = new DocumentRegionAnnotator().annotate(
+        new GeocodeAnnotator(exampleGeocoder()).annotate(
+            Document.of(TEXT).with(Layers.ENTITIES,
+                List.of(locationEntity("Guadalajara"), locationEntity("Boston")))));
 
     final List<Annotation<RegionVote>> ballot =
         document.get(DocumentRegionAnnotator.REGIONS);

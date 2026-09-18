@@ -76,6 +76,29 @@
   </dependencies>
 
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>geo-test-fixtures</id>
+            <goals><goal>test-jar</goal></goals>
+            <configuration>
+              <includes>
+                <include>opennlp/tools/geo/GeoTestUtil*.class</include>
+                <include>META-INF/LICENSE</include>
+                <include>META-INF/NOTICE</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+    <testResources>
+      <testResource><directory>src/test/resources</directory></testResource>
+      <testResource><directory>src/license</directory><targetPath>META-INF</targetPath></testResource>
+    </testResources>
     <resources>
       <resource><directory>src/main/resources</directory></resource>
       <resource><directory>src/license</directory><targetPath>META-INF</targetPath></resource>

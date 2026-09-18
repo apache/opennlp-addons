@@ -28,13 +28,20 @@ import opennlp.tools.document.Layers;
 import opennlp.tools.util.Span;
 
 /**
- * Shared fixtures of the region ballot tests: deterministic table geocoders, minimal
- * gazetteer entries, and documents carrying a location entity layer.
+ * Utility class for testing the geocoding annotators and everything reading their
+ * layers: deterministic table geocoders, minimal gazetteer entries, and documents
+ * carrying an entity or region layer.
  */
-final class GeoTestUtil {
+public class GeoTestUtil {
 
-  /** The entity type label the region annotator treats as a location by default. */
+  /** The population every fixture entry carries; no fixture ranks candidates by it. */
+  private static final long FIXTURE_POPULATION = 1000;
+
+  /** The entity type label the annotators treat as a location by default. */
   static final String LOCATION = "location";
+
+  private GeoTestUtil() {
+  }
 
   /**
    * One geocoding outcome of a table geocoder: the country a mention resolves to and
@@ -72,15 +79,14 @@ final class GeoTestUtil {
   }
 
   /**
-   * Builds a geocoder that resolves a fixed name-to-country table at one shared
-   * confidence and leaves unknown mentions unresolved.
+   * Builds a geocoder resolving mentions through a fixed name-to-country table at a
+   * fixed confidence, leaving every name the table does not know unresolved.
    *
-   * @param countryByName Maps a mention text to its country code. Must not be
-   *                      {@code null}.
-   * @param confidence The confidence every resolution reports, in {@code [0, 1]}.
-   * @return A {@link Geocoder} over the table. Never {@code null}.
+   * @param countryByName The resolvable surface forms mapped to their country codes.
+   * @param confidence The confidence given to every resolution.
+   * @return The table-backed geocoder. Never {@code null}.
    */
-  static Geocoder tableGeocoder(Map<String, String> countryByName, double confidence) {
+  public static Geocoder tableGeocoder(Map<String, String> countryByName, double confidence) {
     final Map<String, ScoredCountry> outcomes = new HashMap<>(countryByName.size());
     for (final Map.Entry<String, String> entry : countryByName.entrySet()) {
       outcomes.put(entry.getKey(), new ScoredCountry(entry.getValue(), confidence));
@@ -101,29 +107,43 @@ final class GeoTestUtil {
   }
 
   /**
-   * Builds a minimal city entry for a country; only the country code matters for the
-   * region ballot.
+   * Builds a minimal city entry whose record id equals its name.
    *
-   * @param name The city name. Must not be {@code null}.
-   * @param countryCode The ISO 3166-1 alpha-2 country code, or {@code null} for an
-   *                    entry without a country.
-   * @return A {@link GazetteerEntry} for the city. Never {@code null}.
+   * @param name The place name.
+   * @param countryCode The ISO 3166-1 alpha-2 country code, or {@code null} when the
+   *                    source assigns the place no country.
+   * @return The entry. Never {@code null}.
    */
-  static GazetteerEntry entry(String name, String countryCode) {
-    return new GazetteerEntry("test", name, name, List.of(), new GeoPoint(0.0, 0.0),
-        countryCode, List.of(), 1000, GazetteerEntry.FEATURE_CLASS_CITY, Map.of());
+  public static GazetteerEntry entry(String name, String countryCode) {
+    return entry(name, name, countryCode);
   }
 
   /**
-   * Builds a document whose entity layer marks each given mention as a location.
+   * Builds a minimal city entry, with a distinct record id for same-name places.
    *
-   * @param text The document text. Must not be {@code null}.
+   * @param recordId The source-scoped record id.
+   * @param name The place name.
+   * @param countryCode The ISO 3166-1 alpha-2 country code, or {@code null} when the
+   *                    source assigns the place no country.
+   * @return The entry. Never {@code null}.
+   */
+  public static GazetteerEntry entry(String recordId, String name, String countryCode) {
+    return new GazetteerEntry("test", recordId, name, List.of(), new GeoPoint(0.0, 0.0),
+        countryCode, List.of(), FIXTURE_POPULATION, GazetteerEntry.FEATURE_CLASS_CITY,
+        Map.of());
+  }
+
+  /**
+   * Builds a document whose entity layer marks each given mention as a location, over
+   * the mention's first occurrence in the text.
+   *
+   * @param text The document text.
    * @param mentions The mention texts to mark. Each must occur in {@code text}.
-   * @return A {@link Document} with an entity layer. Never {@code null}.
+   * @return The document with its entity layer. Never {@code null}.
    * @throws IllegalArgumentException Thrown if a mention does not occur in the text.
    */
-  static Document withLocations(String text, String... mentions) {
-    final List<Annotation<String>> entities = new ArrayList<>();
+  public static Document withLocationEntities(String text, String... mentions) {
+    final List<Annotation<String>> entities = new ArrayList<>(mentions.length);
     for (final String mention : mentions) {
       final int start = text.indexOf(mention);
       if (start < 0) {
@@ -135,7 +155,16 @@ final class GeoTestUtil {
     return Document.of(text).with(Layers.ENTITIES, entities);
   }
 
-  private GeoTestUtil() {
-    // Not instantiated; this class provides static test fixtures only.
+  /**
+   * Builds a document carrying a region ballot with a single full-share vote for one
+   * country, as a downstream annotator sees it.
+   *
+   * @param text The document text.
+   * @param countryCode The winning ISO 3166-1 alpha-2 country code.
+   * @return The document with a one-row region ballot. Never {@code null}.
+   */
+  public static Document withRegionBallot(String text, String countryCode) {
+    return Document.of(text).with(DocumentRegionAnnotator.REGIONS,
+        List.of(Annotation.of(new RegionVote(countryCode, 1.0))));
   }
 }

@@ -20,6 +20,7 @@ package opennlp.tools.money;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Currency;
@@ -41,8 +42,9 @@ import opennlp.tools.geo.DocumentRegionAnnotator;
 import opennlp.tools.geo.GazetteerEntry;
 import opennlp.tools.geo.GeoPoint;
 import opennlp.tools.geo.GeoResolution;
+import opennlp.tools.geo.GeoTestUtil;
+import opennlp.tools.geo.GeocodeAnnotator;
 import opennlp.tools.geo.Geocoder;
-import opennlp.tools.geo.RegionVote;
 import opennlp.tools.util.Span;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,24 +57,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class RegionAwareMoneyAnnotatorTest {
 
-  /**
-   * Builds a document that carries a region ballot with a single full-share vote for
-   * one country.
-   *
-   * @param text The document text. Must not be {@code null}.
-   * @param countryCode The winning ISO 3166-1 alpha-2 country code. Must not be
-   *                    {@code null}.
-   * @return A {@link Document} with a one-row region ballot. Never {@code null}.
-   */
-  private static Document withBallot(String text, String countryCode) {
-    return Document.of(text).with(DocumentRegionAnnotator.REGIONS,
-        List.of(Annotation.of(new RegionVote(countryCode, 1.0))));
-  }
-
   @Test
   void testWinningRegionResolvesTheSymbol() {
     final Document document = new RegionAwareMoneyAnnotator()
-        .annotate(withBallot("the deal is worth $5", "AU"));
+        .annotate(GeoTestUtil.withRegionBallot("the deal is worth $5", "AU"));
     assertEquals("AUD",
         document.get(MoneyAnnotator.MONEY).get(0).value().currency());
   }
@@ -100,7 +88,7 @@ public class RegionAwareMoneyAnnotatorTest {
       return resolutions;
     };
     final EcbFxRates rates = EcbFxRates.load(new ByteArrayInputStream(String.join("\n",
-        "Date,USD,AUD,", "2026-07-10,1.2000,1.8000,", "").getBytes()));
+        "Date,USD,AUD,", "2026-07-10,1.2000,1.8000,", "").getBytes(StandardCharsets.UTF_8)));
 
     final String text = "a Sydney startup raised $3 million this week";
     final DocumentAnnotator entities = new DocumentAnnotator() {
@@ -120,7 +108,8 @@ public class RegionAwareMoneyAnnotatorTest {
 
     final Document document = DocumentAnalyzer.builder()
         .add(entities)
-        .add(new DocumentRegionAnnotator(geocoder))
+        .add(new GeocodeAnnotator(geocoder))
+        .add(new DocumentRegionAnnotator())
         .add(new RegionAwareMoneyAnnotator())
         .add(new MoneyConversionAnnotator(rates, "USD", LocalDate.parse("2026-07-10")))
         .build()
@@ -150,7 +139,7 @@ public class RegionAwareMoneyAnnotatorTest {
   @Test
   void testCountryWithMinorityLanguageLocalesResolvesTheSymbol() {
     final Document document = new RegionAwareMoneyAnnotator()
-        .annotate(withBallot("the grant is $5", "CA"));
+        .annotate(GeoTestUtil.withRegionBallot("the grant is $5", "CA"));
     assertEquals("CAD",
         document.get(MoneyAnnotator.MONEY).get(0).value().currency());
   }
@@ -171,7 +160,7 @@ public class RegionAwareMoneyAnnotatorTest {
     Assumptions.assumeTrue(singleCurrencySign(Locale.forLanguageTag("nqo-GN")));
 
     final Document document = new RegionAwareMoneyAnnotator()
-        .annotate(withBallot("price 100\u07FF today", "GN"));
+        .annotate(GeoTestUtil.withRegionBallot("price 100\u07FF today", "GN"));
     assertEquals("GNF",
         document.get(MoneyAnnotator.MONEY).get(0).value().currency());
   }
@@ -206,8 +195,8 @@ public class RegionAwareMoneyAnnotatorTest {
   @Test
   void testRepeatedDocumentsFromOneCountryResolveIdentically() {
     final RegionAwareMoneyAnnotator annotator = new RegionAwareMoneyAnnotator();
-    final Document first = annotator.annotate(withBallot("the grant is $5", "CA"));
-    final Document second = annotator.annotate(withBallot("the rebate is $9", "CA"));
+    final Document first = annotator.annotate(GeoTestUtil.withRegionBallot("the grant is $5", "CA"));
+    final Document second = annotator.annotate(GeoTestUtil.withRegionBallot("the rebate is $9", "CA"));
     assertEquals("CAD", first.get(MoneyAnnotator.MONEY).get(0).value().currency());
     assertEquals("CAD", second.get(MoneyAnnotator.MONEY).get(0).value().currency());
   }
@@ -215,7 +204,7 @@ public class RegionAwareMoneyAnnotatorTest {
   @Test
   void testUnknownCountryFallsBackToTheDefaultTable() {
     final Document document = new RegionAwareMoneyAnnotator()
-        .annotate(withBallot("costs $5", "ZZ"));
+        .annotate(GeoTestUtil.withRegionBallot("costs $5", "ZZ"));
     assertEquals("USD",
         document.get(MoneyAnnotator.MONEY).get(0).value().currency());
   }

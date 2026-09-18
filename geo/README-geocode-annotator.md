@@ -15,23 +15,22 @@
    limitations under the License.
 -->
 
-# Document region voting
+# Gazetteer-backed geocoding annotator
 
-This feature combines geocoded location mentions, country names, and country flag emoji into a document-level ballot for the most likely geographic region.
+This feature resolves location mentions to gazetteer places and records the selected geographic identities in an OpenNLP Document layer.
 
 ## Human definition
 
-It gathers several weak geographic clues from a document and chooses a region only when one candidate wins by a sufficient margin.
+It turns a place name in text into a specific real-world place instead of leaving it as an unlinked name.
 
 ## Prior art and comparable products
 
-- [Mordecai](https://github.com/openeventdata/mordecai) uses full-document geoparsing context to resolve geographic references.
+- [Mordecai](https://github.com/openeventdata/mordecai) performs full-text geoparsing and event geocoding.
+- [Nominatim](https://nominatim.osm.org/ui/about.html) resolves names and addresses against OpenStreetMap data.
 
 ## Addon modules
 
-`geo` supplies the region ballot, gazetteer, and geocoder contracts. `numeric`
-contains the region-aware currency adapter and depends on `geo`. The immutable
-Document container and typed layer contracts come from core.
-
-Run `GeocodeAnnotator` first, then `DocumentRegionAnnotator`. Both the entities
-and locations layers must be present, though they may be empty.
+The `geo` module provides geocoding and region voting. Run `GeocodeAnnotator`
+before `DocumentRegionAnnotator`: the ballot consumes the locations layer and
+adds country-name and flag evidence. The `numeric` module supplies the downstream
+region-aware currency adapter. Core supplies Document and the flag decoder.

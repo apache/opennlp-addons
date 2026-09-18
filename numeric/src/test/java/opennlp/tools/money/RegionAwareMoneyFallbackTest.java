@@ -26,7 +26,8 @@ import opennlp.tools.document.Annotation;
 import opennlp.tools.document.Document;
 import opennlp.tools.document.Layers;
 import opennlp.tools.geo.DocumentRegionAnnotator;
-import opennlp.tools.geo.Geocoder;
+import opennlp.tools.geo.GeoTestUtil;
+import opennlp.tools.geo.GeocodeAnnotator;
 import opennlp.tools.geo.RegionVote;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,33 +42,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class RegionAwareMoneyFallbackTest {
 
   /**
-   * Builds a document that carries a region ballot with a single full-share vote for
-   * one country.
-   *
-   * @param text The document text. Must not be {@code null}.
-   * @param countryCode The winning ISO 3166-1 alpha-2 country code. Must not be
-   *                    {@code null}.
-   * @return A {@link Document} with a one-row region ballot. Never {@code null}.
-   */
-  private static Document withBallot(String text, String countryCode) {
-    return Document.of(text).with(DocumentRegionAnnotator.REGIONS,
-        List.of(Annotation.of(new RegionVote(countryCode, 1.0))));
-  }
-
-  /**
    * Verifies the empty-ballot fallback on a ballot the region annotator itself
-   * produced: a document whose entity layer is present but holds no locations gets an
-   * empty region layer, so the money annotator uses the default symbol table and
-   * identifies {@code $7} as {@code USD}.
+   * produced: a document that ran the pipeline but holds no location entity and nothing
+   * geocoded gets an empty region layer, so the money annotator uses the default symbol
+   * table and identifies {@code $7} as {@code USD}. The region annotator's required
+   * layers are present and empty, which is what a location-free document looks like
+   * downstream of the geocoding stage.
    */
   @Test
   void testPipelineProducedEmptyBallotUsesTheDefaultTable() {
-    final Geocoder unreachable = (text, mentions) -> {
-      throw new IllegalStateException("the geocoder must not be consulted");
-    };
+    final Document input = Document.of("the fee is $7")
+        .with(Layers.ENTITIES, List.of())
+        .with(GeocodeAnnotator.LOCATIONS, List.of());
     final Document document = new RegionAwareMoneyAnnotator().annotate(
-        new DocumentRegionAnnotator(unreachable).annotate(
-            Document.of("the fee is $7").with(Layers.ENTITIES, List.of())));
+        new DocumentRegionAnnotator().annotate(input));
 
     final List<Annotation<MoneyAmount>> money = document.get(MoneyAnnotator.MONEY);
     assertEquals(1, money.size());
@@ -86,7 +74,7 @@ public class RegionAwareMoneyFallbackTest {
   @Test
   void testLetterSymbolCountryKeepsTheDefaultTable() {
     final Document document = new RegionAwareMoneyAnnotator()
-        .annotate(withBallot("the invoice totals $5", "CH"));
+        .annotate(GeoTestUtil.withRegionBallot("the invoice totals $5", "CH"));
 
     final List<Annotation<MoneyAmount>> money = document.get(MoneyAnnotator.MONEY);
     assertEquals(1, money.size());
