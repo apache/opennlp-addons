@@ -18,6 +18,11 @@ package opennlp.subword.sentencepiece;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InvalidClassException;
+import java.io.ObjectInputFilter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.IntUnaryOperator;
 
 import opennlp.tools.commons.ThreadSafe;
@@ -54,7 +60,7 @@ import opennlp.tools.util.normalizer.OffsetAwareNormalizer;
 @ThreadSafe
 public final class SentencePieceTokenizer implements SubwordTokenizer, OffsetAwareNormalizer {
 
-  private static final long serialVersionUID = 953529461297726978L;
+  private static final long serialVersionUID = 7751888381608757475L;
 
   /** The segmentation algorithm a model was trained with. */
   public enum Algorithm {
@@ -267,6 +273,191 @@ public final class SentencePieceTokenizer implements SubwordTokenizer, OffsetAwa
       throw new IllegalArgumentException("in must not be null");
     }
     return new SentencePieceTokenizer(ModelProtoReader.read(in.readAllBytes()));
+  }
+
+  /**
+   * Serializes this tokenizer to the given {@link OutputStream} using Java object serialization.
+   * The resulting stream can be read back with {@link #deserialize(InputStream)}.
+   *
+   * @param out The {@link OutputStream} to write to; must not be null.
+   * @throws IOException Thrown if IO errors occurred during serialization.
+   * @throws IllegalArgumentException Thrown if {@code out} is null.
+   */
+  public void serialize(OutputStream out) throws IOException {
+    if (out == null) {
+      throw new IllegalArgumentException("out must not be null");
+    }
+    try (ObjectOutputStream oos = new ObjectOutputStream(out)) {
+      oos.writeObject(this);
+    }
+  }
+
+  /**
+   * Deserializes a {@link SentencePieceTokenizer} from the given {@link InputStream} using
+   * {@link DeserializationLimits#DEFAULT default} resource limits.
+   *
+   * <p>The stream is filtered via an {@link ObjectInputFilter} that allow-lists only the classes
+   * required to reconstruct a {@link SentencePieceTokenizer}, plus resource limits on graph depth,
+   * references, and array length. Foreign payloads are rejected with
+   * {@link java.io.InvalidClassException} before {@link ObjectInputStream#readObject()}
+   * returns.</p>
+   *
+   * <p>Only deserialize tokenizer streams from trusted sources. If the default limits reject a
+   * large model, use
+   * {@link #deserialize(InputStream, DeserializationLimits)} to supply higher limits. The class
+   * allow-list is intentionally not configurable; loosening it would defeat the purpose of the
+   * filter.</p>
+   *
+   * @param in The {@link InputStream} to read from; must not be null.
+   * @return The reconstructed tokenizer.
+   * @throws IOException Thrown if IO errors occurred during deserialization, including
+   *         {@link java.io.InvalidClassException} when the stream contains a class outside the
+   *         allow-list or exceeds a resource limit.
+   * @throws ClassNotFoundException Thrown if required classes are not found.
+   * @throws IllegalArgumentException Thrown if {@code in} is null.
+   */
+  public static SentencePieceTokenizer deserialize(InputStream in)
+      throws IOException, ClassNotFoundException {
+    return deserialize(in, DeserializationLimits.DEFAULT);
+  }
+
+  /**
+   * Deserializes a {@link SentencePieceTokenizer} from the given {@link InputStream} using the
+   * supplied {@link DeserializationLimits resource limits}.
+   *
+   * <p>Use this overload when the {@link DeserializationLimits#DEFAULT default limits} reject a
+   * legitimate model, for example one with a very large vocabulary. The class allow-list applied
+   * to the stream is the same as for {@link #deserialize(InputStream)}; only the numeric limits
+   * change.</p>
+   *
+   * @param in The {@link InputStream} to read from; must not be null.
+   * @param limits The {@link DeserializationLimits} to apply; must not be null.
+   * @return The reconstructed tokenizer.
+   * @throws IOException Thrown if IO errors occurred during deserialization, including
+   *         {@link java.io.InvalidClassException} when the stream contains a class outside the
+   *         allow-list or exceeds one of the supplied limits.
+   * @throws ClassNotFoundException Thrown if required classes are not found.
+   * @throws IllegalArgumentException Thrown if {@code in} or {@code limits} is null.
+   */
+  public static SentencePieceTokenizer deserialize(InputStream in, DeserializationLimits limits)
+      throws IOException, ClassNotFoundException {
+    if (in == null) {
+      throw new IllegalArgumentException("in must not be null");
+    }
+    if (limits == null) {
+      throw new IllegalArgumentException("limits must not be null");
+    }
+    try (ObjectInputStream ois = new ObjectInputStream(in)) {
+      ois.setObjectInputFilter(buildFilter(limits));
+      final Object value = ois.readObject();
+      if (!(value instanceof SentencePieceTokenizer tokenizer)) {
+        final String type = value == null ? "null" : value.getClass().getName();
+        throw new InvalidClassException(
+            "Expected a SentencePieceTokenizer, found " + type + ".");
+      }
+      return tokenizer;
+    }
+  }
+
+  /**
+   * Resource limits applied by the {@link ObjectInputFilter} used by
+   * {@link SentencePieceTokenizer#deserialize(InputStream, DeserializationLimits)}.
+   *
+   * <p>The limits bound graph traversal independently of the class allow-list. Raise the
+   * {@linkplain #DEFAULT default values} only when they reject a valid model.</p>
+   *
+   * @param maxDepth Maximum object-graph nesting depth. Must be {@code > 0}.
+   * @param maxRefs Maximum number of internal references the stream may create.
+   *                Must be {@code > 0}.
+   * @param maxArrayLength Maximum length of any single array allocation requested by the stream.
+   *                       Must be {@code > 0}.
+   */
+  public record DeserializationLimits(long maxDepth, long maxRefs, long maxArrayLength) {
+
+    /**
+     * Default limits. Sized so that models with vocabularies of several hundred thousand pieces
+     * round-trip while pathological streams stay bounded.
+     */
+    public static final DeserializationLimits DEFAULT =
+        new DeserializationLimits(MAX_DEPTH_DEFAULT, MAX_REFS_DEFAULT, MAX_ARRAY_DEFAULT);
+
+    /**
+     * Validates the limits.
+     *
+     * @throws IllegalArgumentException Thrown if any of {@code maxDepth}, {@code maxRefs}, or
+     *         {@code maxArrayLength} is {@code <= 0}.
+     */
+    public DeserializationLimits {
+      if (maxDepth <= 0) {
+        throw new IllegalArgumentException("maxDepth must be > 0");
+      }
+      if (maxRefs <= 0) {
+        throw new IllegalArgumentException("maxRefs must be > 0");
+      }
+      if (maxArrayLength <= 0) {
+        throw new IllegalArgumentException("maxArrayLength must be > 0");
+      }
+    }
+  }
+
+  private static final long MAX_DEPTH_DEFAULT = 64;
+  private static final long MAX_REFS_DEFAULT = 5_000_000;
+  private static final long MAX_ARRAY_DEFAULT = 10_000_000;
+
+  // Allow-list of fully qualified class names that may appear in the serialized graph of a
+  // SentencePieceTokenizer. Anything else is rejected.
+  private static final Set<String> ALLOWED_CLASSES = Set.of(
+      "opennlp.subword.sentencepiece.SentencePieceTokenizer",
+      "opennlp.subword.sentencepiece.SentencePieceTokenizer$Algorithm",
+      "opennlp.subword.sentencepiece.SentencePieceNormalizer",
+      "opennlp.subword.sentencepiece.UnigramEncoder",
+      "opennlp.subword.sentencepiece.BpeEncoder",
+      "opennlp.subword.sentencepiece.PieceTrie",
+      "opennlp.subword.sentencepiece.DoubleArrayTrie",
+      // JDK types used in field declarations. ObjectInputStream invokes the filter for every
+      // class descriptor in the inheritance chain, not only for the runtime class - so the
+      // abstract superclasses java.lang.Number (super of Integer) and java.lang.Enum (super of
+      // Algorithm) must be allow-listed even though no instance of either appears in the stream.
+      "java.lang.String",
+      "java.lang.Number",
+      "java.lang.Integer",
+      "java.lang.Enum",
+      "java.util.HashMap",
+      // HashMap.readObject() requests permission to allocate a Map.Entry[] before reading
+      // entries; the array type itself never appears as a value in the stream.
+      "java.util.Map$Entry"
+  );
+
+  /**
+   * Builds the {@link ObjectInputFilter} enforcing the class allow-list and the given limits.
+   *
+   * @param limits The resource limits to enforce; never null here.
+   * @return The filter to install on the reading {@link ObjectInputStream}.
+   */
+  private static ObjectInputFilter buildFilter(DeserializationLimits limits) {
+    return info -> {
+      if (info.depth() > limits.maxDepth()
+          || info.references() > limits.maxRefs()
+          || info.arrayLength() > limits.maxArrayLength()) {
+        return ObjectInputFilter.Status.REJECTED;
+      }
+
+      final Class<?> serialClass = info.serialClass();
+      if (serialClass == null) {
+        return ObjectInputFilter.Status.UNDECIDED;
+      }
+
+      Class<?> componentType = serialClass;
+      while (componentType.isArray()) {
+        componentType = componentType.getComponentType();
+      }
+      if (componentType.isPrimitive()) {
+        return ObjectInputFilter.Status.ALLOWED;
+      }
+      return ALLOWED_CLASSES.contains(componentType.getName())
+          ? ObjectInputFilter.Status.ALLOWED
+          : ObjectInputFilter.Status.REJECTED;
+    };
   }
 
   /** {@inheritDoc} */
@@ -555,12 +746,26 @@ public final class SentencePieceTokenizer implements SubwordTokenizer, OffsetAwa
    * @param piece The piece string.
    * @return The byte value in {@code [0, 255]}, or {@code -1} when the string is not a byte piece.
    */
-  private int parseBytePiece(String piece) {
+  private static int parseBytePiece(String piece) {
     if (piece.length() != 6 || !piece.startsWith(BYTE_PIECE_PREFIX) || piece.charAt(5) != '>') {
       return -1;
     }
-    final int high = Character.digit(piece.charAt(3), 16);
-    final int low = Character.digit(piece.charAt(4), 16);
+    final int high = asciiHexValue(piece.charAt(3));
+    final int low = asciiHexValue(piece.charAt(4));
     return high < 0 || low < 0 ? -1 : (high << 4) | low;
+  }
+
+  /** {@return the value of an ASCII hexadecimal digit, or {@code -1} for another character} */
+  private static int asciiHexValue(char c) {
+    if (c >= '0' && c <= '9') {
+      return c - '0';
+    }
+    if (c >= 'A' && c <= 'F') {
+      return c - 'A' + 10;
+    }
+    if (c >= 'a' && c <= 'f') {
+      return c - 'a' + 10;
+    }
+    return -1;
   }
 }

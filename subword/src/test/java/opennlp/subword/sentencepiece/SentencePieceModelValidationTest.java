@@ -45,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class SentencePieceModelValidationTest {
 
+  private static final String HEX_DIGITS = "0123456789ABCDEF";
+
   @Test
   void testNullAndEmptyInputAreRejected() {
     assertThrows(IllegalArgumentException.class,
@@ -189,6 +191,80 @@ class SentencePieceModelValidationTest {
       assertFalse(plain.isByte(id), "piece " + id + " must not be a byte piece");
     }
     assertThrows(IllegalArgumentException.class, () -> plain.isByte(-1));
+  }
+
+  @Test
+  void testRejectsAPieceFieldThatCrossesItsMessageBoundary() {
+    final byte[] model = {
+        0x0A, 0x02,  // pieces sub-message with a two-byte payload
+        0x0A, 0x04,  // piece string claiming four bytes outside that payload
+        'a', 'b', 'c', 'd'};
+
+    final InvalidFormatException error = assertThrows(InvalidFormatException.class,
+        () -> ModelProtoReader.read(model));
+
+    assertTrue(error.getMessage().contains("message boundary"), error.getMessage());
+  }
+
+  @Test
+  void testRejectsMalformedUtf8InAPiece() {
+    final byte[] model = {
+        0x0A, 0x03,  // pieces sub-message
+        0x0A, 0x01, (byte) 0xFF};
+
+    final InvalidFormatException error = assertThrows(InvalidFormatException.class,
+        () -> ModelProtoReader.read(model));
+
+    assertTrue(error.getMessage().contains("UTF-8"), error.getMessage());
+  }
+
+  /** Verifies that the tenth byte of a 64-bit varint cannot carry more than one value bit. */
+  @Test
+  void testRejectsVarintLargerThan64Bits() {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    out.writeBytes(minimalModel(ModelProtoReader.RawModel.MODEL_TYPE_UNIGRAM));
+    out.write(0x28); // Unknown field 5 with the varint wire type.
+    for (int i = 0; i < 9; i++) {
+      out.write(0x80);
+    }
+    out.write(0x02);
+
+    final InvalidFormatException error = assertThrows(InvalidFormatException.class,
+        () -> ModelProtoReader.read(out.toByteArray()));
+
+    assertTrue(error.getMessage().contains("64 bits"), error.getMessage());
+  }
+
+  @Test
+  void testRejectsNonAsciiHexadecimalBytePiece() {
+    final InvalidFormatException error = assertThrows(InvalidFormatException.class,
+        () -> SentencePieceTokenizer.load(new ByteArrayInputStream(
+            byteFallbackModel("<0x\uff26F>"))));
+
+    assertTrue(error.getMessage().contains("invalid"), error.getMessage());
+  }
+
+  /**
+   * Builds a byte-fallback model, replacing the {@code <0xFF>} piece with the supplied text.
+   *
+   * @param lastBytePiece The text of the piece assigned to byte {@code 0xFF}.
+   * @return The encoded model.
+   */
+  private static byte[] byteFallbackModel(String lastBytePiece) {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    writePiece(out, "<unk>", 2);
+    for (int b = 0; b < 256; b++) {
+      final String piece = "<0x" + HEX_DIGITS.charAt(b >>> 4)
+          + HEX_DIGITS.charAt(b & 0x0f) + ">";
+      writePiece(out, b == 255 ? lastBytePiece : piece, 6);
+    }
+    // trainer_spec { byte_fallback = true }
+    out.write(0x12);
+    out.write(3);
+    out.write(0x98);
+    out.write(0x02);
+    out.write(1);
+    return out.toByteArray();
   }
 
   private static byte[] readModel() throws IOException {
