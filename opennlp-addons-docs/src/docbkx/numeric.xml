@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="tools.numeric" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<title>Numeric Extraction</title>
+
+	<section xml:id="tools.numeric.introduction">
+		<title>Introduction</title>
+		<para>
+			Numeric extraction adds dates, currency amounts, and quantities to document
+			layers. A dateline supplies the reference date for relative expressions.
+			Currency amounts include a <code>BigDecimal</code> value and an ISO currency
+			code. <code>MoneyConversionAnnotator</code> converts these amounts to a target
+			currency using rates for the document date. <code>NumericPacks</code> provides
+			pipelines for these operations.
+		</para>
+		<para>
+			The extractors require no model or regular expressions. Results include
+			original-text spans. Quantity extraction scans for currency amounts before
+			measurements to exclude overlapping results.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.pipeline">
+		<title>Temporal, money, and conversion</title>
+		<para>
+			The pipeline below uses model-free extractors and a synthetic ECB-style
+			rate table. The dateline becomes the document date; both money spans keep
+			their original offsets while the conversion layer restates them in USD.
+			<code>NumericExtractionExampleTest</code> asserts the behavior shown here.
+			<programlisting language="java"><![CDATA[
+String text = "Berlin, 14 July 2026. The seller asked for €2.5 million, "
+    + "but the buyer paid $2,400,000 after a week of talks.";
+
+FxRates rates = EcbFxRates.load(ratesCsvStream); // e.g. 2026-07-13, 1.2000 USD per EUR
+
+Document document = DocumentAnalyzer.builder()
+    .add(new TemporalAnnotator(new CursorTemporalExtractor()))
+    .add(new DocumentDateAnnotator())
+    .add(new MoneyAnnotator(new CursorMoneyExtractor()))
+    .add(new MoneyConversionAnnotator(rates, "USD"))
+    .build()
+    .analyze(text);
+
+// TEMPORALS / DOCUMENT_DATE: 14 July 2026 -> 2026-07-14
+// MONEY: €2.5 million -> 2500000 EUR; $2,400,000 -> 2400000 USD
+// CONVERTED_MONEY: 3000000 USD and 2400000 USD on the same spans]]>
+			</programlisting>
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.annotators">
+		<title>Annotator contracts</title>
+		<para>
+			<code>MoneyAnnotator</code>, <code>QuantityAnnotator</code>, and
+			<code>TemporalAnnotator</code> accept custom extractors. Each extractor must
+			return a non-null list of non-null mentions, ordered by text position with
+			non-overlapping spans within the original text. The adapters reject invalid
+			results with <code>IllegalArgumentException</code>; they do not sort or remove
+			mentions to repair the result. Adjacent spans and zero-width spans at span
+			boundaries are accepted. An empty result adds an empty output layer.
+		</para>
+		<para>
+			<code>TemporalAnnotator</code> validates the complete absolute extraction
+			before selecting a reference date, then validates the resolved extraction.
+			With a fixed reference date, it performs and validates one extraction pass.
+			The adapters reject an existing output layer before calling the extractor
+			or conversion provider. Provider exceptions propagate without modification.
+		</para>
+		<para>
+			<code>MoneyConversionAnnotator</code> requires the source amount layer and,
+			unless a fixed date is configured, the document-date layer. Required layers
+			may be empty. Document-date mode accepts at most one date annotation;
+			fixed-date mode ignores that layer. Input values must have the same spans as
+			their annotations;
+			this is checked before conversion begins. A present conversion result must
+			use the requested currency and retain the source span's offsets and type.
+			Invalid provider results raise <code>IllegalArgumentException</code>.
+			Valid amounts are accepted without additional rounding.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.fx">
+		<title>Exchange rates</title>
+		<para>
+			<code>EcbFxRates</code> loads the uncompressed history CSV from the
+			<ulink url="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html">ECB reference-rate downloads</ulink>.
+			Supply the file or an input stream; OpenNLP does not download or bundle rates.
+			Stream loading does not close the input. ECB rates are published for information,
+			and the ECB discourages their use for transactions. Review the
+			<ulink url="https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html">ECB data use terms</ulink>
+			before distributing data or results.
+		</para>
+		<para>
+			The UTF-8 CSV starts with <code>Date,</code> followed by unique currency codes
+			of 3 uppercase ASCII letters. Fields are unquoted and dates must be unique.
+			Spaces and tabs around fields are accepted. NUL and other non-whitespace
+			control characters are rejected, including in empty fields and missing-quote markers.
+			Include all columns, using a blank field or <code>N/A</code> for an unavailable
+			quote. One additional empty field at the end of a header or record is accepted.
+			Quotes must be positive; an explicit <code>EUR</code> quote must equal 1.
+			Malformed tables raise <code>IllegalArgumentException</code>; reading and UTF-8
+			decoding failures raise <code>IOException</code>.
+		</para>
+		<para>
+			The most recent reference date on or before the requested date is used, up to
+			7 calendar days earlier. If either currency is unavailable on that date, the
+			result is empty; older quotes are not combined with the selected date. A
+			request before the first reference date or more than 7 days after the last
+			applicable reference date also returns an empty result.
+		</para>
+		<para>
+			This example uses synthetic rates: 1 EUR equals 1.25 USD or 150 JPY.
+			The weekend conversion uses the July 10 reference date and retains the span
+			of the original amount.
+			<programlisting language="java"><![CDATA[
+String csv = "Date,USD,JPY,\n2026-07-10,1.25,150,\n";
+FxRates rates = EcbFxRates.load(
+    new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+
+String text = "The fare was $10.";
+MoneyAmount source = new CursorMoneyExtractor().extract(text).getFirst();
+MoneyAmount converted = rates.convert(source, "JPY", LocalDate.of(2026, 7, 12))
+    .orElseThrow();
+
+// converted: 1200 JPY, with the original "$10" span
+// July 17: available; July 18: empty (the quote is 8 days old)]]>
+			</programlisting>
+		</para>
+		<para>
+			Cross-currency conversion multiplies the amount by the target quote, then
+			divides by the source quote with <code>MathContext.DECIMAL64</code> (16 significant
+			digits, half-even rounding). Amounts are not rounded to a currency's minor unit.
+			Converting to the source currency preserves the amount and decimal scale, but
+			still requires an available quote on a usable date.
+		</para>
+		<para>
+			Use <code>convert</code> to convert an amount without multiplying by a rounded
+			cross rate. With the synthetic quotes below, the rate is a repeating decimal,
+			but the converted amount is exact.
+			<programlisting language="java"><![CDATA[
+String csv = "Date,USD,JPY\n2026-07-14,3,1\n";
+FxRates rates = EcbFxRates.load(
+    new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+String text = "The fee was USD 3.";
+MoneyAmount source = new CursorMoneyExtractor().extract(text).getFirst();
+LocalDate date = LocalDate.of(2026, 7, 14);
+
+BigDecimal rate = rates.rate("USD", "JPY", date).orElseThrow();
+MoneyAmount converted = rates.convert(source, "JPY", date).orElseThrow();
+
+// rate: 0.3333333333333333
+// converted: 1 JPY, retaining the original "USD 3" span
+// source.amount().multiply(rate): 0.9999999999999999]]>
+			</programlisting>
+		</para>
+		<para>
+			Rates and cross-currency results must fit the
+			<ulink url="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html">BigDecimal scale range</ulink>
+			at 16-digit precision. Intermediate scale overflow does not prevent a
+			representable result. A result outside this range raises
+			<code>ArithmeticException</code>; it is not returned as a missing quote or
+			rounded to zero. Zero amounts remain convertible when a quote is available.
+		</para>
+		<para>
+			In a document pipeline, conversions with no available rate are omitted from
+			the converted layer. The source amount layer is unchanged. Match converted
+			mentions to their source spans, not by list index. This example has no CHF
+			quote, so the converted layer contains only the EUR and JPY mentions.
+			<programlisting language="java"><![CDATA[
+String csv = "Date,USD,JPY,\n2026-07-10,1.25,150,\n";
+FxRates rates = EcbFxRates.load(
+    new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+String text = "2026-07-12: paid EUR 10, CHF 5, and JPY 150.";
+
+Document document = DocumentAnalyzer.builder()
+    .add(new TemporalAnnotator(new CursorTemporalExtractor()))
+    .add(new DocumentDateAnnotator())
+    .add(new MoneyAnnotator(new CursorMoneyExtractor()))
+    .add(new MoneyConversionAnnotator(rates, "USD"))
+    .build()
+    .analyze(text);
+
+List<Annotation<MoneyAmount>> converted =
+    document.get(MoneyConversionAnnotator.CONVERTED_MONEY);
+
+// EUR 10 -> 12.5 USD; JPY 150 -> 1.25 USD
+// CHF 5 remains in MONEY but has no conversion.]]>
+			</programlisting>
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.packs">
+		<title>Ready-made pipelines</title>
+		<para>
+			<code>NumericPacks</code> assembles the annotators for one kind of number:
+			<code>money()</code>, <code>quantity()</code>, <code>temporal()</code>, and
+			<code>fullPipeline()</code>. Money, quantity, and full-pipeline variants accept a
+			<code>Locale</code> to select number notation and currency-symbol defaults
+			from JDK locale data. The temporal annotator runs before
+			<code>DocumentDateAnnotator</code>. To add steps such as currency conversion,
+			use the modifiable list from <code>NumericPacks.annotators()</code> or
+			<code>NumericPacks.annotators(Locale)</code>.
+		</para>
+		<para>
+			Currency and quantity extraction default to <code>LATIN_US</code>. Regional factories with
+			currency extraction require a locale with a currency; <code>quantity(Locale)</code>
+			also accepts language-only locales. Locale selection does not translate month
+			names or relative-date words. Empty input produces the configured layers with
+			no mentions. Currency conversion requires an additional annotator and rates.
+		</para>
+		<para>
+			This example extends the German pipeline using synthetic rates. The conversion
+			uses the document date and preserves the original amount span.
+		</para>
+		<programlisting language="java"><![CDATA[String csv = "Date,USD\n2026-07-14,1.25\n";
+FxRates rates = EcbFxRates.load(
+    new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+List<DocumentAnnotator> annotators = NumericPacks.annotators(Locale.GERMANY);
+annotators.add(new MoneyConversionAnnotator(rates, "USD"));
+
+DocumentAnalyzer.Builder builder = DocumentAnalyzer.builder();
+annotators.forEach(builder::add);
+Document document = builder.build()
+    .analyze("2026-07-14: paid EUR 10 for 3 kg yesterday.");
+
+// MONEY: 10 EUR; CONVERTED_MONEY: 12.5 USD, both on the "EUR 10" span
+// QUANTITIES: 3 kg; yesterday: 2026-07-13; DOCUMENT_DATE: 2026-07-14]]></programlisting>
+		<para>
+			<code>NumericManualExampleTest</code> tests this listing. Each returned list is
+			independent; editing it does not change a built analyzer. Additional annotators
+			must provide distinct output layers and follow their required input layers.
+			Factory analyzers support concurrent requests. For an extended pipeline,
+			verify concurrent-call support in the added annotators and rate providers.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.timestamps">
+		<title>Dates in timestamps</title>
+		<para>
+			<code>CursorTemporalExtractor</code> reports the date part of a timestamp at
+			day granularity. The span excludes the time and offset. The written calendar
+			date is used without conversion to UTC, including for relative-date resolution.
+			<programlisting language="java"><![CDATA[
+String text = "Received 2026-07-14T23:30:00.125-04:00. Reviewed yesterday.";
+Document document = NumericPacks.temporal().analyze(text);
+
+// TEMPORALS: 2026-07-14 -> 2026-07-14; yesterday -> 2026-07-13
+// DOCUMENT_DATE: 2026-07-14, on the date-only span [9, 19)]]>
+			</programlisting>
+		</para>
+		<para>
+			Supported suffixes require <code>T</code> and <code>HH:MM</code>. Seconds, a
+			dot or comma fraction, and <code>Z</code> or a numeric offset are optional.
+			Offsets use <code>+HH:MM</code> or <code>-HH:MM</code>. Fractions apply to the last
+			clock component and may have any number of digits. Lowercase <code>t</code>
+			and <code>z</code> are also accepted. Hour 24 requires zero minutes, seconds,
+			and fraction. Offset hours range from 00 through 23; minutes range from 00
+			through 59. Second 60 is accepted without checking a leap-second calendar.
+		</para>
+		<para>
+			Malformed clock fields and incomplete offsets do not produce a date mention
+			or supply a document reference date. Extraction continues with later mentions.
+			For example, <code>2026-07-14T99:99</code> has no result. These checks recognize
+			the supported suffix forms; they do not provide general timestamp validation.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.relative">
+		<title>Relative dates</title>
+		<para>
+			By default, <code>TemporalAnnotator</code> extracts absolute dates and uses
+			the first absolute day mention as the reference for another scan. This resolves
+			expressions such as <code>yesterday</code>, <code>3 days ago</code>, and
+			<code>next quarter</code>. Relative expressions retain their origin and do not
+			replace the document date.
+			<programlisting language="java"><![CDATA[
+Document document = NumericPacks.temporal()
+    .analyze("Berlin, 14 July 2026. The buyer paid yesterday.");
+
+// TEMPORALS: 14 July 2026 -> 2026-07-14; yesterday -> 2026-07-13
+// DOCUMENT_DATE: 2026-07-14, on the span of the dateline]]>
+			</programlisting>
+		</para>
+		<para>
+			Without an absolute day mention or a configured reference date, relative
+			expressions are omitted. Resolution does not depend on the system clock.
+			<programlisting language="java"><![CDATA[
+Document document = NumericPacks.temporal().analyze("The buyer paid yesterday.");
+
+// TEMPORALS: empty]]>
+			</programlisting>
+		</para>
+		<para>
+			To use a date from metadata, pass it to
+			<code>TemporalAnnotator(TemporalExtractor, LocalDate)</code> or
+			<code>NumericPacks.temporal(LocalDate)</code>. This reference takes precedence
+			when resolving relative expressions. It is not added to the document-date
+			layer, which requires an absolute day mention with a text span.
+			<programlisting language="java"><![CDATA[
+Document document = NumericPacks.temporal(LocalDate.of(2021, 1, 1))
+    .analyze("Filed yesterday. Review this week; follow-up next month.");
+
+// TEMPORALS: yesterday -> 2020-12-31; this week -> 2020-W53; next month -> 2021-02
+// DOCUMENT_DATE: empty, the reference came from metadata]]>
+			</programlisting>
+		</para>
+		<para>
+			Week values use the ISO week-based year, which can differ from the calendar
+			year near January 1. Relative counts from 0 to 99 support days, weeks, months,
+			quarters, and years. Reference and resolved dates support the full
+			<code>LocalDate</code> range. If a shift exceeds that range, the expression has
+			no result and extraction continues. Absolute dates written in text remain
+			restricted to years 1000 through 2999.
+		</para>
+		<para>
+			Normalized years have at least 4 digits. Negative years include a negative
+			sign, as in <code>-0001-01-04</code>; years after 9999 include a positive sign,
+			as in <code>+10000-01-04</code>. Digits and week numbering do not depend on
+			the default locale.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.documentdate">
+		<title>Document reference date</title>
+		<para>
+			<code>DocumentDateAnnotator</code> selects the absolute day mention with the
+			earliest text offset, independent of annotation-list order. Equal start offsets
+			use list order. Relative expressions, months, and coarser values do not supply
+			a date. Without an absolute day mention, the output layer is empty.
+		</para>
+		<para>
+			Temporal values must have the same spans as their annotations. The selected
+			value must be a valid calendar date; an invalid first date is not replaced by
+			a later date. The source layer is unchanged. This example builds a layer in
+			reverse order to show selection by text position.
+			<programlisting language="java"><![CDATA[
+String text = "Filed 2026-07-14. Due 2026-08-01.";
+List<Annotation<TemporalExpression>> mentions = new CursorTemporalExtractor().extract(text)
+    .reversed().stream().map(value -> new Annotation<>(value.span(), value)).toList();
+
+Document input = Document.of(text).with(TemporalAnnotator.TEMPORALS, mentions);
+Document document = new DocumentDateAnnotator().annotate(input);
+Annotation<LocalDate> date = document.get(DocumentDateAnnotator.DOCUMENT_DATE).getFirst();
+
+// TEMPORALS retains list order: 2026-08-01, 2026-07-14
+// DOCUMENT_DATE: 2026-07-14, with the original span [6, 16)]]>
+			</programlisting>
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.notations">
+		<title>Regional number notations</title>
+		<para>
+			The extractors read digits in one written convention, named by
+			<code>NumberNotation</code>: <code>LATIN_US</code> groups with commas and marks
+			the fraction with a dot, <code>LATIN_EU</code> does the opposite. The choice
+			matters: <code>1.234</code> is valid in both conventions, but means 1.234 in
+			LATIN_US and 1234 in LATIN_EU. Invalid grouping is rejected. Inputs valid in both
+			are interpreted using the selected notation, without guessing the author's intent.
+		</para>
+		<para>
+			<code>CursorMoneyExtractor.forRegion(Locale)</code> and the regional packs derive
+			the notation from the locale's own <code>DecimalFormatSymbols</code>, not from a
+			hard-coded country list, and resolve ambiguous currency symbols in the same step.
+			<programlisting language="java"><![CDATA[
+String text = "Der Kaufer zahlte 2.400.000 EUR fur 1.250,5 GB Speicher.";
+
+Document german = NumericPacks.fullPipeline(Locale.GERMANY).analyze(text);
+// MONEY: 2.400.000 EUR -> 2400000 EUR
+// QUANTITIES: 1.250,5 GB -> 1250.5 GB
+
+Document american = NumericPacks.fullPipeline().analyze(text);
+// MONEY and QUANTITIES: empty, the text is not written in that notation]]>
+			</programlisting>
+		</para>
+		<para>
+			Both notations read ASCII digits only. Nonbreaking spaces (U+00A0 and U+202F),
+			thin spaces (U+2009), apostrophes (U+0027 and U+2019), and Arabic numeric
+			separators (U+066B and U+066C) between ASCII digits reject an amount rather than
+			produce a partial value. This does not add support for those formats. Ordinary
+			spaces separate tokens and are not interpreted as grouping.
+			<programlisting language="java"><![CDATA[
+MoneyAmount grouped = new CursorMoneyExtractor(NumberNotation.LATIN_US)
+    .extract("1,234 USD").getFirst(); // amount: 1234
+MoneyAmount decimal = new CursorMoneyExtractor(NumberNotation.LATIN_EU)
+    .extract("1,234 USD").getFirst(); // amount: 1.234
+
+List<MoneyAmount> rejected = new CursorMoneyExtractor().extract("$1\u202F234");
+// empty: the narrow nonbreaking space is not a supported grouping separator]]>
+			</programlisting>
+		</para>
+		<para>
+			Scientific notation is not supported: <code>1e-3kg</code> does not produce a
+			quantity, and <code>$1e-3</code> does not produce a currency amount. The exponent
+			is not extracted as a separate value.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.currencywords">
+		<title>Spelled-out currencies</title>
+		<para>
+			An amount may name its currency in words instead of a symbol or an ISO code:
+			<code>50 euros</code>, <code>1.2 million dollars</code>,
+			<code>3 billion pounds</code>. The word follows the amount and any scale marker,
+			and the mention covers the whole phrase.
+			<programlisting language="java"><![CDATA[
+List<MoneyAmount> mentions = new CursorMoneyExtractor()
+    .extract("the fund raised 1.2 million dollars and 50 euros");
+
+// 1.2 million dollars -> 1200000 USD
+// 50 euros -> 50 EUR]]>
+			</programlisting>
+		</para>
+		<para>
+			Currency words use fixed defaults, including <code>dollar</code> for USD,
+			<code>rupee</code> for INR, and <code>pound</code> for GBP. The words
+			<code>peso</code>, <code>franc</code>, <code>krone</code>, and <code>won</code>
+			are not supported. Subunits such as <code>cents</code> and hyphenated compounds
+			such as <code>euro-cent</code> are excluded. Weight phrases such as
+			<code>3 pounds of flour</code> are interpreted as GBP amounts.
+		</para>
+	</section>
+
+	<section xml:id="tools.numeric.quantities">
+		<title>Quantities</title>
+		<para>
+			<code>QuantityAnnotator</code> adds a quantity layer over the raw text, so it
+			requires no other layer. A mention is a number with a percent marker or a unit
+			token; a bare number is never a quantity. Percentages are reported with the unit
+			<code>%</code>, whether
+			written as a sign or as the word <code>percent</code>. No unit conversion is
+			performed: <code>2.5km</code> keeps the value <code>2.5</code> and the unit
+			<code>km</code>.
+		</para>
+		<para>
+			Unit matching is case-sensitive. The built-in set excludes ambiguous words
+			such as <code>in</code>. A set passed to <code>CursorQuantityExtractor(Set)</code>
+			replaces the built-in units; percentage recognition is independent of that set.
+			Custom tokens contain letters only and are rejected at construction
+			time if they are empty or exceed six UTF-16 code units. A supplementary Unicode
+			letter occupies 2 code units. A letter, number,
+			combining mark, or identifier connector following a unit prevents a partial
+			match. For example, <code>5m²</code> is not reported as 5 meters; area units
+			are not supported. Combining marks on preceding text are classified with the
+			base character, so a quantity after an emoji remains valid.
+			<programlisting language="java"><![CDATA[
+Document document = DocumentAnalyzer.builder()
+    .add(new QuantityAnnotator(new CursorQuantityExtractor()))
+    .build()
+    .analyze("battery lasts 12 hr at 45% load");
+
+// QUANTITIES: 12 hr -> 12 hr; 45% -> 45 %]]>
+			</programlisting>
+		</para>
+		<para>
+			This custom set recognizes kilograms and percentages, but excludes the
+			built-in meter unit.
+			<programlisting language="java"><![CDATA[
+List<Quantity> mentions = new CursorQuantityExtractor(Set.of("kg"))
+    .extract("Load 5kg across 2m at 45% capacity.");
+
+// QUANTITIES: 5kg -> 5 kg; 45% -> 45 %
+// 2m is not included because m is not in the custom set.]]>
+			</programlisting>
+		</para>
+		<para>
+			Recognized currency amounts take precedence over measurements, including
+			custom units. The quantity extractor uses the selected number notation and
+			the default <code>CursorMoneyExtractor</code> currency-symbol table. This
+			avoids interpreting the scale suffix in <code>$3m</code> as meters, while
+			preserving separate measurements and their original offsets.
+			<programlisting language="java"><![CDATA[
+String text = "Paid $3m for 3m of pipe and 5kg of fittings; USD 2m remained.";
+Document document = NumericPacks.fullPipeline().analyze(text);
+
+// MONEY: $3m -> 3000000 USD; USD 2m -> 2000000 USD
+// QUANTITIES: 3m -> 3 m; 5kg -> 5 kg]]>
+			</programlisting>
+		</para>
+	</section>
+</chapter>
