@@ -395,4 +395,64 @@ List<GeoResolution> resolutions = geocoder.resolve(text, mentions);
 			</programlisting>
 		</para>
 	</section>
+
+	<section xml:id="tools.geo.place-profiles">
+		<title>Place profiles</title>
+		<para>
+			<code>PlaceProfiles</code> loads a tab-separated metric table and answers
+			pairwise cosine similarities after standardizing each column to mean zero
+			and unit population variance. Constant columns contribute zero. These are
+			comparisons of numeric measurements, not geographic distances or text embeddings.
+			No metric data is bundled; check the licenses of the sources used for a table.
+		</para>
+		<para>
+			The first column must be named <code>id</code>, followed by at least one metric.
+			Metric names and place identifiers must be unique and non-empty after surrounding
+			whitespace is removed. Data lines must have a finite decimal value for each metric;
+			exponent notation is accepted. UTF-8 text may use LF, CRLF, or CR line endings.
+			Blank lines and comments beginning with <code>#</code>, optionally indented, are
+			ignored. An empty cell, repeated identifier or metric name, invalid UTF-8, or
+			malformed data produces <code>InvalidFormatException</code>. Other read failures
+			produce <code>IOException</code>. The stream overload does not close the supplied
+			stream, including on failure.
+		</para>
+		<para>
+			Save this project-authored example as <code>profiles.tsv</code>, using tabs between
+			cells. It contains density, income, and transit measurements for fictional places:
+		</para>
+		<programlisting><![CDATA[id	density	income	transit
+metroville	12000	72000	8
+harborview	11000	68000	9
+suburb-glen	1800	85000	3
+farmdale	120	46000	1
+mill-city	9500	52000	7]]></programlisting>
+		<programlisting language="java"><![CDATA[import java.nio.file.Path;
+import java.util.List;
+
+import opennlp.geo.PlaceProfiles;
+
+PlaceProfiles profiles = PlaceProfiles.load(Path.of("profiles.tsv"));
+
+double score = profiles.similarity("metroville", "harborview");
+// approximately 0.94217
+List<PlaceProfiles.Neighbor> neighbors = profiles.mostSimilar("metroville", 4);
+// harborview, mill-city, suburb-glen, farmdale]]></programlisting>
+		<para>
+			Neighbor queries exclude the query place and sort by decreasing score, then by
+			ascending identifier for equal scores. Results and metric-name lists are immutable.
+			Scores are in <code>[-1, 1]</code>. A place at the column means has a zero profile
+			and scores zero, including against itself. A table with one place therefore has
+			zero self-similarity and no neighbors. <code>PlaceProfilesUsageTest</code> checks
+			the example's scores and rankings.
+		</para>
+		<para>
+			Numeric cells are parsed as doubles before statistics are calculated. Decimal
+			input can therefore be rounded. Centering uses the exact values of those doubles;
+			a value that looks like a decimal midpoint may not be the exact column mean.
+			Cosine measures direction, so a profile very close to the mean can have a nonzero
+			score despite a small absolute difference. Load-time arithmetic supports the finite
+			double range; query-time calculations use rescaled double vectors. Standardization
+			depends on the complete table, so adding or removing places can change existing scores.
+		</para>
+	</section>
 </chapter>
