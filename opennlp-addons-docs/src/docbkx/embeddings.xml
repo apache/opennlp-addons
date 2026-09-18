@@ -299,4 +299,60 @@ List<Neighbor> related = model.mostSimilar("coffee espresso", 3);]]></programlis
 			(about 2.1 billion float elements), checked explicitly.
 		</para>
 	</section>
+	<section xml:id="tools.embeddings.annotator">
+		<title>EmbeddingAnnotator</title>
+		<para>
+			<code>EmbeddingAnnotator</code>, in <code>embedding-annotator</code>, embeds the
+			original text covered by each source annotation. It does not embed the annotation's
+			stored value. Each vector keeps its source span and layer order, so it can be
+			highlighted in the original text. The output key prefixes the source id with
+			<code>embeddings:</code>.
+		</para>
+		<para>
+			Given a loaded <code>TextEmbedder</code> named <code>embedder</code>, this pipeline
+			tokenizes text with the model-free <code>SimpleTokenizer</code> and embeds each token:
+		</para>
+		<programlisting language="java">
+			<![CDATA[
+EmbeddingAnnotator annotator = new EmbeddingAnnotator(embedder, Layers.TOKENS);
+DocumentAnalyzer analyzer = DocumentAnalyzer.builder()
+    .add(new TokenizerAnnotator(SimpleTokenizer.INSTANCE))
+    .add(annotator)
+    .build();
+Document embedded = analyzer.analyze("Dogs bark loudly");
+
+// annotator.layer().id() is "embeddings:opennlp:tokens"
+List<Annotation<float[]>> vectors = embedded.get(annotator.layer());
+Annotation<float[]> first = vectors.getFirst();
+String covered = first.span().getCoveredText(embedded.text()).toString(); // "Dogs"
+float[] editable = first.value().clone();]]>
+		</programlisting>
+		<para>
+			Use <code>Layers.SENTENCES</code> instead to embed whole sentences after sentence
+			detection. Token and sentence embeddings coexist under
+			<code>embeddings:opennlp:tokens</code> and <code>embeddings:opennlp:sentences</code>.
+			Embedding a token does not supply its surrounding sentence as context. The
+			annotator performs no additional pooling or normalization.
+		</para>
+		<para>
+			The source must be a present, positional layer. An empty source produces an empty
+			output without calling the embedder. For a nonempty source, one
+			<code>embedAll</code> call processes distinct covered texts in first-appearance order.
+			The embedder's default batch method calls <code>embed</code> sequentially; a backend
+			can override it for batched inference. Deduplication is exact and per document.
+		</para>
+		<para>
+			The returned batch must have one non-null vector per distinct text, each with
+			exactly <code>embedder.dimension()</code> components. Invalid batches throw
+			<code>IllegalArgumentException</code>. Valid vectors are stored unchanged, without
+			copying, and repeated texts share the same array. Both readers and embedders must
+			treat stored arrays as read-only; clone a vector before modifying it, as above.
+		</para>
+		<para>
+			An existing output layer is rejected before inference. Two embedders using the same
+			source derive the same output key, so they cannot both add results to one document.
+			Concurrent annotation requires a thread-safe embedder. The annotator does not retain
+			vectors between documents.
+		</para>
+	</section>
 </chapter>
