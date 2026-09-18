@@ -109,6 +109,7 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>geo</module>
+        <module>numeric</module>
     </modules>
 
     <properties>
