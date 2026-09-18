@@ -108,6 +108,7 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
+        <module>morfologik-fsa</module>
     </modules>
 
     <properties>

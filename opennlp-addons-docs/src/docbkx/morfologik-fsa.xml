@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
+	license agreements. See the NOTICE file distributed with this work for additional 
+	information regarding copyright ownership. The ASF licenses this file to 
+	you under the Apache License, Version 2.0 (the "License"); you may not use 
+	this file except in compliance with the License. You may obtain a copy of 
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+	by applicable law or agreed to in writing, software distributed under the 
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. See the License for the specific 
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="addons.morfologik-fsa" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Morphological dictionary readers</title>
+<para>Stored forms and query tokens use <code>StringUtil.toLowerCase</code>
+code-point conversion. This maps dotted capital I to i and capital sigma to
+small sigma without contextual casing. Input-conversion replacements are
+lower-cased again before lookup; tags and lemmas keep their original case.</para>
+		<section xml:id="tools.lemmatizer.polimorf">
+			<title>Dictionary lemmatization from PoliMorf tables</title>
+			<para>
+				<code>DictionaryLemmatizer</code> reads a <code>word</code>, <code>postag</code>,
+				<code>lemma</code> table. Many published morphological dictionaries use the opposite
+				column order, one <code>surfaceForm</code>, <code>lemma</code>, <code>tag</code> row
+				per entry. This is the layout of PoliMorf, the successor grammatical dictionary of
+				Polish, which is released under a permissive BSD 2-Clause license, and it is also
+				what exporting a morfologik dictionary to text produces.
+				<code>PoliMorfDictionaryReader</code> adapts such a table into a
+				<code>DictionaryLemmatizer</code>: it re-orders the columns, lower-cases each surface
+				form to match the case-insensitive lookup, and merges every lemma listed for the same
+				form and tag into one entry. The dictionary data is supplied by the caller and never
+				bundled. <code>PoliMorfDictionaryReaderUsageExampleTest</code> asserts the behavior
+				shown here over a small in-repo table in this format:
+				<programlisting language="java"><![CDATA[
+// surfaceForm<TAB>lemma<TAB>tag, one row per entry
+String table = "psa\tpies\tsubst:sg:gen:m2\n"
+    + "psy\tpies\tsubst:pl:nom:m2\n"
+    + "kota\tkot\tsubst:sg:gen:m2\n";
+
+Lemmatizer lemmatizer = PoliMorfDictionaryReader.read(
+    new ByteArrayInputStream(table.getBytes(StandardCharsets.UTF_8)));
+
+lemmatizer.lemmatize(new String[] {"psa"}, new String[] {"subst:sg:gen:m2"});   // ["pies"]
+lemmatizer.lemmatize(new String[] {"Psa"}, new String[] {"subst:sg:gen:m2"});   // ["pies"], case-insensitive
+lemmatizer.lemmatize(new String[] {"psa"}, new String[] {"adj:sg:nom:m2:pos"}); // ["O"], tag miss]]>
+				</programlisting>
+			</para>
+			<para>
+				Distinct lemmas for a form and tag retain their first-seen order. A
+				<code>#</code> is part of a lemma, not a separator: an entry
+				<code>csharp&#x9;C#&#x9;NNP</code> returns <code>C#</code>, not <code>C</code>.
+				Empty lemma and tag fields are retained; columns after the tag are ignored.
+				Malformed entries and invalid character data cause <code>IOException</code>.
+			</para>
+		</section>
+		<section xml:id="tools.lemmatizer.morfologik">
+			<title>Reading morfologik dictionaries</title>
+			<para>
+				<code>MorfologikDictionaryReader</code> loads FSA5 and CFSA2
+				<code>.dict</code> files into a <code>DictionaryLemmatizer</code>, without a
+				third-party dependency. Supply a dictionary and <code>.info</code> metadata
+				file, or specify the separator, character encoding and base-form encoder
+				explicitly. Dictionary data is not bundled with OpenNLP.
+			</para>
+			<para>
+				Loading expands every entry into an in-memory lookup map. Subsequent
+				lookups use that map, not the compressed automaton. Allow heap for decoded
+				forms, tags and lemmas, plus temporary collections during loading.
+				Compressed file size alone does not indicate the heap required.
+			</para>
+			<para>
+				The metadata file is UTF-8, regardless of the dictionary's encoding.
+				It must declare <code>fsa.dict.separator</code>, <code>fsa.dict.encoding</code>
+				and <code>fsa.dict.encoder</code>. The separator character must encode as
+				a single byte in the dictionary's charset. For example, <code>€</code>
+				is byte <code>0x80</code> in Windows-1252 but cannot be a UTF-8 dictionary
+				separator. Invalid separator definitions cause <code>IllegalArgumentException</code>.
+				Surrounding spaces in encoder names are ignored.
+			</para>
+			<para>
+				Optional <code>fsa.dict.input-conversion</code> metadata supplies ordered
+				string substitutions for query tokens. Each comma-separated entry uses a single
+				space between the input and replacement strings. For example:
+				<screen>fsa.dict.input-conversion=\uFB03 ffi, \u2019 '</screen>
+				This expands the U+FB03 ligature to <code>ffi</code> and converts a
+				typographic apostrophe to an ASCII apostrophe, allowing <code>can’t</code>
+				to match <code>can't</code>.
+			</para>
+			<para>
+				Query tokens are lower-cased before substitution. Rules apply in order to
+				non-overlapping matches; text inserted by a rule is considered only by later rules.
+				Lookup remains case-insensitive after substitution. Tags, stored forms and lemmas
+				are not substituted. Invalid pairs and duplicate input strings cause
+				<code>IllegalArgumentException</code> before the dictionary is read.
+				Spelling options and output-display conversions do not change lemmatizer results.
+			</para>
+			<para>
+				Decoded tags and lemmas retain characters such as
+				<code>#</code>, tabs and line breaks. Forms are lower-cased to match
+				lookup. Empty fields are retained. Invalid character data in a decoded
+				field, or invalid UTF-8 metadata, causes <code>IOException</code>.
+			</para>
+			<para>
+				Reachable nodes and arcs are checked on load. Truncated data, invalid
+				addresses, unsupported format flags and cycles cause <code>IOException</code>.
+				Traversal uses a per-call stack without recursive calls. Paths exceeding
+				8192 bytes and nodes with shared outgoing arcs are supported.
+			</para>
+			<para>
+				The supported encoders are <code>NONE</code>, <code>SUFFIX</code>,
+				<code>PREFIX</code> and <code>INFIX</code>. Removal counts use bytes, not
+				characters. Encoded control values wrap modulo 256; a removal count of 255
+				replaces the complete surface form. Control bytes equal to the separator are
+				part of the encoded base, not field boundaries. Incomplete controls and
+				overlapping or out-of-range removals cause <code>IOException</code> on load.
+			</para>
+			<para>
+				For a dictionary containing <code>mice</code> with tag <code>NN</code> and
+				lemma <code>mouse</code>:
+				<programlisting language="java"><![CDATA[
+// dict is a .dict automaton stream, info is its .info metadata stream
+Lemmatizer lemmatizer = MorfologikDictionaryReader.read(dict, info);
+
+lemmatizer.lemmatize(new String[] {"mice"}, new String[] {"NN"});  // ["mouse"]]]>
+				</programlisting>
+			</para>
+			<para>
+				Use <code>PoliMorfDictionaryReader</code> to load a tab-separated
+				PoliMorf table into a <code>DictionaryLemmatizer</code>.
+			</para>
+		</section>
+</chapter>
