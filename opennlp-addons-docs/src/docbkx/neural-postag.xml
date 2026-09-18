@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<chapter xml:id="addons.neural-postag" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Neural part-of-speech taggers</title>
+		<section xml:id="tools.postagger.feedforward">
+		<title>Feedforward POS Tagger</title>
+		<para>
+		The feedforward tagger is a small neural network over word, suffix, and word shape
+		features. Train a <code>FeedforwardPOSModel</code> with
+		<code>FeedforwardPOSTrainer</code>, wrap it in a <code>FeedforwardPOSTagger</code>,
+		and call <code>tag</code>. The hyperparameters are passed as a
+		<code>FeedforwardPOSTrainer.Settings</code> record in the order shown below;
+		<code>Settings.defaults()</code> supplies a usable starting point. Training is
+		deterministic for a fixed seed on a given platform and JVM.
+		<code>FeedforwardPOSTaggerUsageTest</code> asserts the behavior shown here.
+		<programlisting language="java">
+<![CDATA[// embeddingSize, hiddenSize, epochs, batchSize, learningRate,
+// l2, dropout, wordCutoff, suffixCutoff, seed
+FeedforwardPOSTrainer.Settings settings = new FeedforwardPOSTrainer.Settings(
+    16, 32, 80, 32, 0.05, 0.0, 0.0, 1, 1, 17L);
+
+FeedforwardPOSModel model = FeedforwardPOSTrainer.train(sampleStream, settings);
+FeedforwardPOSTagger tagger = new FeedforwardPOSTagger(model);
+
+String[] tags = tagger.tag(new String[] {"the", "cat", "barks"});]]>
+		</programlisting>
+		</para>
+		<para>
+		The learning rate must be finite and positive; the L2 penalty must be finite
+		and non-negative. Invalid settings cause <code>IllegalArgumentException</code>.
+		If a gradient, optimizer accumulator or updated weight becomes non-finite,
+		training stops with <code>IllegalStateException</code> and does not return a model.
+		Check the learning rate, L2 penalty and vector magnitudes before trying again.
+		</para>
+		<para>
+		Pretrained word vectors are an opt-in: an overload of <code>train</code> takes a
+		<code>java.util.function.Function</code> that is asked once per distinct
+		lowercased training word and returns its vector, or <code>null</code> for a word
+		without one. The vectors of the training words extend the input layer and are
+		stored inside the model, so tagging needs no separate embedding source and a
+		word without a stored vector scores that block as zeros. A further overload also
+		takes a coverage lexicon, extra words whose vectors are stored besides the
+		training words; the lexicon does not change training itself, it only widens
+		tagging-time coverage to words never seen in training. Without these opt-ins the
+		two-argument <code>train</code> call above behaves exactly as before.
+		<code>FeedforwardPretrainedVectorsTest</code> asserts the behavior shown here.
+		<programlisting language="java">
+<![CDATA[// Return one vector per word the source knows, null for a word without one.
+Function<CharSequence, float[]> wordVectors = word -> lookupVector(word);
+
+FeedforwardPOSModel vectored =
+    FeedforwardPOSTrainer.train(sampleStream, settings, wordVectors);
+
+// Additionally store vectors for words never seen in training:
+FeedforwardPOSModel withLexicon =
+    FeedforwardPOSTrainer.train(sampleStream, settings, wordVectors, lexiconWords);]]>
+		</programlisting>
+		</para>
+		<para>
+		Supplied vectors must have a consistent positive length and finite components,
+		including vectors for additional words. Invalid vectors cause
+		<code>IllegalArgumentException</code>; the message identifies the word and, for
+		a non-finite value, the component index. Vectors are copied without clipping
+		or normalization, and training does not modify the supplied arrays.
+		</para>
+		<para>
+		How confident was the tagger? <code>topKSequences</code> returns the greedy
+		tagging as a single scored <code>Sequence</code>: <code>getProbs()</code>
+		holds the model's probability for each assigned tag, one per token and each
+		in the interval (0, 1], and <code>getScore()</code> is the sum of the logs
+		of those probabilities.
+		<code>FeedforwardPOSTaggerUsageTest</code> asserts the behavior shown here.
+		<programlisting language="java">
+<![CDATA[Sequence[] sequences = tagger.topKSequences(new String[] {"the", "cat", "barks"});
+Sequence best = sequences[0];
+
+// One probability per token, each in (0, 1]:
+double[] probs = best.getProbs();]]>
+		</programlisting>
+		</para>
+		<para>
+		Scoring multiplies and sums inputs in double precision. Cached contributions
+		retain that precision, so cached and direct scoring produce the same values.
+		The shared cache retains at most 32,768 feature-slot and embedding-row pairs;
+		other pairs use direct calculation. All tagging methods throw
+		<code>IllegalStateException</code> if the model produces a non-finite score.
+		</para>
+		<para>
+		Save a trained model to a file and load it for tagging:
+		<programlisting language="java">
+<![CDATA[Path modelPath = Path.of("pos-feedforward.bin");
+try (OutputStream out = Files.newOutputStream(modelPath)) {
+    model.serialize(out);
+}
+
+FeedforwardPOSTagger reloaded = new FeedforwardPOSTagger(
+    FeedforwardPOSModel.load(modelPath));
+
+String[] tags = reloaded.tag(new String[] {"the", "cat", "barks"});]]>
+		</programlisting>
+		</para>
+		<para>
+		Loading rejects truncated files, inconsistent dimensions, invalid vocabulary
+		rows, duplicate symbols or tags, and non-finite weights with <code>IOException</code>.
+		Storage grows as values are read; a short file declaring a large array does not
+		allocate that array in advance. Complete models still require memory for their
+		weights, vocabularies and scoring cache. Stream overloads leave the caller's
+		stream open; the <code>Path</code> overload closes the file after loading.
+		</para>
+		</section>
+
+
+</chapter>
