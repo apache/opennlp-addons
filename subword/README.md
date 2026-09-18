@@ -19,5 +19,5 @@ limitations under the License.
 
 This module provides pure Java SentencePiece inference through OpenNLP's
 `SubwordTokenizer` API. See the
-[SentencePiece subword manual](../src/site/markdown/subword.md) for setup,
+[SentencePiece subword manual](../opennlp-addons-docs/src/docbkx/subword.xml) for setup,
 usage, offset behavior, and verification details.
