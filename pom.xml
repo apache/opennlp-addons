@@ -108,6 +108,7 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
+        <module>embedded-assets</module>
     </modules>
 
     <properties>
