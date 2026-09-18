@@ -1,0 +1,88 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+# Bundled gazetteer table, authored by the Apache OpenNLP project as a derivation of the
+# Natural Earth "Populated Places" dataset (loaded by opennlp.geo.BundledGazetteer).
+# {count} rows. Regenerated with NaturalEarthGenerator.java in the project source tree; the
+# underlying data is in the public domain (see the derivation record below), so this file
+# carries the derivation record instead of a source license header. See the Natural Earth
+# section of the LICENSE file.
+#
+# Derivation record:
+#   Source     Natural Earth 1:10m Cultural Vectors, Populated Places
+#              (ne_10m_populated_places), https://www.naturalearthdata.com/
+#   Retrieved  {date}, as geojson/ne_10m_populated_places.geojson from the Natural Earth
+#              GitHub distribution https://github.com/nvkelso/natural-earth-vector (master;
+#              the file's last upstream change is commit {commit},
+#              repository VERSION 5.2.0-pre).
+#   License    Natural Earth is in the public domain: "All versions of Natural Earth raster +
+#              vector map data found on this website are in the public domain."
+#              (https://www.naturalearthdata.com/about/terms-of-use/). See the Natural Earth
+#              section of the LICENSE file.
+#
+# Row format, eleven semicolon separated fields, one record per line:
+#
+#   source;recordId;name;altNames;lat;lon;iso2;containment;population;featureClass;attributes
+#
+#   source        Always "naturalearth" in this table (the dataset id, also the provenance
+#                 tag of every attribute value in the last field).
+#   recordId      The stable Natural Earth id (upstream field NE_ID).
+#   name          The canonical place name: the upstream display name (NAME) folded to
+#                 ASCII; the upstream transliteration (NAMEASCII) for the {name_fallback}
+#                 rows whose NAME does not reduce to clean ASCII; explicitly corrected for
+#                 {name_corrected} row damaged in both fields (see the mojibake note).
+#   altNames      Pipe separated alternate names: NAMEASCII where it differs from the
+#                 derived name, then the upstream fields NAMEALT, NAMEPAR, MEGANAME
+#                 (pipe-split as published), deduplicated case-insensitively; possibly
+#                 empty.
+#   lat, lon      WGS84 decimal degrees from the feature's point geometry, 5 decimals.
+#   iso2          ISO 3166-1 alpha-2 country code (upstream field ISO_A2); empty where the
+#                 source assigns no code (its -99 sentinel, e.g. disputed territories).
+#   containment   Pipe separated admin containment chain, outermost first. In v1 a single
+#                 element, the admin-1 name (upstream field ADM1NAME), possibly empty.
+#   population    Peak population estimate (upstream field POP_MAX); 0 when unknown
+#                 (its -99 sentinel).
+#   featureClass  Always CITY: every record in this dataset is a populated place.
+#   attributes    Pipe separated key=value pairs of stable external identifiers as provided
+#                 by Natural Earth, possibly empty: wikidata (WIKIDATAID), geonames
+#                 (GEONAMESID where positive), whosonfirst (WOF_ID). Keys the source does not
+#                 provide are never fabricated.
+#
+# ASCII note: this file is deliberately pure ASCII. Names and admin-1 values are
+# accent-stripped to ASCII (NFD, drop combining marks, standard stroke-letter
+# transliterations); an alternate name or containment element that is not ASCII after the
+# fold is dropped ({alt_dropped_nonascii} alternate names, {adm1_omitted_nonascii}
+# containment elements), and a display name that is not ASCII after the fold falls back to
+# the upstream transliteration. Matching still works for accented queries because
+# BundledGazetteer folds queries and index keys through the same chain; native-script names
+# belong to a later, richer data tier.
+#
+# Mojibake note: the upstream distribution itself carries encoding damage in some fields
+# (an accented letter replaced by '?' or by a wrong ASCII letter). This derivation never
+# carries a value it knows to be damaged:
+#   - a containment value that announces damage with '?' is omitted ({adm1_omitted_damaged}
+#     elements);
+#   - a value verified against its accent-bearing upstream sibling or the documented place
+#     name is repaired to that spelling ({adm1_repaired} containment elements,
+#     {alt_repaired} alternate names, {name_corrected} canonical name); the audited repair
+#     tables are in the generation script;
+#   - an alternate name that is a one-character corruption of the derived name at an
+#     accented position is dropped ({alt_dropped_damaged} values, upstream forms like
+#     'Zarich' for Zurich).
+# The generation script hard-fails on anomalies it does not recognize, so a refresh forces
+# a reviewed decision instead of importing new corruption.
+#
+# A line starting with '#' is a comment; data rows carry no inline comments.

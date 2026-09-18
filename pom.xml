@@ -108,6 +108,7 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
+        <module>geo</module>
     </modules>
 
     <properties>
@@ -370,6 +371,8 @@
                         <configuration>
                             <excludes>
                                 <exclude>release.properties</exclude>
+                                <!-- Public-domain derived data carries its provenance header. -->
+                                <exclude>src/main/resources/opennlp/geo/naturalearth-populated-places.txt</exclude>
                                 <exclude>.gitattributes</exclude>
                                 <!-- A NOTICE fragment, which carries no license header of its own. -->
                                 <exclude>src/license/NOTICE.template</exclude>
