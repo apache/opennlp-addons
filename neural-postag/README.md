@@ -36,3 +36,10 @@ live in this module; shared document and normalization contracts come from core.
 
 The parser constructors accepting a supplied POSTagger are retained in core.
 Training and direct tagging through this module use the current core API.
+
+BiLSTM source: ai-pipestream/opennlp 1983e1be51c9abc5fe28836da21e2602c3fd7291.
+The opt-in CoNLL-U evaluator is included in this module. Run it with
+-Dopennlp.postag.ud.dir pointing to train.conllu and test.conllu.
+Optional vector preparation is in dev/fetch-fasttext-vectors.sh.
+The historical 96.294 UPOS result is not an evaluation of this migrated code.
+The research accuracy target remains 97.0 UPOS; no new accuracy claim is made.

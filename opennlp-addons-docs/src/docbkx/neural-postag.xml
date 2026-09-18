@@ -131,4 +131,156 @@ String[] tags = reloaded.tag(new String[] {"the", "cat", "barks"});]]>
 		</section>
 
 
+		<section xml:id="tools.postagger.bilstm">
+		<title>BiLSTM POS Tagger</title>
+<para>Vocabulary lookup uses <code>StringUtil.toLowerCase</code> code-point
+conversion during training and tagging, including pretrained vector lookup.
+Dotted capital I maps to i and capital sigma maps to small sigma without
+contextual casing. Internal symbols remain unchanged. Older research models
+whose stored keys used JDK contextual or expanding lowercase conversion may
+need retraining for affected Unicode words; stored vocabularies are not rewritten
+on load.</para>
+		<para>
+		The BiLSTM tagger scores each token from whole-sentence context through a
+		character-level BiLSTM, a word-level BiLSTM sentence encoder, and a linear
+		tag scorer. Train a <code>BilstmPOSModel</code> with
+		<code>BilstmPOSTrainer</code>, wrap it in a <code>BilstmPOSTagger</code>,
+		and call <code>tag</code>.
+		<code>BilstmPOSTaggerUsageTest</code> asserts the train-then-tag workflow
+		shown here.
+		<programlisting language="java">
+<![CDATA[BilstmPOSTrainer.Settings settings = new BilstmPOSTrainer.Settings(
+    16, 8, 8, 16, 60, 8, 0.05, 5.0, 0.0, 1, 16, 17L, 1, 0.0, 0, false, 1,
+    0.0, 0.0, 1.0, 0.0, false);
+
+BilstmPOSModel model = BilstmPOSTrainer.train(sampleStream, settings);
+BilstmPOSTagger tagger = new BilstmPOSTagger(model);
+
+String[] tags = tagger.tag(new String[] {"the", "cat", "barks"});]]>
+		</programlisting>
+		</para>
+		<para>
+		Taggers created from the same <code>BilstmPOSModel</code> share a cache of
+		up to 100,000 token representations, including during concurrent requests.
+		Creating another tagger or calling <code>enableRepresentationCache</code>
+		again preserves cached entries. After the cache is full, uncached tokens
+		are computed without being stored. Reuse the model across requests to
+		reuse this work. Cache memory depends on token lengths and representation
+		width; it is released with the model and is not included in saved model
+		files. <code>BilstmRepresentationCacheTest</code> checks shared taggers,
+		concurrent limits, result copies and independent loaded models.
+		</para>
+		<para>
+		The <code>Settings</code> record controls the optional model components.
+		A linear-chain CRF output layer (<code>crf</code>) decodes whole tag sequences with Viterbi instead of
+		per-position argmax, a second stacked encoder layer
+		(<code>encoderLayers</code>) deepens the sentence encoder, pretrained word
+		vectors passed to an overload of <code>train</code> can enter through a
+		learned adapter projection (<code>pretrainedAdapter</code>) or be fine-tuned
+		at a fraction of the base learning rate (<code>pretrainedTuning</code>), and
+		<code>trainMultiTask</code> regularizes the shared encoder with auxiliary
+		tagging heads weighted by <code>auxLossWeight</code>. The variant below
+		switches on CRF decoding and the second encoder layer.
+		<code>BilstmPOSTaggerUsageTest</code> asserts the behavior shown here.
+		<programlisting language="java">
+<![CDATA[// Identical to the settings above except for CRF decoding and encoderLayers=2.
+BilstmPOSTrainer.Settings accurate = new BilstmPOSTrainer.Settings(
+    16, 8, 8, 16, 60, 8, 0.05, 5.0, 0.0, 1, 16, 17L, 1, 0.0, 0, true, 2,
+    0.0, 0.0, 1.0, 0.0, false);
+
+BilstmPOSTagger tagger = new BilstmPOSTagger(
+    BilstmPOSTrainer.train(sampleStream, accurate));
+
+String[] tags = tagger.tag(new String[] {"the", "cat", "barks"});]]>
+		</programlisting>
+		</para>
+		<para>
+		Save the trained model and load it without retraining:
+		<programlisting language="java">
+<![CDATA[Path file = Path.of("pos-bilstm.bin");
+model.serialize(file);
+
+BilstmPOSModel loaded = BilstmPOSModel.load(file);
+BilstmPOSTagger tagger = new BilstmPOSTagger(loaded);
+String[] tags = tagger.tag(new String[] {"the", "cat", "barks"});]]>
+		</programlisting>
+		</para>
+		<para>
+		Loading accepts binary formats <code>ONLP-BLPT-1</code> through
+		<code>ONLP-BLPT-5</code>, including the CRF, stacked encoder and adapter
+		variants. Invalid vocabularies, incompatible layer dimensions, non-finite
+		weights and truncated files cause <code>IOException</code> during loading.
+		Parameter storage grows as values are read; large models still require
+		enough memory for their parameters. Stream overloads leave caller-owned
+		streams open. Null streams and paths cause <code>IllegalArgumentException</code>.
+		<code>BilstmPOSModelValidationTest</code> checks the formats and file round trip.
+		</para>
+		<para>
+		Training settings must use finite numbers within their allowed ranges.
+		The gate widths and combined word input width must fit positive integer
+		array lengths. Training checks the width added by pretrained vectors before
+		allocating parameters. Invalid dimensions cause
+		<code>IllegalArgumentException</code>; valid dimensions still require enough
+		heap for the model and training state. <code>BilstmDimensionTest</code> checks
+		these limits, including vectors supplied only through an additional lexicon.
+		Pretrained vectors must have a consistent positive length and finite components,
+		including vectors requested for an additional lexicon. Invalid settings or
+		vectors cause <code>IllegalArgumentException</code>; vector errors identify
+		the word and component index. Training copies provider arrays before storing
+		or fine-tuning them. Multi-task sample arrays must contain no null elements;
+		absent auxiliary taggings can use a null array. <code>MultiTaskSample</code>
+		copies constructor inputs, returns copies from its accessors, and compares
+		samples by array contents. A stream can reuse its input buffers without
+		changing samples it has already returned. <code>BilstmSampleOwnershipTest</code>
+		compares training from reused buffers with independent samples.
+		A literal <code>*UNK*</code>
+		token uses the reserved unknown-word embedding.
+		</para>
+		<para>
+		Training clips gradients before each Adam update and calculates softmax
+		loss from score differences. Non-finite scores, loss, gradients or optimizer
+		updates stop training with <code>IllegalStateException</code>.
+		</para>
+		<para>
+		Tagging and <code>BilstmPOSModel.score</code> reject null token arrays or
+		elements with <code>IllegalArgumentException</code>. Empty token strings are
+		accepted. An empty array produces an empty tagging, but cannot be passed to
+		<code>score</code>. Both decoders and <code>score</code> throw
+		<code>IllegalStateException</code> if a computed tag score is not finite,
+		identifying the token and tag indices. This can result from arithmetic
+		overflow even when the model file contains only finite parameters.
+		</para>
+		<para>
+		For a CRF model, <code>topKSequences</code> returns one best tagging with
+		posterior probabilities for the assigned tags. These are token probabilities,
+		not the probability of the complete tag sequence. CRF calculations remove
+		common score offsets before computing probabilities; non-finite scores cause
+		<code>IllegalStateException</code>. <code>BilstmCrfUsageTest</code> checks
+		tagging and probabilities after model serialization and loading.
+		<programlisting language="java">
+<![CDATA[String[] tokens = {"the", "cat", "runs"};
+Sequence best = tagger.topKSequences(tokens)[0];
+String[] bestTags = best.getOutcomes().toArray(String[]::new);
+double[] tagProbabilities = best.getProbs();]]>
+		</programlisting>
+		</para>
+		<para>
+		Provide vectors with a lookup function. This example uses small arrays to
+		show the interface and stores an additional word for use after training:
+		<programlisting language="java">
+<![CDATA[Map<String, float[]> vectors = Map.of(
+    "cat", new float[] {0.5f, -0.25f},
+    "dog", new float[] {0.25f, 0.5f},
+    "kitten", new float[] {0.4f, -0.2f});
+
+BilstmPOSModel model = BilstmPOSTrainer.train(sampleStream, settings,
+    word -> vectors.get(word.toString()), List.of("kitten"));]]>
+		</programlisting>
+		A null lookup result means that the word has no vector. The provider must
+		return at least one vector across the training words and additional lexicon.
+		<code>BilstmPOSTrainingInputTest</code> checks this example.
+		</para>
+		</section>
+
+
 </chapter>
