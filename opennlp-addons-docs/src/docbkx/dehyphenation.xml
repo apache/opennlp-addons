@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="addons.dehyphenation" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>dehyphenation</title>
+	<section xml:id="tools.normalizer.dehyphenation">
+		<title>De-hyphenation and re-tokenizing term vectors</title>
+		<para>
+			<code>DehyphenationCharSequenceNormalizer</code> joins words split at a
+			line break, such as <code>"litiga-\ntion"</code> to <code>"litigation"</code>.
+			A letter must precede the hyphen and follow the break, with optional
+			horizontal whitespace before the continuation. The supported hyphens are
+			<code>U+002D</code>, <code>U+00AD</code> and <code>U+2010</code>.
+			The non-breaking hyphen <code>U+2011</code> is excluded.
+		</para>
+		<para>
+			Breaks use <code>UnicodeWhitespace.lineBreaks()</code>: <code>U+000A</code>,
+			<code>U+000B</code>, <code>U+000C</code>, <code>U+000D</code>,
+			<code>U+0085</code>, <code>U+2028</code> and <code>U+2029</code>.
+			CRLF counts as one break. Additional breaks prevent a join, so
+			<code>"litiga-\n\fPage 3\ntion"</code> is unchanged.
+			No dictionary is used: a compound split at a hyphen, such as
+			<code>"well-\nknown"</code>, becomes <code>"wellknown"</code>.
+		</para>
+		<para>
+			<code>opennlp.tools.termvector.RetokenizingTermVectorAnnotator</code>
+			tokenizes normalized text and groups terms in tokenizer output order.
+			Unlike <code>TermVectorAnnotator</code>, it does not use an existing token
+			layer, so a joined word can become a single term. Existing layers and
+			document text are preserved. Empty token spans are omitted in both modes.
+			Full mode includes original-text occurrence spans; scoring-only mode
+			includes counts without spans. Offsets use UTF-16 code units.
+		</para>
+		<programlisting language="java">
+<![CDATA[OffsetAwareNormalizer pipeline = TextNormalizer.builder()
+    .with(DehyphenationCharSequenceNormalizer.getInstance())
+    .fullCaseFold()
+    .buildAligned();
+
+Document annotated = new RetokenizingTermVectorAnnotator(
+    pipeline, WhitespaceTokenizer.INSTANCE).annotate(Document.of("word litiga-\ntion word"));
+TermVector term = annotated.get(TermVectorAnnotator.TERM_VECTORS).get(1).value();
+String original = term.spans().get(0).getCoveredText(annotated.text()).toString();
+// term.term(): "litigation", term.frequency(): 1, original: "litiga-\ntion"]]>
+		</programlisting>
+	</section>
+</chapter>

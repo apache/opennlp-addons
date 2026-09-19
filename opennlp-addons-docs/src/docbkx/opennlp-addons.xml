@@ -59,4 +59,5 @@
   <xi:include href="pii.xml" />
   <xi:include href="assets.xml" />
   <xi:include href="noise.xml" />
+  <xi:include href="dehyphenation.xml" />
 </book>

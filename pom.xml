@@ -111,6 +111,7 @@
         <module>pii</module>
         <module>embedded-assets</module>
         <module>noise</module>
+        <module>dehyphenation</module>
     </modules>
 
     <properties>
