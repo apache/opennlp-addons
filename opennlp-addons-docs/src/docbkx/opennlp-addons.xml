@@ -60,4 +60,5 @@
   <xi:include href="assets.xml" />
   <xi:include href="noise.xml" />
   <xi:include href="dehyphenation.xml" />
+  <xi:include href="symbol-joiner.xml" />
 </book>

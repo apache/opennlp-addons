@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="addons.symbol-joiner" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>symbol-joiner</title>
+	<section xml:id="tools.normalizer.symboltokens">
+		<title>Normalizing symbol tokens</title>
+		<para>
+			<code>SymbolJoinerCharSequenceNormalizer</code> maps a supported symbol only when
+			it is the complete input. A phrase such as <code>Dungeons &amp; Dragons</code>,
+			an embedded symbol such as <code>R&amp;D</code>, padded input such as
+			<code>" &amp; "</code>, and ASCII forms such as <code>(TM)</code> are unchanged.
+			The fixed English replacements are matching conventions, not rules for reading
+			symbols in context. Currency symbols and symbols followed by variation selectors
+			are unchanged.
+		</para>
+		<para>
+			For per-token matching, use tokens that retain the symbols. The following example
+			uses whitespace boundaries and stores normalized forms with the original spans:
+		</para>
+		<programlisting language="java">
+<![CDATA[import opennlp.tools.tokenize.WhitespaceTokenizer;
+import opennlp.tools.util.Span;
+import opennlp.tools.util.normalizer.CharSequenceNormalizer;
+import opennlp.tools.util.normalizer.SymbolJoinerCharSequenceNormalizer;
+import opennlp.tools.util.normalizer.TextNormalizer;
+
+String text = "Dungeons & Dragons";
+CharSequenceNormalizer normalizer = TextNormalizer.builder()
+    .with(SymbolJoinerCharSequenceNormalizer.getInstance())
+    .caseFold()
+    .build();
+Span[] spans = WhitespaceTokenizer.INSTANCE.tokenizePos(text);
+String[] forms = new String[spans.length];
+for (int i = 0; i < spans.length; i++) {
+  forms[i] = normalizer.normalize(spans[i].getCoveredText(text)).toString();
+}
+// forms: ["dungeons", "and", "dragons"]
+// spans[1]: [9, 10), covering the original ampersand]]>
+		</programlisting>
+		<para>
+			<code>WordTokenizer</code>, used by default in <code>TermAnalyzer</code>, omits the
+			ampersand; applying a normalizer afterward cannot recover it. Choose a tokenizer
+			that retains the symbols needed for matching, or supply pretokenized input.
+			There is no built-in symbol-expansion term dimension; normalize token forms
+			explicitly as above.
+			This normalizer does not implement <code>OffsetAwareNormalizer</code> and cannot
+			be included in <code>buildAligned()</code>. In the example, the spans refer to the
+			original tokens, not character positions within the expanded words.
+		</para>
+	</section>
+</chapter>

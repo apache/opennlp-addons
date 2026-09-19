@@ -112,6 +112,7 @@
         <module>embedded-assets</module>
         <module>noise</module>
         <module>dehyphenation</module>
+        <module>symbol-joiner</module>
     </modules>
 
     <properties>
