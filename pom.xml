@@ -114,6 +114,7 @@
         <module>coref-formats</module>
         <module>dependency-annotations</module>
         <module>relation-extraction</module>
+        <module>predicate-annotators</module>
     </modules>
 
     <properties>
