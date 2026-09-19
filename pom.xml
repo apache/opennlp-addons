@@ -109,6 +109,8 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>pii</module>
+        <module>embedded-assets</module>
+        <module>noise</module>
     </modules>
 
     <properties>

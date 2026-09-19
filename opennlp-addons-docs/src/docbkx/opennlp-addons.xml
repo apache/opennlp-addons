@@ -57,4 +57,6 @@
   <xi:include href="building.xml" />
   <xi:include href="addon-guidelines.xml" />
   <xi:include href="pii.xml" />
+  <xi:include href="assets.xml" />
+  <xi:include href="noise.xml" />
 </book>

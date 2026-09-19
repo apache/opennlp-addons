@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="tools.assets" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<title>Embedded Asset Detection</title>
+
+	<section xml:id="tools.assets.introduction">
+		<title>Introduction</title>
+		<para>
+			Text can include encoded files: web pages inline images as <code>data:</code> URIs,
+			documents paste base64 payloads, mail wraps MIME bodies, and logs contain PEM
+			envelopes and JSON Web Tokens.
+			The package <code>opennlp.tools.assets</code> finds such assets as exact spans
+			over the original text, identifies their format, and can replace them with text
+			while keeping every offset mapped to the source.
+		</para>
+		<para>
+			<code>CursorAssetDetector</code> checks encoded prefixes and validates the payload
+			alphabet and padding. Format detection uses up to 24 decoded leading bytes,
+			36 bytes for JPEG 2000 or encoded PEM candidates, or 45 bytes for EMF candidates.
+			Calendar opening lines and XML root elements use the incremental checks below.
+			Bare runs need at least 32 encoded characters and a recognized file signature.
+			The signature table is derived from Apache Tika's media-type catalog. Recognized
+			PNG and GIF headers also provide image dimensions. A declared media type alone
+			does not provide dimensions. Both dimensions are -1 when either
+			is missing or invalid. PNG dimensions require a leading 13-byte
+			<ulink url="https://www.w3.org/TR/png-3/#11IHDR">IHDR chunk</ulink> and positive
+			values no greater than 2,147,483,647. GIF dimensions describe the logical screen.
+			A signature match does not establish that a file is complete, valid, or safe to open.
+			Inferred format names and media types come from the same signature. Formats such as
+			<code>xls</code> and <code>pem-parameters</code> can have several media types.
+		</para>
+		<para>
+			<ulink url="https://docs.oracle.com/cd/E19253-01/816-5174/6mbb98ucf/index.html">AU</ulink>
+			detection uses <code>.snd</code> without restricting the audio encoding.
+			<ulink url="https://lasformat.org/latest/02.00_definition.html#public-header-block">LAS</ulink>
+			uses <code>LASF</code> without a version filter.
+			<ulink url="https://axcrypt.net/information/technical-details/">AxCrypt</ulink>
+			uses its 16-byte GUID without checking header blocks or authenticating data.
+			Universal <ulink url="https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h">Mach-O</ulink>
+			detection does not check architecture counts. The shared <code>CAFEBABE</code>
+			signature is reported as <code>class</code> and <code>application/java-vm</code>,
+			not as a 32-bit universal Mach-O file.
+		</para>
+		<para>
+			Android binary XML detection uses <code>03 00 08 00</code>, the first four
+			bytes of its <ulink url="https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/libs/androidfw/include/androidfw/ResourceTypes.h">XML
+			container header</ulink>. It reports <code>axml</code> and
+			<code>application/vnd.android.axml</code> without requiring the string pool to
+			be the first chunk. Chunk lengths and XML nodes are not validated.
+			<ulink url="https://codes.ecmwf.int/grib/format/grib2/sections/0/">GRIB</ulink>
+			detection uses the four-byte <code>GRIB</code> identifier and reports
+			<code>grb</code> and <code>application/x-grib</code> without an edition filter.
+			This does not validate message sections or establish support for decoding an edition.
+		</para>
+		<para>
+			MPX detection accepts <code>MPX,</code> and <code>MPX;</code>, the format identifier
+			followed by a common list separator in the
+			<ulink url="https://www.betaarchive.com/wiki/index.php/Microsoft_KB_Archive/270139">file-creation
+			record</ulink>. It reports <code>mpx</code> and <code>application/x-project</code>
+			without restricting the producing program. Version, code-page and project records
+			are not validated. Other separators require a supplied media type and do not
+			provide an inferred <code>mpx</code> format name.
+		</para>
+		<para>
+			Calendar detection requires a <code>BEGIN:VCALENDAR</code> opening line ending
+			in CRLF. It accepts ASCII letter-case variants and unfolds CRLF followed by
+			SPACE or TAB, as specified in
+			<ulink url="https://www.rfc-editor.org/rfc/rfc5545.html#section-3.1">RFC 5545</ulink>.
+			The detector reads this line incrementally, including continuations beyond the usual
+			header probe. It reports <code>ics</code> and <code>text/calendar</code> without
+			checking the version, property order, event data or closing line.
+		</para>
+		<para>
+			SVG detection requires a root element named <code>svg</code> in the
+			<ulink url="https://www.w3.org/TR/SVG2/struct.html#Namespace">SVG namespace</ulink>.
+			XML declarations, byte-order marks, comments and namespace prefixes are accepted.
+			The root start tag must fit within the first 64 KiB of decoded data. The XML reader
+			disables DTD processing, external entities and catalog resolution. It stops at the
+			root element; image contents, scripts and links are not validated or executed.
+			A match reports <code>svg</code> and <code>image/svg+xml</code>. When the XML header
+			is too long or its namespace is unavailable without a DTD, callers can supply a
+			media type in a data URI. Recognition does not make an image safe to display.
+		</para>
+		<para>
+			JPEG 2000 detection requires the 12-byte signature box followed by an
+			<code>ftyp</code> box with complete brand and minor-version fields.
+			Standard and extended box lengths are supported. The primary brand selects
+			<ulink url="https://www.rfc-editor.org/rfc/rfc3745.html#section-4">format metadata</ulink>:
+			<code>jp2 </code> gives <code>jp2</code> and <code>image/jp2</code>,
+			<code>jpx </code> gives <code>jpx</code> and <code>image/jpx</code>,
+			<code>jpm </code> gives <code>jpm</code> and <code>image/jpm</code>, and
+			<code>mjp2</code> gives <code>mj2</code> and <code>video/mj2</code>.
+			Unknown brands are not inferred from compatibility-list entries. Minor-version
+			values, compatibility lists, image data and complete file lengths are not validated.
+		</para>
+		<para>
+			AIFF detection requires <code>FORM</code> at byte 0 and an audio form type
+			at byte 8: <code>AIFF</code> or <code>AIFC</code>. Both use format name
+			<code>aiff</code> and media type <code>audio/x-aiff</code>.
+			The <ulink url="https://www.mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Docs/AIFF-1.3.pdf#page=5">FORM
+			size field</ulink> does not participate in identification. Other FORM
+			types are not classified as AIFF. Local chunks and audio data are not validated.
+		</para>
+		<para>
+			PNG, MNG, JNG and HDF5 detection requires the complete 8-byte signature
+			at the start of the payload, including the control bytes.
+			<ulink url="https://www.libpng.org/pub/mng/spec/jng.html">JNG</ulink>
+			is reported as <code>jng</code> with media type <code>image/x-jng</code>.
+			<ulink url="https://portal.hdfgroup.org/documentation/hdf5/latest/_f_m_t11.html">HDF5</ulink>
+			is reported as <code>hdf</code> with media type <code>application/x-hdf</code>.
+			HDF5 signatures after an initial user block are not searched.
+		</para>
+		<para>
+			Pcapng detection requires a
+			<ulink url="https://www.ietf.org/archive/id/draft-ietf-opsawg-pcapng-05.html#name-section-header-block">Section
+			Header Block</ulink> identifier and the byte-order magic at byte 8.
+			Both big-endian and little-endian sections are recognized. These identifiers
+			do not validate block lengths or packet contents.
+		</para>
+		<para>
+			DEX detection requires the complete 8-byte
+			<ulink url="https://source.android.com/docs/core/runtime/dex-format#dex-file-magic">file
+			magic</ulink>: <code>dex</code>, a newline, 3 ASCII decimal version digits
+			and a zero byte. It reports <code>dex</code> and <code>application/x-dex</code>.
+			Version numbers are not restricted to a particular Android release. This
+			identifies a possible format, not runtime compatibility or valid bytecode.
+		</para>
+		<para>
+			DWF detection requires the complete 12-byte
+			<ulink url="https://github.com/kveretennicov/dwf-toolkit/blob/fd1e8097b158ab3afef335484d7a111ab8da3d74/develop/global/src/dwf/whiptk/dwfhead.cpp">header</ulink>:
+			<code>(DWF Vdd.dd)</code>, with ASCII decimal digits at each <code>d</code>.
+			A match reports <code>dwf</code> and <code>model/vnd.dwf</code>. Version numbers
+			are not restricted to particular releases. Drawing records and package contents
+			are not validated. W2D streams and ZIP-based DWFx files are not identified as DWF.
+		</para>
+		<para>
+			WebVTT detection accepts an optional UTF-8 byte-order mark followed by
+			<code>WEBVTT</code> and TAB, LF, CR, SPACE or the end of the payload, as specified
+			in the <ulink url="https://www.w3.org/TR/2026/CRD-webvtt1-20260520/#iana-text-vtt">WebVTT
+			media-type registration</ulink>. A match reports <code>vtt</code> and
+			<code>text/vtt</code>. Cue syntax and UTF-8 content are not validated.
+			Bare payloads still require at least 32 encoded characters; an untyped
+			data URI can identify a shorter header.
+		</para>
+		<para>
+			EMF detection requires the <code>EMR_HEADER</code> type and the
+			<ulink url="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-emf/b55cbd24-612d-47fe-81c9-1da6a682246f">EMF
+			signature</ulink> at byte 40, including the initial space in <code> EMF</code>.
+			A leading type field without that signature is not sufficient.
+		</para>
+		<para>
+			Timestamped-data detection requires the complete
+			<ulink url="https://www.rfc-editor.org/rfc/rfc5544.html#section-2">CMS content-type
+			identifier</ulink> <code>1.2.840.113549.1.9.16.1.31</code> at the start of the envelope.
+			BER definite and indefinite sequence lengths are supported, including DER encoding.
+			The identifier must fit within the 24-byte decoded header. A match reports
+			<code>tsd</code> and <code>application/timestamped-data</code>; other CMS identifiers
+			are not timestamped data. Detection does not validate timestamp evidence, signatures
+			or the complete envelope, and does not retrieve external content.
+		</para>
+		<para>
+			Excel 2-4 detection requires a complete
+			<ulink url="https://www.openoffice.org/sc/excelfileformat.pdf#page=135">BOF
+			(Beginning of File) record</ulink> with a supported document type. Worksheets,
+			charts and macro sheets are reported as <code>xls</code>. Excel 3 and 4
+			workspaces are reported as <code>xlw</code> with media types
+			<code>application/vnd.ms-excel.workspace.3</code> and
+			<code>application/vnd.ms-excel.workspace.4</code>. Unused BOF fields do not
+			restrict detection. A recognized header does not validate the rest of the file.
+		</para>
+		<para>
+			XAR archives are reported as <code>xar</code> with media type
+			<code>application/x-xar</code>, not Xara graphics. Encoded XPM images are
+			reported as <code>xpm</code> with media type <code>image/x-xpixmap</code>.
+			OpenEXR headers are reported as <code>exr</code> with media type
+			<code>image/x-exr</code>. The signature does not establish
+			<ulink url="https://www.iana.org/assignments/media-types/image/aces">ACES
+			conformance</ulink>. TIFF and BigTIFF headers are recognized in both byte orders.
+		</para>
+		<para>
+			DXB detection requires the complete 19-byte header, including the control bytes.
+			Snappy streams are recognized by the
+			<ulink url="https://github.com/google/snappy/blob/main/framing_format.txt">stream
+			identifier chunk</ulink>, not just the <code>sNaPpY</code> text.
+		</para>
+		<para>
+			Explicitly typed, base64 <code>data:</code> URIs accept non-empty payloads,
+			including one- and two-byte values. The media type retains parameters such as
+			<code>charset=UTF-8</code>; the format name excludes them. Non-base64 data URIs
+			and percent-encoded payload characters are not supported.
+			A media type supplied in the URI overrides the inferred media type without
+			changing a recognized format name. It does not establish that the payload
+			conforms to that type.
+		</para>
+		<para>
+			Malformed padding, mixed standard and URL-safe alphabets, and line-wrapped
+			URL-safe payloads are rejected. For an unpadded run with length 1 modulo 4,
+			the scanner omits the final character to recover a decodable prefix. This
+			recovery does not repair or validate the underlying file.
+		</para>
+	</section>
+
+	<section xml:id="tools.assets.detection">
+		<title>Detecting and decoding</title>
+		<para>
+			This example uses a 45-byte PNG header fixture with dimensions 5 by 7:
+			<programlisting language="java"><![CDATA[
+String text = "An image data:image/png;base64,"
+    + "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAYAAAAAAAAAAAAAAAAAAAAAAAAA"
+    + " follows.";
+
+AssetDetector detector = new CursorAssetDetector();
+EmbeddedAsset asset = detector.detect(text).get(0);
+// asset.format()        = "png"
+// asset.mediaType()     = "image/png"
+// asset.width()         = 5
+// asset.height()        = 7
+// asset.decodedLength() = 45
+byte[] bytes = asset.decode(text);  // the original 45 bytes]]>
+			</programlisting>
+			The asset span covers the URI and the payload span covers the base64 text.
+			<code>decode</code> returns the payload bytes from the original text.
+		</para>
+		<para>
+			Detection needs no <code>data:</code> URI: the same payload pasted bare into
+			prose is found by its magic prefix and verified against its decoded header:
+			<programlisting language="java"><![CDATA[
+String bare = "A report pastes "
+    + "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAYAAAAAAAAAAAAAAAAAAAAAAAAA"
+    + " into the body.";
+
+EmbeddedAsset found = new CursorAssetDetector().detect(bare).get(0);
+// found.format()        = "png", sniffed from the decoded header
+// found.mediaType()     = "image/png", derived from the format
+// found.width()         = 5
+// found.height()        = 7
+// found.decodedLength() = 45]]>
+			</programlisting>
+			For a bare run, the asset span and payload span cover the same characters.
+		</para>
+		<para>
+			A short text payload does not require a file signature:
+			<programlisting language="java"><![CDATA[
+String note = "data:text/plain;charset=UTF-8;base64,SGk=";
+EmbeddedAsset asset = new CursorAssetDetector().detect(note).get(0);
+String decoded = new String(asset.decode(note), StandardCharsets.UTF_8);
+// decoded = "Hi"
+// asset.format() = "plain"
+// asset.mediaType() = "text/plain;charset=UTF-8"]]>
+			</programlisting>
+		</para>
+		<para>
+			An MPX attachment can identify a program other than Microsoft Project. This
+			example contains an original file-creation record and a comment:
+			<programlisting language="java"><![CDATA[
+String project = "MPX;Fieldwork Planner;4.0;ANSI\r\n0;Survey schedule\r\n";
+String text = "data:;base64," + Base64.getEncoder().encodeToString(
+    project.getBytes(StandardCharsets.US_ASCII));
+EmbeddedAsset asset = new CursorAssetDetector().detect(text).get(0);
+String decoded = new String(asset.decode(text), StandardCharsets.US_ASCII);
+// asset.format() = "mpx"
+// asset.mediaType() = "application/x-project"
+// decoded equals project]]>
+			</programlisting>
+		</para>
+		<para>
+			A calendar attachment retains its original text, including letter case:
+			<programlisting language="java"><![CDATA[
+String calendar = "begin:vcalendar\r\n"
+    + "PRODID:-//Fieldwork Planner//EN\r\n"
+    + "VERSION:2.0\r\nBEGIN:VEVENT\r\nUID:survey@example.org\r\n"
+    + "DTSTAMP:20260907T090000Z\r\nDTSTART:20260908T100000Z\r\n"
+    + "SUMMARY:Survey schedule\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+String text = "data:;base64," + Base64.getEncoder().encodeToString(
+    calendar.getBytes(StandardCharsets.US_ASCII));
+EmbeddedAsset asset = new CursorAssetDetector().detect(text).get(0);
+String decoded = new String(asset.decode(text), StandardCharsets.US_ASCII);
+// asset.format() = "ics"
+// asset.mediaType() = "text/calendar"
+// decoded equals calendar]]>
+			</programlisting>
+		</para>
+		<para>
+			This SVG attachment contains an original circle image:
+			<programlisting language="java"><![CDATA[
+String svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'>"
+    + "<circle cx='5' cy='5' r='4'/></svg>";
+String text = "data:;base64," + Base64.getEncoder().encodeToString(
+    svg.getBytes(StandardCharsets.UTF_8));
+EmbeddedAsset asset = new CursorAssetDetector().detect(text).get(0);
+String decoded = new String(asset.decode(text), StandardCharsets.UTF_8);
+// asset.format() = "svg"
+// asset.mediaType() = "image/svg+xml"
+// decoded equals svg]]>
+			</programlisting>
+		</para>
+		<para>
+			A caption attachment without a supplied media type is identified by its header:
+			<programlisting language="java"><![CDATA[
+String captions = "\uFEFFWEBVTT\tTrail captions\n\n"
+    + "00:00.000 --> 00:03.000\nTurn left at the bridge.\n";
+String text = "data:;base64,"
+    + Base64.getEncoder().encodeToString(captions.getBytes(StandardCharsets.UTF_8));
+EmbeddedAsset asset = new CursorAssetDetector().detect(text).get(0);
+String decoded = new String(asset.decode(text), StandardCharsets.UTF_8);
+// asset.format() = "vtt"
+// asset.mediaType() = "text/vtt"
+// decoded equals captions, including the byte-order mark]]>
+			</programlisting>
+		</para>
+		<para>
+			PEM text can also appear inside base64. This example uses public elliptic-curve
+			parameters for <code>prime256v1</code>, not a private key:
+			<programlisting language="java"><![CDATA[
+String parameters = "-----BEGIN EC PARAMETERS-----\n"
+    + "BggqhkjOPQMBBw==\n"
+    + "-----END EC PARAMETERS-----\n";
+String encoded = Base64.getEncoder().encodeToString(
+    parameters.getBytes(StandardCharsets.US_ASCII));
+EmbeddedAsset asset = new CursorAssetDetector().detect(encoded).get(0);
+String decoded = new String(asset.decode(encoded), StandardCharsets.US_ASCII);
+// asset.format() = "pem-parameters"
+// asset.mediaType() = "application/x-x509-ec-parameters"
+// decoded equals parameters]]>
+			</programlisting>
+			The media type distinguishes EC parameters from DSA parameters. Decoding the
+			outer base64 returns the PEM text. Encoded PEM detection requires a complete
+			supported <ulink url="https://www.rfc-editor.org/rfc/rfc7468.html#section-3">opening
+			marker</ulink> at byte 0, including the label and its five closing hyphens.
+			It does not validate the end marker, body or cryptographic data.
+		</para>
+	</section>
+
+	<section xml:id="tools.assets.transport-forms">
+		<title>Wrapped base64, PEM, and JWT</title>
+		<para>
+			Bare standard-base64 payloads can cross LF or CRLF line separators when their
+			continued lines use the conventional 76-column MIME or 64-column PEM width.
+			The final line may be shorter. Unwrapped payloads may instead use the URL-safe
+			alphabet from
+			<link xlink:href="https://www.rfc-editor.org/rfc/rfc4648.html#section-5">RFC
+			4648 section 5</link>. The detector still requires a known and decoded file
+			magic before it reports either form as a bare asset.
+		</para>
+		<para>
+			A textual envelope following
+			<link xlink:href="https://www.rfc-editor.org/rfc/rfc7468.html">RFC 7468</link>
+			is different: its verified, matching <code>BEGIN</code> and <code>END</code>
+			labels identify the content. The asset span covers the full envelope while the
+			payload span covers only its line-wrapped body, so <code>decode</code> returns
+			the DER bytes directly. Empty bodies, mismatched labels, lines longer than 64
+			characters, invalid padding, and non-base64 body characters fail closed.
+		</para>
+		<para>
+			Compact JSON Web Tokens from
+			<link xlink:href="https://www.rfc-editor.org/rfc/rfc7519.html">RFC 7519</link>
+			are recognized as three base64url segments. The header and claims must decode
+			as UTF-8 JSON objects, the header must carry a non-empty string-valued
+			<code>alg</code>, and each segment is bounded to 16 KiB. For an unsecured token,
+			<code>alg</code> must be <code>none</code> and the signature segment must be empty;
+			all other algorithms require a non-empty signature segment with valid unpadded
+			base64url encoding. The full token is
+			the asset span and the claims segment is the payload:
+			<programlisting language="java"><![CDATA[
+String jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+    + ".eyJzdWIiOiIxMjMifQ.AAAA";
+
+EmbeddedAsset token = new CursorAssetDetector().detect(jwt).get(0);
+// token.format()    = "jwt"
+// token.mediaType() = "application/jwt"
+// new String(token.decode(jwt), StandardCharsets.UTF_8) = "{\"sub\":\"123\"}"]]>
+			</programlisting>
+			Detection validates structure only. It does not verify a JWT signature, trust a
+			key, or make an authorization decision.
+		</para>
+	</section>
+
+	<section xml:id="tools.assets.fold">
+		<title>Folding assets into text</title>
+		<para>
+			<code>AssetAnnotator</code> provides the <code>opennlp:assets</code> layer, and
+			<code>AssetFolder</code> replaces every asset with text. The result is an
+			<code>AlignedText</code>: spans over the folded text map back to exact original
+			offsets, so downstream findings over the cleaned text still locate in the raw
+			input. The default replacement renders a caption from the asset's own
+			metadata:
+			<programlisting language="java"><![CDATA[
+Document document = new AssetAnnotator().annotate(Document.of(text));
+AlignedText folded = AssetFolder.fold(document, AssetFolder.caption());
+// folded.normalizedString() = "An image [png 5x7, 45 bytes] follows."]]>
+			</programlisting>
+			Mapping the caption back recovers the asset's exact span in the original:
+			<code>folded.toOriginalSpan(9, 28)</code>, the caption's offsets in the folded
+			text, returns the span of the whole data URI.
+		</para>
+		<para>
+			What replaces an asset is the caller's choice through the replacement
+			function. A <code>BinaryContentDescriber</code> can extract document text or
+			generate an image description:
+			<programlisting language="java"><![CDATA[
+BinaryContentDescriber describer = ...;  // supplied by the caller
+
+AlignedText described = AssetFolder.fold(document, annotation ->
+    describer.describe(annotation.value().decode(text),
+        annotation.value().mediaType()));]]>
+			</programlisting>
+			The interface takes bytes and a media type and returns text. OpenNLP ships no
+			implementation. Applications provide the extraction or captioning service.
+		</para>
+	</section>
+</chapter>
