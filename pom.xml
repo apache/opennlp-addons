@@ -111,6 +111,7 @@
         <module>subword</module>
         <module>embeddings-core</module>
         <module>embeddings-onnx</module>
+        <module>embedding-annotator</module>
         <module>embeddings</module>
         <module>embeddings-cli</module>
     </modules>
