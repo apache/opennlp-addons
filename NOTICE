@@ -28,3 +28,11 @@ The catalog also includes definitions adapted from the PRONOM Technical
 Registry by The National Archives (https://www.nationalarchives.gov.uk/PRONOM/).
 Contains public sector information licensed under the Open Government Licence v3.0.
 https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+
+The Windows-1252 mapping in
+opennlp.tools.artifacts.CursorArtifactDetector is derived from CP1252.TXT,
+table version 2.01 (1998-04-15), published at:
+https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1252.TXT
+
+Copyright © 1991-2026 Unicode, Inc.
+Distributed under the Unicode License V3 reproduced in LICENSE.

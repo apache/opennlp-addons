@@ -113,6 +113,7 @@
         <module>noise</module>
         <module>dehyphenation</module>
         <module>symbol-joiner</module>
+        <module>text-artifacts</module>
     </modules>
 
     <properties>
