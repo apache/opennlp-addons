@@ -110,6 +110,7 @@
         <module>opennlp-addons-docs</module>
         <module>wordnet</module>
         <module>light-stemmers</module>
+        <module>glossary</module>
     </modules>
 
     <properties>
