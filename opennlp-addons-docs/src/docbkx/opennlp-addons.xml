@@ -58,4 +58,6 @@
   <xi:include href="addon-guidelines.xml" />
   <xi:include href="neural-postag.xml" />
   <xi:include href="coref.xml" />
+  <xi:include href="dependency-annotations.xml" />
+  <xi:include href="relation.xml" />
 </book>

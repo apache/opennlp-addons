@@ -112,6 +112,8 @@
         <module>coref</module>
         <module>coref-dl</module>
         <module>coref-formats</module>
+        <module>dependency-annotations</module>
+        <module>relation-extraction</module>
     </modules>
 
     <properties>
