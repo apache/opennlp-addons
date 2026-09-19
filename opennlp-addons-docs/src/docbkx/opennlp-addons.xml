@@ -59,4 +59,5 @@
   <xi:include href="wordnet.xml" />
   <xi:include href="light-stemmers.xml" />
   <xi:include href="glossary.xml" />
+  <xi:include href="morfologik-fsa.xml" />
 </book>

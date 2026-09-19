@@ -111,6 +111,7 @@
         <module>wordnet</module>
         <module>light-stemmers</module>
         <module>glossary</module>
+        <module>morfologik-fsa</module>
     </modules>
 
     <properties>
