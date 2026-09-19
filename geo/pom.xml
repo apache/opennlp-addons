@@ -79,6 +79,15 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <opennlp.runtimeJar>${project.build.directory}/${project.build.finalName}.jar</opennlp.runtimeJar>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -101,7 +110,6 @@
     </testResources>
     <resources>
       <resource><directory>src/main/resources</directory></resource>
-      <resource><directory>src/license</directory><targetPath>META-INF</targetPath></resource>
     </resources>
   </build>
 </project>
