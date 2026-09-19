@@ -31,12 +31,12 @@
 		</para>
 		<para>
 			<code>WnLmfReader</code> requires a <code>LexicalResource</code> root
-			with lexicons as direct children. Parsed entries, senses, synsets,
-			relations and dependency declarations must have their WN-LMF parent;
-			each lexical entry must contain a lemma. Incorrect placement or a
-			missing lemma raises <code>InvalidFormatException</code> with the
+			with lexicons or extensions as direct children. Parsed entries, senses,
+			synsets, relations and dependency declarations must have their WN-LMF
+			parent; each lexical entry must contain a lemma. Incorrect placement or
+			a missing lemma raises <code>InvalidFormatException</code> with the
 			resource name and source line. Elements outside the reader's supported
-			subset are skipped with all descendants, which cannot add lexical
+			subset are skipped with all their descendants, which cannot add lexical
 			content or dependencies. Skipped XML must still be well formed. The
 			reader does not perform full DTD validation.
 		</para>
@@ -99,9 +99,115 @@ dog.id();  // "omw-es-02084071-n"]]>
 			attributes are available through the namespace-aware
 			<code>Map&lt;QName, String&gt; metadata</code>. This preserves attributes such
 			as <code>license</code> and <code>dc:publisher</code> without allowing
-			namespace collisions. <code>LexiconExtension</code> is not yet represented
-			by the knowledge-base contract and is rejected clearly rather than partly
-			loaded.
+			namespace collisions. A <code>LexiconExtension</code> requires its base
+			lexicon from a separate document; the resolver-aware overloads described in
+			the next section compose it, while the overloads shown here reject it
+			clearly rather than partly load it.
+		</para>
+	</section>
+
+	<section xml:id="tools.wordnet.extension">
+		<title>Composing lexicon extensions</title>
+		<para>
+			A WN-LMF <code>LexiconExtension</code> is an additive overlay on a base
+			lexicon that ships in a separate document; the format forbids a base and
+			its extension sharing one file. An extension can add lexical entries,
+			senses, and synsets, attach a new sense to an existing base entry, and add
+			relations to base senses and synsets it declares through
+			<code>ExternalLexicalEntry</code>, <code>ExternalSense</code>, and
+			<code>ExternalSynset</code>. Composition is additive: base content is
+			never deleted or replaced, and new ids must not collide with base ids.
+		</para>
+		<para>
+			References in extension <code>members</code> lists require new content
+			or explicit external declarations. This also applies to legacy
+			lexical-entry identifiers: a base entry needs an
+			<code>ExternalLexicalEntry</code> declaration. An invalid declaration
+			names the document containing it, including intermediate extensions.
+		</para>
+		<para>
+			Each selected base must have valid senses, members and relations before
+			an extension is added, including intermediate extensions. These checks
+			report the base source and line. Extension content cannot repair an
+			invalid base.
+		</para>
+		<para>
+			The application supplies the base through a <code>WnLmfResolver</code>,
+			typically a catalog of lexicon IDs and versions. The resolver controls
+			dependency retrieval; the reader does not fetch URLs in the XML.
+			Without a resolver, extensions are rejected. The <code>Path</code>
+			overloads open and close the specified file. Stream overloads leave the
+			supplied top-level stream open.
+		</para>
+		<para>
+			A resolver returns
+			a freshly opened <code>WnLmfSource</code> per call, or throws
+			<code>IOException</code> when it cannot supply the document. The reader
+			closes resolved sources on success or failure. A consumed or closed source
+			cannot be reused. Repeated close calls have no effect, including after a
+			close failure. A close error is propagated, or suppressed on a parse error
+			when both occur.
+		</para>
+		<para>
+			The example uses files in a <code>wordnets</code> directory.
+			<code>WordNetUsageExampleTest</code> runs it using the original
+			test documents, with no model or downloaded dictionary.
+			<programlisting language="java"><![CDATA[
+Path directory = Path.of("wordnets");
+WnLmfResolver resolver = reference -> {
+  if ("ewn".equals(reference.ref()) && "2020".equals(reference.version())) {
+    return new WnLmfSource("extension-base.xml",
+        Files.newInputStream(directory.resolve("extension-base.xml")));
+  }
+  throw new IOException(
+      "No lexicon " + reference.ref() + " " + reference.version());
+};
+
+WnLmfResource resource = WnLmfReader.readResource(
+    directory.resolve("extension-computer-science.xml"), resolver);
+WnLmfLexicon composed = resource.lexicons().get(0);
+
+WnLmfDependency base = composed.extensionOf().orElseThrow();
+base.ref();      // "ewn"
+base.version();  // "2020"
+composed.dependencies().get(0).ref();  // "omw-fr", metadata only
+
+LexicalKnowledgeBase lexicon = composed.knowledgeBase();
+List<Synset> senses = lexicon.lookup("process", WordNetPOS.NOUN);
+// senses.size() = 3, the base senses first, the added sense last
+Synset added = senses.get(2);
+added.id();     // "ewn-20000123-n"
+added.gloss();  // "a running instance of a computer program"
+
+String hypernymId = added.related(WordNetRelation.HYPERNYM).get(0);
+lexicon.synset(hypernymId).orElseThrow().lemmas();  // ["software"], a base synset]]>
+			</programlisting>
+		</para>
+		<para>
+			The composed result is an ordinary <code>WnLmfLexicon</code>: its
+			identity and metadata come from the extension,
+			<code>extensionOf()</code> carries the exact <code>Extends</code>
+			reference, and <code>dependencies()</code> still means only the source's
+			ordered <code>Requires</code> declarations, which stay descriptive
+			metadata and are never loaded automatically. Sibling extensions in one
+			document compose independently against their own bases and are never
+			merged with each other. External IDs must be unique within one XML
+			document. Put extensions that repeat an external ID in separate files.
+			When the resolved base is another extension, the
+			chain can contain up to 16 extension levels, excluding the plain base lexicon.
+			Cycles are detected by exact id and version. Resolutions are cached per
+			id and version for one read, so a shared base is fetched once. Cached paths
+			still count toward the depth limit and cycle checks, regardless of extension
+			order. Each read call has a separate cache, including concurrent calls with
+			a thread-safe resolver.
+		</para>
+		<para>
+			The projection limits of the ordinary reader apply unchanged: forms,
+			pronunciations, examples, and counts stay outside
+			the <code>LexicalKnowledgeBase</code> contract, in extensions exactly as
+			in ordinary lexicons. Because a <code>Synset</code> carries one gloss, a
+			base gloss always wins; the first external definition only fills a base gloss
+			that is empty.
 		</para>
 	</section>
 

@@ -95,6 +95,49 @@ public class WordNetUsageExampleTest {
   }
 
   /**
+   * Runs the manual's file-based extension example and checks the base remains unchanged.
+   *
+   * @param directory The directory for the example documents.
+   * @throws IOException If a document cannot be copied or read.
+   */
+  @Test
+  void testComposeLexiconExtension(@TempDir Path directory) throws IOException {
+    for (final String fixture : List.of("extension-base.xml", "extension-computer-science.xml")) {
+      try (InputStream input = WordNetUsageExampleTest.class.getResourceAsStream(fixture)) {
+        assertNotNull(input, fixture);
+        Files.copy(input, directory.resolve(fixture));
+      }
+    }
+    final WnLmfResolver resolver = reference -> {
+      if ("ewn".equals(reference.ref()) && "2020".equals(reference.version())) {
+        return new WnLmfSource("extension-base.xml",
+            Files.newInputStream(directory.resolve("extension-base.xml")));
+      }
+      throw new IOException("No lexicon " + reference.ref() + " " + reference.version());
+    };
+    final WnLmfResource resource = WnLmfReader.readResource(
+        directory.resolve("extension-computer-science.xml"), resolver);
+    final WnLmfLexicon composed = resource.lexicons().get(0);
+
+    final WnLmfDependency base = composed.extensionOf().orElseThrow();
+    assertEquals("ewn", base.ref());
+    assertEquals("2020", base.version());
+    assertEquals("omw-fr", composed.dependencies().get(0).ref());
+
+    final LexicalKnowledgeBase lexicon = composed.knowledgeBase();
+    final List<Synset> senses = lexicon.lookup("process", WordNetPOS.NOUN);
+    assertEquals(3, senses.size());
+    final Synset added = senses.get(2);
+    assertEquals("ewn-20000123-n", added.id());
+    assertEquals("a running instance of a computer program", added.gloss());
+
+    final String hypernymId = added.related(WordNetRelation.HYPERNYM).get(0);
+    assertEquals(List.of("software"), lexicon.synset(hypernymId).orElseThrow().lemmas());
+    assertEquals(2, WnLmfReader.read(directory.resolve("extension-base.xml"))
+        .lookup("process", WordNetPOS.NOUN).size());
+  }
+
+  /**
    * Follow the hypernym relation from the first sense of dog as the chapter's relation
    * navigation listing shows.
    */
