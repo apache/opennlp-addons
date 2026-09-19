@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN"
+"http://docbook.org/xml/5.0/dtd/docbook.dtd"[
+]>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+	license agreements. See the NOTICE file distributed with this work for additional
+	information regarding copyright ownership. The ASF licenses this file to
+	you under the Apache License, Version 2.0 (the "License"); you may not use
+	this file except in compliance with the License. You may obtain a copy of
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+	by applicable law or agreed to in writing, software distributed under the
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+	OF ANY KIND, either express or implied. See the License for the specific
+	language governing permissions and limitations under the License. -->
+
+<chapter xml:id="addons.light-stemmers" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Light and minimal stemmers</title>
+	<section xml:id="tools.stemmer.light">
+		<title>Light and minimal stemmers</title>
+		<para>
+			The package <code>opennlp.tools.stemmer.light</code> provides light and minimal
+			stemmers based on algorithms in Apache Lucene's analysis-common module.
+			Light stemmers remove a modest set of endings; minimal stemmers remove fewer.
+			Instances are immutable, safe for concurrent use, and implement
+			<code>StemmerFactory</code>. Input must use lowercase NFC. The stemmers do not
+			apply case folding or Unicode normalization.
+		</para>
+		<para>
+			Languages with a light stemmer include German, Spanish, Finnish, French,
+			Hungarian, Italian, Norwegian, Portuguese, Russian, and Swedish. Minimal
+			stemmers are available for German, English, Spanish, French, Norwegian, and
+			Swedish. Norwegian variants are selected through
+			<code>NorwegianVariety</code>.
+			<code>LightStemmerUsageExampleTest</code> checks these results.
+			<programlisting language="java"><![CDATA[
+GermanLightStemmer light = new GermanLightStemmer();
+light.stem("häusern");                           // "haus"
+
+new SpanishMinimalStemmer().stem("jerseis");         // "jersey"
+
+NorwegianLightStemmer bokmaal =
+    new NorwegianLightStemmer(NorwegianVariety.BOKMAAL);
+bokmaal.stem("hemmeligheten");                       // "hemmelig"]]>
+			</programlisting>
+		</para>
+		<para>
+			For uppercase or decomposed input, normalize to NFC and lowercase before
+			stemming. This example prepares a German word with a combining diaeresis:
+		</para>
+		<programlisting language="java"><![CDATA[import java.text.Normalizer;
+import opennlp.tools.stemmer.light.GermanLightStemmer;
+import opennlp.tools.util.StringUtil;
+
+String input = "HA\u0308USERN";
+String prepared = StringUtil.toLowerCase(
+    Normalizer.normalize(input, Normalizer.Form.NFC));
+new GermanLightStemmer().stem(prepared);             // "haus"]]>
+		</programlisting>
+	</section>
+</chapter>
