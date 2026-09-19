@@ -112,6 +112,7 @@
         <module>light-stemmers</module>
         <module>glossary</module>
         <module>morfologik-fsa</module>
+        <module>subword</module>
     </modules>
 
     <properties>

@@ -60,4 +60,5 @@
   <xi:include href="light-stemmers.xml" />
   <xi:include href="glossary.xml" />
   <xi:include href="morfologik-fsa.xml" />
+  <xi:include href="subword.xml" />
 </book>
