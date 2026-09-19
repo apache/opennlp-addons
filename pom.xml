@@ -108,6 +108,9 @@
 
     <modules>
         <module>opennlp-addons-docs</module>
+        <module>coref</module>
+        <module>coref-dl</module>
+        <module>coref-formats</module>
     </modules>
 
     <properties>

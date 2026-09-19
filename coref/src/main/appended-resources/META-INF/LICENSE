@@ -1,0 +1,7 @@
+The English first-name table in
+coref/src/main/resources/opennlp/tools/coref/first-names-en.txt
+is an Apache-licensed project derivative of the United States Social Security
+Administration national baby-name data for 1920 through 2008. The source data are
+United States government material published at https://www.ssa.gov/oact/babynames/.
+SSA describes its government documents as public domain at
+https://www.ssa.gov/websitepolicies.htm.
