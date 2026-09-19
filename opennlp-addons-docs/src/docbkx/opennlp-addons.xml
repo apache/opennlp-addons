@@ -57,4 +57,5 @@
   <xi:include href="building.xml" />
   <xi:include href="addon-guidelines.xml" />
   <xi:include href="neural-postag.xml" />
+  <xi:include href="coref.xml" />
 </book>

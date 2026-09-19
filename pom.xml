@@ -109,6 +109,9 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>neural-postag</module>
+        <module>coref</module>
+        <module>coref-dl</module>
+        <module>coref-formats</module>
     </modules>
 
     <properties>
