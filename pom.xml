@@ -109,6 +109,7 @@
     <modules>
         <module>opennlp-addons-docs</module>
         <module>dependency-annotations</module>
+        <module>relation-extraction</module>
     </modules>
 
     <properties>

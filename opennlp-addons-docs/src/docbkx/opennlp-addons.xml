@@ -57,4 +57,5 @@
   <xi:include href="building.xml" />
   <xi:include href="addon-guidelines.xml" />
   <xi:include href="dependency-annotations.xml" />
+  <xi:include href="relation.xml" />
 </book>
