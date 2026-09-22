@@ -17,6 +17,13 @@
 github:
   description: "Apache OpenNLP Add-ons"
   homepage: https://opennlp.apache.org/
+  features:
+    # Issues are used for user-facing questions and bug reports; design
+    # decisions and releases stay on the dev list and in JIRA.
+    issues: true
+    discussions: false
+    wiki: false
+    projects: true
   autolink_jira:
     - OPENNLP
   custom_subjects:
